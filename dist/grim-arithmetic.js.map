@@ -1,0 +1,1 @@
+{"version":3,"file":"grim-arithmetic.js","names":[],"sources":["../src/main.ts"],"sourcesContent":["Hooks.once('init', () => {\n  console.log('Grim Arithmetic | Initializing');\n});\n"],"mappings":";AAAA,MAAM,KAAK,cAAc;CACvB,QAAQ,IAAI,iCAAiC;EAC7C"}
