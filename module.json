@@ -1,0 +1,29 @@
+{
+  "id": "grim-arithmetic",
+  "title": "Grim Arithmetic",
+  "description": "GM-facing PF2e mortality and encounter-risk analysis for Foundry VTT.",
+  "version": "0.1.0",
+  "authors": [
+    {
+      "name": "Kyle Travis"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13.351",
+    "verified": "13.351"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "pf2e",
+        "type": "system"
+      }
+    ]
+  },
+  "esmodules": ["dist/grim-arithmetic.js"],
+  "styles": ["styles/grim-arithmetic.css"],
+  "templates": ["templates/mortality-panel.hbs"],
+  "url": "",
+  "manifest": "",
+  "download": ""
+}
