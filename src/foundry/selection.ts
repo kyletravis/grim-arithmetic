@@ -26,8 +26,10 @@ export function resolveTokenSelection<TokenLike = unknown>(
   const subjectToken = controlled.length === 1 ? controlled[0] : null;
   const enemyToken = targets.length === 1 ? targets[0] : null;
 
-  if (!subjectToken) errors.push('Select exactly one PC token.');
-  if (!enemyToken) errors.push('Target exactly one enemy token.');
+  if (controlled.length === 0) errors.push('No PC token selected. Select one PC token.');
+  if (controlled.length > 1) errors.push('Multiple tokens selected. Select only one PC token.');
+  if (targets.length === 0) errors.push('No target selected. Target one enemy token.');
+  if (targets.length > 1) errors.push('Multiple targets selected. Target only one enemy token.');
 
   return { subjectToken, enemyToken, errors };
 }

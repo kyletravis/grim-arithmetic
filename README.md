@@ -14,6 +14,7 @@ Current status: early MVP development. The module has a tested probability engin
 - [MVP Scaffold Implementation Plan](./docs/plans/2026-05-09-mvp-scaffold.md)
 - [Installation Guide](./docs/INSTALL.md)
 - [Foundry v13 / PF2e Testing Guide](./docs/TESTING.md)
+- [Release / Tag Workflow](./docs/RELEASE.md)
 
 ## Initial Direction
 

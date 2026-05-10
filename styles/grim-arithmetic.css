@@ -55,6 +55,11 @@
   width: 100%;
 }
 
+.grim-arithmetic-panel__refresh {
+  align-self: end;
+  min-height: 2rem;
+}
+
 .grim-arithmetic-panel__errors {
   margin-top: 0.75rem;
   padding: 0.5rem;
