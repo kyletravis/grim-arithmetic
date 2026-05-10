@@ -43,4 +43,17 @@ describe('immediateDownRisk', () => {
     expect(result.hitChanceByStrike).toHaveLength(3);
     expect(result.critChanceByStrike).toHaveLength(3);
   });
+
+  it('counts cumulative crit damage that downs the target across multiple strikes', () => {
+    const result = immediateDownRisk({
+      hp: 20,
+      ac: 20,
+      attackBonus: 10,
+      damageFormula: '1d6+3',
+      strikes: 2,
+      mapType: 'none'
+    });
+
+    expect(result.downProbability).toBeGreaterThan(0);
+  });
 });
