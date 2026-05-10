@@ -20,6 +20,7 @@ This backlog keeps the next work intentionally phased. The guiding principle is:
 4. **Capture real PF2e data shapes** — when Foundry/PF2e extraction fails, add a fixture and regression test.
 5. **No false precision** — permanent death probability remains deferred until dying/recovery/healing/enemy behavior assumptions are explicit.
 6. **GM-only by default** — no player-facing output until explicitly designed.
+7. **Keep `docs/ARITHMETIC.md` current** — every backlog item that changes a calculation, assumption, caveat, or displayed probability must update the calculation guide in the same commit/PR.
 
 ---
 
