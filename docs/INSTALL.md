@@ -5,6 +5,7 @@ This guide covers installing the current development build of **Grim Arithmetic*
 Current target:
 
 - Foundry VTT: **v13 Build 351 minimum**
+- Manifest compatibility generation: `minimum: "13"`, `verified: "13"` for Foundry package discovery compatibility
 - System: **Pathfinder 2e (`pf2e`)**
 - Module ID/folder name: `grim-arithmetic`
 
@@ -213,11 +214,37 @@ If the panel says it cannot find a supported melee Strike, continue to the testi
 
 ### Module does not appear in Manage Modules
 
-Check:
+If Grim Arithmetic does not appear anywhere after a restart, Foundry is not discovering a valid module manifest. This is almost always one of: wrong data path, nested folder, folder/id mismatch, permissions, or manifest validation failure.
+
+Run this on the Foundry server, adjusting `FOUNDRY_DATA` if needed:
 
 ```bash
-ls -la <FOUNDRY_DATA>/Data/modules/grim-arithmetic
-cat <FOUNDRY_DATA>/Data/modules/grim-arithmetic/module.json
+FOUNDRY_DATA="$HOME/foundrydata/Data"
+MODULE_DIR="$FOUNDRY_DATA/modules/grim-arithmetic"
+
+printf 'Module dir: %s\n' "$MODULE_DIR"
+ls -la "$MODULE_DIR"
+printf '\nmodule.json:\n'
+python3 -m json.tool "$MODULE_DIR/module.json"
+printf '\nKey files:\n'
+find "$MODULE_DIR" -maxdepth 2 -type f | sort | sed "s|$MODULE_DIR/||"
+printf '\nPermissions:\n'
+namei -l "$MODULE_DIR/module.json" 2>/dev/null || true
+```
+
+Expected key files:
+
+```text
+module.json
+dist/grim-arithmetic.js
+styles/grim-arithmetic.css
+templates/mortality-panel.hbs
+```
+
+Also verify there is **not** an extra nested repo folder:
+
+```bash
+test ! -f "$MODULE_DIR/grim-arithmetic/module.json" || echo 'Nested folder problem detected'
 ```
 
 Common causes:
@@ -225,7 +252,20 @@ Common causes:
 - Folder is not named `grim-arithmetic`.
 - `module.json` is missing or invalid.
 - Files were copied one level too deep, e.g. `modules/grim-arithmetic/grim-arithmetic/module.json`.
+- Foundry is using a different user data path than the one you copied into.
+- The Foundry service user cannot read the module folder/files.
 - Foundry was not fully restarted after install.
+
+Check the active user data path in the Foundry UI if possible: **Configuration → User Data Path**.
+
+For systemd installs, also inspect the service command/environment:
+
+```bash
+systemctl status foundryvtt --no-pager
+systemctl cat foundryvtt
+```
+
+Look for `--dataPath`, `FOUNDRY_VTT_DATA_PATH`, or similar.
 
 ### Browser console has runtime errors
 
