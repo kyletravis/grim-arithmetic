@@ -1,32 +1,41 @@
 import { MODULE_ID } from '../constants';
 import { MortalityPanel } from './mortality-panel';
 
-interface SceneControlTool {
+interface SceneControlToolV13 {
   name: string;
   title: string;
   icon: string;
+  order: number;
   button: true;
-  onClick: () => void;
+  visible: boolean;
+  onChange: () => void;
 }
 
-interface SceneControl {
-  name: string;
-  tools: SceneControlTool[];
+interface SceneControlV13 {
+  tools: Record<string, SceneControlToolV13>;
+}
+
+type SceneControlsV13 = Record<string, SceneControlV13>;
+
+const TOOL_NAME = `${MODULE_ID}-open-panel`;
+
+function openMortalityPanel(): void {
+  new MortalityPanel().render(true);
 }
 
 export function registerTokenControls(): void {
-  Hooks.on('getSceneControlButtons', (controls: SceneControl[]) => {
-    if (!game.user?.isGM) return;
-
-    const tokenControls = controls.find((control) => control.name === 'token');
+  Hooks.on('getSceneControlButtons', (controls: SceneControlsV13) => {
+    const tokenControls = controls.tokens;
     if (!tokenControls) return;
 
-    tokenControls.tools.push({
-      name: `${MODULE_ID}-open-panel`,
+    tokenControls.tools[TOOL_NAME] = {
+      name: TOOL_NAME,
       title: 'Grim Arithmetic',
-      icon: 'fas fa-skull',
+      icon: 'fa-solid fa-skull',
+      order: Object.keys(tokenControls.tools).length,
       button: true,
-      onClick: () => new MortalityPanel().render(true)
-    });
+      visible: Boolean(game.user?.isGM),
+      onChange: openMortalityPanel
+    };
   });
 }
