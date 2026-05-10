@@ -440,21 +440,26 @@ function H(e) {
 }
 //#endregion
 //#region src/ui/token-controls.ts
-function U() {
-	Hooks.on("getSceneControlButtons", (t) => {
-		if (!game.user?.isGM) return;
-		let n = t.find((e) => e.name === "token");
-		n && n.tools.push({
-			name: `${e}-open-panel`,
+var U = `${e}-open-panel`;
+function W() {
+	new j().render(!0);
+}
+function G() {
+	Hooks.on("getSceneControlButtons", (e) => {
+		let t = e.tokens;
+		t && (t.tools[U] = {
+			name: U,
 			title: "Grim Arithmetic",
-			icon: "fas fa-skull",
+			icon: "fa-solid fa-skull",
+			order: Object.keys(t.tools).length,
 			button: !0,
-			onClick: () => new j().render(!0)
+			visible: !!game.user?.isGM,
+			onChange: W
 		});
 	});
 }
 Hooks.once("init", () => {
-	console.log(`${t} | Initializing`), n(), U();
+	console.log(`${t} | Initializing`), n(), G();
 }), Hooks.once("ready", () => {
 	if (!game.user?.isGM) return;
 	let t = game.modules.get(e);
