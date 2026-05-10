@@ -6,6 +6,44 @@
 
   <p>{{message}}</p>
 
+  <form class="grim-arithmetic-panel__controls">
+    <label>
+      Enemy turn
+      <select data-grim-control="strikes">
+        {{#each controls.strikes}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      MAP
+      <select data-grim-control="mapMode">
+        {{#each controls.mapMode}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      Shield / AC adjustment
+      <select data-grim-control="shieldBonus">
+        {{#each controls.shieldBonus}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      Wounded display
+      <select data-grim-control="woundedOverride">
+        {{#each controls.woundedOverride}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+  </form>
+
   {{#if errors.length}}
     <div class="grim-arithmetic-panel__errors">
       <h3>Needs attention</h3>
@@ -23,6 +61,15 @@
       <dl>
         <dt>Enemy Strike</dt>
         <dd>{{attack.name}} — +{{attack.attackBonus}}, {{attack.damageFormula}}</dd>
+
+        <dt>Modeled HP</dt>
+        <dd>{{risk.modeledHp}}</dd>
+
+        <dt>Effective AC</dt>
+        <dd>{{risk.effectiveAc}}</dd>
+
+        <dt>Wounded</dt>
+        <dd>{{risk.woundedNote}}</dd>
 
         <dt>Down chance</dt>
         <dd><strong>{{risk.downPercent}}%</strong> — {{risk.riskLabel}}</dd>
