@@ -82,9 +82,9 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
         heroPoints: optionalNumber(heroPoints.value)
       },
       damageAdjustments: {
-        resistances: getAdjustmentValues(system.resistances),
-        weaknesses: getAdjustmentValues(system.weaknesses),
-        immunities: getImmunities(system.immunities)
+        resistances: getAdjustmentValues(attributes.resistances ?? system.resistances),
+        weaknesses: getAdjustmentValues(attributes.weaknesses ?? system.weaknesses),
+        immunities: getImmunities(attributes.immunities ?? system.immunities)
       },
       traits: toStringArray(traits.value),
       assumptions: []

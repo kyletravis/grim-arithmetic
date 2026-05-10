@@ -19,7 +19,13 @@ describe('Pf2eAdapter combatant extraction', () => {
         system: {
           attributes: {
             hp: { value: 23, max: 31, temp: 4 },
-            ac: { value: 19 }
+            ac: { value: 19 },
+            weaknesses: [{ type: 'cold', value: 4 }],
+            resistances: [
+              { type: 'fire', value: 5 },
+              { type: 'physical', value: 3 }
+            ],
+            immunities: [{ type: 'poison' }]
           },
           saves: {
             fortitude: { value: 8 },
@@ -29,13 +35,7 @@ describe('Pf2eAdapter combatant extraction', () => {
           resources: {
             heroPoints: { value: 1 }
           },
-          traits: { value: ['human', 'druid'] },
-          weaknesses: [{ type: 'cold', value: 4 }],
-          resistances: [
-            { type: 'fire', value: 5 },
-            { type: 'physical', value: 3 }
-          ],
-          immunities: [{ type: 'poison' }]
+          traits: { value: ['human', 'druid'] }
         },
         itemTypes: {
           condition: [condition('wounded', 1), condition('dying', 0), condition('doomed', 0)]
