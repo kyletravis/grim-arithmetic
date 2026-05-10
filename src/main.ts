@@ -1,3 +1,7 @@
+import { MODULE_TITLE } from './constants';
+import { registerSettings } from './settings';
+
 Hooks.once('init', () => {
-  console.log('Grim Arithmetic | Initializing');
+  console.log(`${MODULE_TITLE} | Initializing`);
+  registerSettings();
 });
