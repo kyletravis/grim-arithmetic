@@ -28,6 +28,7 @@
     "eslint": "latest",
     "prettier": "latest",
     "typescript": "latest",
+    "typescript-eslint": "^8.59.2",
     "vite": "latest",
     "vitest": "latest"
   }
