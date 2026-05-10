@@ -340,7 +340,6 @@ paste here
 ```text
 paste here
 ```
-```
 
 ---
 
