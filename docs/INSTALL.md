@@ -205,6 +205,7 @@ Expected:
 - It shows an enemy Strike selector plus the selected Strike, attack bonus, and damage formula.
 - It shows damage range, average damage, and damage swinginess.
 - It shows down chance and risk label.
+- It shows a damage adjustment note for resistance/weakness/immunity handling.
 - It shows dying severity, doomed-adjusted death threshold, immediate death flag, and Hero Point note.
 - It shows assumptions and not-modeled caveats.
 - It explicitly says permanent death probability is not modeled in MVP.

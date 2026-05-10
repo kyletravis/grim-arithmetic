@@ -1,7 +1,7 @@
 # Grim Arithmetic Calculation Guide
 
 > **Purpose:** Explain, in plain English and implementation-level detail, what goes into Grim Arithmetic's risk calculation.  
-> **Current baseline:** v0.3.0 dying-pressure MVP
+> **Current baseline:** v0.4.0 damage-adjustment MVP
 > **Audience:** GMs, testers, contributors, and anyone asking “where did that percentage come from?”
 
 Grim Arithmetic is a decision-support tool, not a combat oracle. Its current MVP answers one narrow question:
@@ -30,6 +30,7 @@ The current calculation uses:
 - cumulative exact damage distribution across the modeled Strike sequence
 - wounded and doomed values for dying severity if the PC is downed
 - optional Hero Point death-prevention assumption messaging
+- simple resistance, weakness, and immunity adjustments when Strike damage type is confidently known
 
 The current calculation does **not** model:
 
@@ -39,7 +40,7 @@ The current calculation does **not** model:
 - Hero Point survival probability
 - Shield Block damage prevention
 - Champion reactions or other defensive reactions
-- resistance, weakness, or immunity
+- resistance, weakness, or immunity edge cases for ambiguous/mixed damage
 - deadly, fatal, precision, splash, or persistent damage
 - enemy tactics beyond “make this many Strikes against this PC”
 - terrain, reach, movement, action availability, or line of effect
@@ -107,6 +108,7 @@ The module lets the GM choose among the enemy's supported melee Strikes. For the
 - Strike name
 - attack bonus
 - damage formula
+- primary damage type, when available
 - MAP type if detectable:
   - `normal`
   - `agile`
@@ -528,6 +530,41 @@ This only changes the explanatory note. Grim Arithmetic does not convert Hero Po
 
 ---
 
+## Damage adjustments in v0.4.0
+
+When PF2e actor data exposes the selected PC's resistances, weaknesses, or immunities and the selected enemy Strike exposes a primary damage type, Grim Arithmetic applies a simple PF2e-style adjustment to each exact damage outcome:
+
+```text
+adjusted damage = max(0, rolled damage - matching resistance) + matching weakness
+```
+
+If the PC is immune to the Strike's damage type, modeled damage is set to 0.
+
+The adjustment is applied separately to the normal-hit and crit-hit exact distributions. This means down chance, damage range, average damage, and expected HP all use the adjusted distribution.
+
+Matching is intentionally conservative:
+
+- exact damage-type matches apply, such as `fire` resistance against `fire` damage
+- `physical` applies to `bludgeoning`, `piercing`, and `slashing`
+- `all` applies to any known damage type
+- unknown or ambiguous damage types do **not** silently apply adjustments
+
+The panel reports the applied adjustment note, for example:
+
+```text
+Applied slashing resistance 5 and slashing weakness 2.
+Damage type unknown; no resistance, weakness, or immunity applied.
+```
+
+Current limitations:
+
+- mixed damage types are not split into separate pools yet
+- exceptions and bypass rules are not modeled
+- precision, splash, persistent, deadly, and fatal remain deferred
+- manual damage-type/value override controls are still planned
+
+---
+
 ## Current interpretation guidance
 
 Use the MVP result as:
@@ -549,12 +586,6 @@ Do **not** use the MVP result as:
 ## Planned updates to this document
 
 As backlog items land, update this guide with new sections.
-
-### v0.4.0 planned documentation updates
-
-- Resistance, weakness, and immunity application.
-- Damage type extraction and ambiguity handling.
-- Manual damage adjustment overrides.
 
 ### v0.5.0 planned documentation updates
 

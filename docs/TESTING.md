@@ -130,6 +130,7 @@ Expected:
 - [ ] Effective AC appears.
 - [ ] Wounded display appears.
 - [ ] Damage range, average damage, and swinginess appear.
+- [ ] Damage adjustment note appears and does not claim adjustments when damage type is unknown.
 - [ ] Down chance appears as a percentage.
 - [ ] Risk label appears.
 - [ ] Expected HP after turn appears.
@@ -155,6 +156,7 @@ Effective AC:
 Down chance:
 Risk label:
 Expected HP after turn:
+Damage adjustment note:
 Dying if downed:
 Death threshold:
 Immediate death flag:
@@ -322,6 +324,8 @@ These are expected right now:
 
 - Permanent death probability is not modeled.
 - Wounded and doomed affect dying severity and immediate death flags, not down chance.
+- Resistance, weakness, and immunity are applied only for confidently typed Strike damage.
+- Ambiguous/mixed damage types, exceptions, and bypass rules are not modeled.
 - Hero Point availability is displayed/caveated but not modeled as survival probability.
 - Damage uses exact dice distributions for supported formulas.
 - Critical damage is simple double damage of the supported formula total.

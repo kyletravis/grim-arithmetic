@@ -3,6 +3,25 @@ import { DamageDistribution, DamageOutcome, damageDistribution } from './dice';
 
 export type MapType = 'normal' | 'agile' | 'none';
 
+export interface DamageAdjustmentValue {
+  type: string;
+  value: number;
+}
+
+export interface DamageAdjustments {
+  resistances: DamageAdjustmentValue[];
+  weaknesses: DamageAdjustmentValue[];
+  immunities: string[];
+}
+
+export interface DamageAdjustmentSummary {
+  damageType: string;
+  resistance: number;
+  weakness: number;
+  immune: boolean;
+  note: string;
+}
+
 export interface ImmediateDownRiskInput {
   hp: number;
   ac: number;
@@ -13,6 +32,8 @@ export interface ImmediateDownRiskInput {
   wounded?: number;
   doomed?: number;
   assumeHeroPointAvailable?: boolean;
+  damageType?: string;
+  targetAdjustments?: DamageAdjustments;
 }
 
 export interface DamageSummary {
@@ -35,6 +56,7 @@ export interface ImmediateDownRiskResult {
   notModeled: string[];
   damage: DamageSummary;
   dyingSeverity: DyingSeverity;
+  damageAdjustment: DamageAdjustmentSummary;
 }
 
 export interface DyingSeverity {
@@ -48,8 +70,11 @@ export interface DyingSeverity {
 }
 
 export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownRiskResult {
-  const baseDamage = damageDistribution(input.damageFormula);
-  const critDamage = doubleDistribution(baseDamage);
+  const rawBaseDamage = damageDistribution(input.damageFormula);
+  const rawCritDamage = doubleDistribution(rawBaseDamage);
+  const damageAdjustment = buildDamageAdjustmentSummary(input.damageType, input.targetAdjustments);
+  const baseDamage = applyDamageAdjustment(rawBaseDamage, damageAdjustment);
+  const critDamage = applyDamageAdjustment(rawCritDamage, damageAdjustment);
   const mapPenalties = getMapPenalties(input.mapType).slice(0, input.strikes);
   const hitChanceByStrike: number[] = [];
   const critChanceByStrike: number[] = [];
@@ -102,20 +127,122 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
     }),
     assumptions: [
       'Uses exact damage distributions for supported formulas.',
+      damageAdjustment.note,
       'Critical damage is modeled as simple double damage of the supported formula total.',
       `Enemy turn model: ${input.strikes} Strike${input.strikes === 1 ? '' : 's'}.`,
       `MAP model: ${input.mapType}.`
     ],
     notModeled: [
-      'Resistance, weakness, and immunity.',
       'Deadly, fatal, precision, splash, and persistent damage.',
       'Reactions such as Shield Block or Champion reactions.',
       'Healing before or during the enemy turn.',
       'Permanent death probability.'
     ],
     damage: buildDamageSummary(baseDamage, critDamage),
-    dyingSeverity
+    dyingSeverity,
+    damageAdjustment
   };
+}
+
+
+function buildDamageAdjustmentSummary(
+  damageType: string | undefined,
+  targetAdjustments: DamageAdjustments | undefined
+): DamageAdjustmentSummary {
+  const normalizedType = normalizeDamageType(damageType);
+  const emptySummary: DamageAdjustmentSummary = {
+    damageType: normalizedType ?? 'unknown',
+    resistance: 0,
+    weakness: 0,
+    immune: false,
+    note: 'Damage type unknown; no resistance, weakness, or immunity applied.'
+  };
+
+  if (!normalizedType) return emptySummary;
+
+  const resistance = highestMatchingValue(targetAdjustments?.resistances ?? [], normalizedType);
+  const weakness = highestMatchingValue(targetAdjustments?.weaknesses ?? [], normalizedType);
+  const immune = (targetAdjustments?.immunities ?? []).some((type) => damageTypesMatch(type, normalizedType));
+
+  if (immune) {
+    return {
+      damageType: normalizedType,
+      resistance: 0,
+      weakness: 0,
+      immune: true,
+      note: `Applied ${normalizedType} immunity; modeled damage is 0.`
+    };
+  }
+
+  const parts: string[] = [];
+  if (resistance > 0) parts.push(`${normalizedType} resistance ${resistance}`);
+  if (weakness > 0) parts.push(`${normalizedType} weakness ${weakness}`);
+
+  return {
+    damageType: normalizedType,
+    resistance,
+    weakness,
+    immune: false,
+    note: parts.length > 0 ? `Applied ${joinAdjustmentParts(parts)}.` : `No ${normalizedType} resistance, weakness, or immunity matched.`
+  };
+}
+
+function joinAdjustmentParts(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? '';
+  return `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`;
+}
+
+function applyDamageAdjustment(
+  distribution: DamageDistribution,
+  adjustment: DamageAdjustmentSummary
+): DamageDistribution {
+  const probabilities = new Map<number, number>();
+
+  for (const outcome of distribution.outcomes) {
+    const damage = adjustDamage(outcome.damage, adjustment);
+    probabilities.set(damage, (probabilities.get(damage) ?? 0) + outcome.probability);
+  }
+
+  const outcomes = Array.from(probabilities.entries())
+    .sort(([left], [right]) => left - right)
+    .map(([damage, probability]) => ({ damage, probability }));
+  const mean = outcomes.reduce((sum, outcome) => sum + outcome.damage * outcome.probability, 0);
+
+  return {
+    min: outcomes[0]?.damage ?? 0,
+    max: outcomes.at(-1)?.damage ?? 0,
+    mean,
+    outcomes
+  };
+}
+
+function adjustDamage(damage: number, adjustment: DamageAdjustmentSummary): number {
+  if (adjustment.immune) return 0;
+  return Math.max(0, damage - adjustment.resistance) + adjustment.weakness;
+}
+
+function highestMatchingValue(adjustments: DamageAdjustmentValue[], damageType: string): number {
+  return adjustments.reduce((highest, adjustment) => {
+    if (!damageTypesMatch(adjustment.type, damageType)) return highest;
+    return Math.max(highest, adjustment.value);
+  }, 0);
+}
+
+function damageTypesMatch(adjustmentType: string, damageType: string): boolean {
+  const normalizedAdjustment = normalizeDamageType(adjustmentType);
+  const normalizedDamage = normalizeDamageType(damageType);
+  if (!normalizedAdjustment || !normalizedDamage) return false;
+  if (normalizedAdjustment === normalizedDamage) return true;
+  if (normalizedAdjustment === 'all') return true;
+  if (normalizedAdjustment === 'physical') {
+    return normalizedDamage === 'bludgeoning' || normalizedDamage === 'piercing' || normalizedDamage === 'slashing';
+  }
+  return false;
+}
+
+function normalizeDamageType(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  return value.trim().toLowerCase().replace(/\s+/g, '-');
 }
 
 function buildDyingSeverity({

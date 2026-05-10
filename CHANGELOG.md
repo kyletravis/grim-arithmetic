@@ -2,6 +2,14 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.4.0 - Damage adjustments
+
+- Extract simple PF2e resistances, weaknesses, and immunities from actor data.
+- Extract primary Strike damage type when available.
+- Apply matching resistance, weakness, and immunity to exact normal/crit damage distributions.
+- Show the applied damage adjustment note in the panel.
+- Keep ambiguous/unknown damage types conservative: no adjustment is silently applied.
+
 ## v0.3.1 - Release packaging alpha
 
 - Add MIT license for public/open-source distribution.

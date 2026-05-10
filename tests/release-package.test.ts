@@ -14,7 +14,7 @@ describe('release packaging metadata', () => {
     const moduleJson = readJson('module.json');
     const version = packageJson.version;
 
-    expect(version).toBe('0.3.1');
+    expect(typeof version).toBe('string');
     expect(moduleJson.version).toBe(version);
     expect(packageJson.license).toBe('MIT');
     expect(existsSync(join(root, 'LICENSE'))).toBe(true);

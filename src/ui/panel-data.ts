@@ -54,6 +54,13 @@ export interface MortalityPanelData {
       critMax: number;
       swinginess: string;
     };
+    damageAdjustment: {
+      damageType: string;
+      resistance: number;
+      weakness: number;
+      immune: boolean;
+      note: string;
+    };
     dyingSeverity: DyingSeverity;
     strikeChances: StrikeChanceData[];
     assumptions: string[];
@@ -126,7 +133,9 @@ export function buildMortalityPanelData<TokenLike>({
     mapType,
     wounded,
     doomed,
-    assumeHeroPointAvailable
+    assumeHeroPointAvailable,
+    damageType: attack.damageType,
+    targetAdjustments: subject.damageAdjustments
   });
 
   const assumptions = [...attack.assumptions, ...result.assumptions];
@@ -157,6 +166,7 @@ export function buildMortalityPanelData<TokenLike>({
       modeledHp,
       woundedNote: getWoundedNote(subject, controls.woundedOverride),
       damage: result.damage,
+      damageAdjustment: result.damageAdjustment,
       dyingSeverity: result.dyingSeverity,
       strikeChances: result.hitChanceByStrike.map((hitChance, index) => ({
         index: index + 1,
