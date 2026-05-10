@@ -1,7 +1,7 @@
 # Grim Arithmetic Backlog
 
 > **Project:** Grim Arithmetic  
-> **Current baseline:** v0.2.0 exact-distribution MVP
+> **Current baseline:** v0.3.0 dying-pressure MVP
 > **Target Foundry:** v13, verified against the v13.351+ development/test path  
 > **Initial system:** Pathfinder 2e (`pf2e`)  
 > **Default visibility:** GM-only
@@ -135,7 +135,7 @@ Add clearer user-facing messages for:
 
 ## v0.2.0 — Exact dice distribution engine
 
-**Status:** implemented locally; awaiting Foundry table smoke test / release tag.
+**Status:** tagged / baseline candidate.
 
 **Goal:** Replace average-only down-risk with exact damage distributions for supported formulas.
 
@@ -195,6 +195,8 @@ Show:
 ---
 
 ## v0.3.0 — Dying, wounded, doomed, and Hero Point pressure
+
+**Status:** implemented locally; awaiting Foundry table smoke test / release tag.
 
 **Goal:** Move from pure down-risk toward immediate mortality pressure without claiming permanent death probability.
 

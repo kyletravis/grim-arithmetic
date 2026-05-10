@@ -10,6 +10,9 @@ export interface ImmediateDownRiskInput {
   damageFormula: string;
   strikes: 1 | 2 | 3;
   mapType: MapType;
+  wounded?: number;
+  doomed?: number;
+  assumeHeroPointAvailable?: boolean;
 }
 
 export interface DamageSummary {
@@ -31,6 +34,17 @@ export interface ImmediateDownRiskResult {
   assumptions: string[];
   notModeled: string[];
   damage: DamageSummary;
+  dyingSeverity: DyingSeverity;
+}
+
+export interface DyingSeverity {
+  wounded: number;
+  doomed: number;
+  deathThreshold: number;
+  normalDownDying: number;
+  critDownDying: number;
+  immediateDeathFlag: string;
+  heroPointNote: string;
 }
 
 export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownRiskResult {
@@ -68,6 +82,11 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
 
   const downProbability = clampProbability(sumDownProbability(damageStates, input.hp));
   const expectedHpAfterTurn = Math.max(0, input.hp - expectedDamage);
+  const dyingSeverity = buildDyingSeverity({
+    wounded: input.wounded ?? 0,
+    doomed: input.doomed ?? 0,
+    assumeHeroPointAvailable: input.assumeHeroPointAvailable ?? false
+  });
 
   return {
     downProbability,
@@ -94,8 +113,58 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
       'Healing before or during the enemy turn.',
       'Permanent death probability.'
     ],
-    damage: buildDamageSummary(baseDamage, critDamage)
+    damage: buildDamageSummary(baseDamage, critDamage),
+    dyingSeverity
   };
+}
+
+function buildDyingSeverity({
+  wounded,
+  doomed,
+  assumeHeroPointAvailable
+}: {
+  wounded: number;
+  doomed: number;
+  assumeHeroPointAvailable: boolean;
+}): DyingSeverity {
+  const normalizedWounded = Math.max(0, Math.floor(wounded));
+  const normalizedDoomed = Math.max(0, Math.floor(doomed));
+  const deathThreshold = Math.max(1, 4 - normalizedDoomed);
+  const normalDownDying = 1 + normalizedWounded;
+  const critDownDying = 2 + normalizedWounded;
+
+  return {
+    wounded: normalizedWounded,
+    doomed: normalizedDoomed,
+    deathThreshold,
+    normalDownDying,
+    critDownDying,
+    immediateDeathFlag: describeImmediateDeathFlag({ normalDownDying, critDownDying, deathThreshold }),
+    heroPointNote: assumeHeroPointAvailable
+      ? 'Hero Point prevention is assumed available; this can prevent death but is not modeled as a survival probability.'
+      : 'No Hero Point death-prevention assumption is applied.'
+  };
+}
+
+function describeImmediateDeathFlag({
+  normalDownDying,
+  critDownDying,
+  deathThreshold
+}: {
+  normalDownDying: number;
+  critDownDying: number;
+  deathThreshold: number;
+}): string {
+  if (normalDownDying >= deathThreshold) {
+    return `Normal down would reach Dying ${normalDownDying}, meeting or exceeding the doomed-adjusted death threshold (Dying ${deathThreshold}).`;
+  }
+  if (critDownDying >= deathThreshold) {
+    return `Crit-down would reach Dying ${critDownDying}, meeting or exceeding the doomed-adjusted death threshold (Dying ${deathThreshold}).`;
+  }
+  if (critDownDying === deathThreshold - 1) {
+    return `Crit-down would put this PC at Dying ${critDownDying}, one step below the doomed-adjusted death threshold (Dying ${deathThreshold}).`;
+  }
+  return `If downed, severity would be Dying ${normalDownDying} on a normal hit or Dying ${critDownDying} on a critical hit.`;
 }
 
 function getMapPenalties(mapType: MapType): number[] {

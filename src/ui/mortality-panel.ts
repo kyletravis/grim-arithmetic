@@ -68,6 +68,7 @@ export class MortalityPanel extends Application {
     if (key === 'mapMode') this.controls.mapMode = parseMapMode(value);
     if (key === 'shieldBonus') this.controls.shieldBonus = parseShieldBonus(value);
     if (key === 'woundedOverride') this.controls.woundedOverride = parseWoundedOverride(value);
+    if (key === 'heroPointMode') this.controls.heroPointMode = parseHeroPointMode(value);
     if (key === 'attackId') this.controls.attackId = value;
   }
 }
@@ -98,9 +99,21 @@ function parseWoundedOverride(value: string): PanelControls['woundedOverride'] {
   return 'current';
 }
 
+function parseHeroPointMode(value: string): PanelControls['heroPointMode'] {
+  if (value === 'available' || value === 'unavailable') return value;
+  return 'actor';
+}
+
 function targetKey(target: { value: string; dataset?: { grimControl?: string } }): keyof PanelControls | null {
   const key = target.dataset?.grimControl;
-  if (key === 'strikes' || key === 'mapMode' || key === 'shieldBonus' || key === 'woundedOverride' || key === 'attackId') {
+  if (
+    key === 'strikes' ||
+    key === 'mapMode' ||
+    key === 'shieldBonus' ||
+    key === 'woundedOverride' ||
+    key === 'heroPointMode' ||
+    key === 'attackId'
+  ) {
     return key;
   }
   return null;

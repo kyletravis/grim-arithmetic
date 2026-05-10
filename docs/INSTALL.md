@@ -200,11 +200,12 @@ In a PF2e scene:
 Expected:
 
 - A Grim Arithmetic panel opens.
-- The panel header shows the current module version, e.g. `Grim Arithmetic v0.2.0`.
+- The panel header shows the current module version, e.g. `Grim Arithmetic v0.3.0`.
 - It shows the PC vs enemy name.
 - It shows an enemy Strike selector plus the selected Strike, attack bonus, and damage formula.
 - It shows damage range, average damage, and damage swinginess.
 - It shows down chance and risk label.
+- It shows dying severity, doomed-adjusted death threshold, immediate death flag, and Hero Point note.
 - It shows assumptions and not-modeled caveats.
 - It explicitly says permanent death probability is not modeled in MVP.
 

@@ -2,7 +2,7 @@
   "id": "grim-arithmetic",
   "title": "Grim Arithmetic",
   "description": "GM-facing PF2e mortality and encounter-risk analysis for Foundry VTT.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "authors": [
     {
       "name": "Kyle Travis"
@@ -12,7 +12,9 @@
     "minimum": "13",
     "verified": "13"
   },
-  "system": ["pf2e"],
+  "system": [
+    "pf2e"
+  ],
   "relationships": {
     "systems": [
       {
@@ -21,7 +23,13 @@
       }
     ]
   },
-  "esmodules": ["dist/grim-arithmetic.js"],
-  "styles": ["styles/grim-arithmetic.css"],
-  "templates": ["templates/mortality-panel.hbs"]
+  "esmodules": [
+    "dist/grim-arithmetic.js"
+  ],
+  "styles": [
+    "styles/grim-arithmetic.css"
+  ],
+  "templates": [
+    "templates/mortality-panel.hbs"
+  ]
 }
