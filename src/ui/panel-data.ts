@@ -44,6 +44,14 @@ export interface MortalityPanelData {
     effectiveAc: number;
     modeledHp: number;
     woundedNote: string;
+    damage: {
+      min: number;
+      max: number;
+      average: string;
+      critMin: number;
+      critMax: number;
+      swinginess: string;
+    };
     strikeChances: StrikeChanceData[];
     assumptions: string[];
     notModeled: string[];
@@ -135,6 +143,7 @@ export function buildMortalityPanelData<TokenLike>({
       effectiveAc,
       modeledHp,
       woundedNote: getWoundedNote(subject, controls.woundedOverride),
+      damage: result.damage,
       strikeChances: result.hitChanceByStrike.map((hitChance, index) => ({
         index: index + 1,
         hitPercent: toPercent(hitChance),

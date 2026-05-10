@@ -33,9 +33,9 @@ Create annotated release tags from the repo where the commit exists:
 
 ```bash
 git status --short
-git tag -a v0.1.1 -m "v0.1.1"
+git tag -a v0.2.0 -m "v0.2.0"
 git push origin main
-git push origin v0.1.1
+git push origin v0.2.0
 ```
 
 If a tag was created on another clone, fetch tags instead of recreating it:

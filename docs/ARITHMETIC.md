@@ -1,7 +1,7 @@
 # Grim Arithmetic Calculation Guide
 
 > **Purpose:** Explain, in plain English and implementation-level detail, what goes into Grim Arithmetic's risk calculation.  
-> **Current baseline:** v0.1.x MVP  
+> **Current baseline:** v0.2.0 exact-distribution MVP
 > **Audience:** GMs, testers, contributors, and anyone asking “where did that percentage come from?”
 
 Grim Arithmetic is a decision-support tool, not a combat oracle. Its current MVP answers one narrow question:
@@ -25,9 +25,9 @@ The current calculation uses:
 - selected number of enemy Strikes: 1, 2, or 3
 - Multiple Attack Penalty model: normal, agile, or none
 - PF2e degree-of-success rules for d20 attacks
-- average damage from supported dice formulas
-- simple doubled damage on critical hits
-- cumulative damage across the modeled Strike sequence
+- exact probability mass functions from supported dice formulas
+- simple doubled total damage distribution on critical hits
+- cumulative exact damage distribution across the modeled Strike sequence
 
 The current calculation does **not** model:
 
@@ -40,7 +40,6 @@ The current calculation does **not** model:
 - Champion reactions or other defensive reactions
 - resistance, weakness, or immunity
 - deadly, fatal, precision, splash, or persistent damage
-- exact dice distributions
 - enemy tactics beyond “make this many Strikes against this PC”
 - terrain, reach, movement, action availability, or line of effect
 
@@ -100,7 +99,7 @@ Effective AC used by Grim Arithmetic: 23
 
 ### Targeted enemy
 
-The MVP uses the enemy's first supported melee Strike. For that Strike, it extracts:
+The module lets the GM choose among the enemy's supported melee Strikes. For the selected Strike, it extracts:
 
 - Strike name
 - attack bonus
@@ -110,7 +109,7 @@ The MVP uses the enemy's first supported melee Strike. For that Strike, it extra
   - `agile`
   - `unknown`, which defaults to normal MAP in Auto mode
 
-A future version will let the GM choose among multiple extracted Strikes.
+If the previously selected Strike is no longer available, the panel falls back to the first supported Strike.
 
 ---
 
@@ -199,9 +198,9 @@ No MAP is mainly a what-if/debug option. It can also approximate special cases w
 
 ---
 
-## Damage math in the MVP
+## Damage math in v0.2.0
 
-The current MVP uses **average damage**, not an exact roll distribution.
+The current calculation uses **exact dice distributions** for supported formulas. Instead of replacing `1d8+4` with only its average, Grim Arithmetic builds a probability mass function: every possible damage total and the probability of rolling it.
 
 Supported formulas are simple additive/subtractive dice expressions, such as:
 
@@ -210,6 +209,7 @@ Supported formulas are simple additive/subtractive dice expressions, such as:
 2d6+4
 2d8 + 6
 1d12+1d6+3
+4
 ```
 
 Unsupported formulas include typed/tagged or conditional PF2e expressions such as:
@@ -220,59 +220,56 @@ Unsupported formulas include typed/tagged or conditional PF2e expressions such a
 1d10 plus Grab
 ```
 
-### Average die value
+### Probability mass functions
 
-The average value of one die is:
+A probability mass function, or PMF, records each total and its probability.
 
-```text
-average of dN = (N + 1) / 2
-```
-
-Examples:
+For `1d4`, the PMF is:
 
 ```text
-average d4  = 2.5
-average d6  = 3.5
-average d8  = 4.5
-average d10 = 5.5
-average d12 = 6.5
+1: 25%
+2: 25%
+3: 25%
+4: 25%
 ```
 
-### Average formula examples
+For `2d6+4`, Grim Arithmetic convolves the two d6 rolls, then adds the flat modifier. The minimum is 6, the maximum is 16, and the average is 11. A total of 11 is the most likely result because it comes from rolling 7 on 2d6.
+
+### Formula summary
+
+For every supported formula, the engine produces:
 
 ```text
-1d8+4 = 4.5 + 4 = 8.5
-2d6+3 = 3.5 + 3.5 + 3 = 10
-1d12+1d6+3 = 6.5 + 3.5 + 3 = 13
+minimum damage
+maximum damage
+mean / average damage
+probability of each total
 ```
 
-### Critical damage in the MVP
+The mean is still displayed because it is useful for intuition and expected HP, but down chance is no longer based on mean-only thresholds.
 
-Critical damage is modeled as simple doubled average damage:
+### Critical damage in v0.2.0
+
+Critical damage is modeled as simple doubled total damage:
 
 ```text
-crit damage = average damage × 2
+crit total = normal total × 2
 ```
 
-For example:
+For example, `1d4+2` has normal totals 3, 4, 5, and 6. Its simple crit distribution is 6, 8, 10, and 12.
 
-```text
-normal average damage: 8.5
-critical average damage: 17
-```
-
-This is intentionally simplified. PF2e traits like deadly and fatal are not modeled yet.
+This is still intentionally simplified. PF2e traits like deadly and fatal are not modeled yet.
 
 ---
 
 ## Expected damage
 
-For each Strike, Grim Arithmetic computes expected damage:
+For each Strike, Grim Arithmetic computes expected damage from the mean of the exact distribution:
 
 ```text
 expected damage from Strike =
-  success probability × average hit damage
-+ critical success probability × average critical damage
+  success probability × normal damage mean
++ critical success probability × critical damage mean
 ```
 
 Failures and critical failures contribute zero damage in the current Strike model.
@@ -289,7 +286,7 @@ The displayed expected HP after the modeled turn is:
 expected HP after turn = max(0, modeled HP - total expected damage)
 ```
 
-Important: expected HP is an average-like summary. It is not the same thing as down probability.
+Important: expected HP is a mean-based summary. It is not the same thing as down probability. The down chance uses the full exact damage distribution.
 
 ---
 
@@ -298,15 +295,15 @@ Important: expected HP is an average-like summary. It is not the same thing as d
 The down probability answers:
 
 ```text
-What fraction of modeled attack outcome sequences deal damage >= modeled HP?
+What fraction of modeled attack + damage sequences deal damage >= modeled HP?
 ```
 
-The MVP treats each Strike as having three damage branches:
+For each Strike, Grim Arithmetic now has three branch groups:
 
 ```text
 miss branch: 0 damage
-hit branch: average damage
-crit branch: average damage × 2
+hit branches: every normal damage total from the exact PMF
+crit branches: every doubled damage total from the exact crit PMF
 ```
 
 The probability of the miss branch is:
@@ -315,34 +312,29 @@ The probability of the miss branch is:
 failure probability + critical failure probability
 ```
 
-The probability of the hit branch is:
+Each hit branch probability is:
 
 ```text
-success probability
+success probability × probability of that normal damage total
 ```
 
-The probability of the crit branch is:
+Each crit branch probability is:
 
 ```text
-critical success probability
+critical success probability × probability of that doubled crit damage total
 ```
 
-For one Strike, the down probability is the sum of branches where damage is at least the PC's modeled HP.
+For one Strike, the down probability is the sum of hit/crit branches where damage is at least the PC's modeled HP.
 
-For multiple Strikes, Grim Arithmetic expands all cumulative damage states.
+For multiple Strikes, Grim Arithmetic convolves cumulative damage states across the selected Strike sequence.
 
 Example for two Strikes:
 
 ```text
 Strike 1 miss + Strike 2 miss
-Strike 1 miss + Strike 2 hit
-Strike 1 miss + Strike 2 crit
-Strike 1 hit  + Strike 2 miss
-Strike 1 hit  + Strike 2 hit
-Strike 1 hit  + Strike 2 crit
-Strike 1 crit + Strike 2 miss
-Strike 1 crit + Strike 2 hit
-Strike 1 crit + Strike 2 crit
+Strike 1 miss + Strike 2 each hit/crit damage total
+Strike 1 each hit/crit damage total + Strike 2 miss
+Strike 1 each hit/crit damage total + Strike 2 each hit/crit damage total
 ```
 
 Each path has a probability:
@@ -385,7 +377,7 @@ Expected HP after turn: 0
 
 This does not necessarily mean the PC is guaranteed to drop. It means the average damage exceeds HP, but individual miss/hit/crit branches still determine the actual down probability.
 
-This is one reason exact dice distributions are planned for v0.2.0: average damage is useful but can hide swinginess.
+This is why v0.2.0 uses exact dice distributions for down chance: average damage is useful, but it can hide swinginess.
 
 ---
 
@@ -410,69 +402,68 @@ These labels are meant as quick GM-facing signals, not official PF2e difficulty 
 Suppose:
 
 ```text
-PC modeled HP: 18
-PC effective AC: 22
-Enemy attack bonus: +12
-Enemy damage: 1d8+4
-Enemy turn model: 2 Strikes
+PC modeled HP: 7
+PC effective AC: 20
+Enemy attack bonus: +10
+Enemy damage: 1d4+2
+Enemy turn model: 1 Strike
 MAP: normal
 ```
 
-### Step 1: damage average
+### Step 1: damage distribution
+
+`1d4+2` has normal damage totals:
 
 ```text
-1d8+4 = 4.5 + 4 = 8.5
-crit damage = 8.5 × 2 = 17
+3: 25%
+4: 25%
+5: 25%
+6: 25%
 ```
 
-### Step 2: first Strike probabilities
-
-First Strike attack bonus is +12.
+The simple crit distribution doubles the total:
 
 ```text
-attack total = d20 + 12
-AC = 22
+6: 25%
+8: 25%
+10: 25%
+12: 25%
 ```
 
-The engine evaluates all d20 rolls and applies PF2e natural 20/natural 1 rules. The result might be something like:
+### Step 2: Strike probabilities
+
+For attack bonus +10 against AC 20, the engine evaluates all d20 rolls and applies PF2e natural 20/natural 1 rules. The result is:
 
 ```text
 hit chance: 50%
 crit chance: 5%
+miss/critical failure chance: 45%
 ```
 
-### Step 3: second Strike probabilities
+### Step 3: exact down check
 
-Normal MAP applies -5 to the second Strike.
+The PC has 7 modeled HP.
+
+Normal hits cannot down the PC because the maximum normal damage is 6.
+
+A crit does not always down the PC either:
 
 ```text
-second attack total = d20 + 7
-AC = 22
+crit 6: does not down
+crit 8: downs
+crit 10: downs
+crit 12: downs
 ```
 
-The hit and crit chances drop accordingly.
-
-### Step 4: cumulative down check
-
-A single crit deals 17 average damage, which is not enough to down an 18 HP PC.
-
-But two hits deal:
+So only 75% of crit damage rolls down the PC.
 
 ```text
-8.5 + 8.5 = 17
+down chance = crit chance × crit-roll down fraction
+            = 5% × 75%
+            = 3.75%
 ```
 
-Still not enough.
-
-A hit plus a crit deals:
-
-```text
-8.5 + 17 = 25.5
-```
-
-That does down the PC.
-
-So Grim Arithmetic sums the probabilities of all two-Strike paths that include enough cumulative average damage to reach 18 or more.
+A mean-only model would have treated the average crit as 9 and reported the full 5% crit chance. The exact distribution avoids that false precision.
 
 ---
 
@@ -497,20 +488,6 @@ Do **not** use the MVP result as:
 ## Planned updates to this document
 
 As backlog items land, update this guide with new sections.
-
-### v0.1.1 planned documentation updates
-
-- Strike selector behavior.
-- Refresh/recalculate behavior.
-- Improved error messages.
-- Debug capture helper and fixture workflow.
-
-### v0.2.0 planned documentation updates
-
-- Exact dice distribution calculations.
-- Probability mass functions.
-- Cumulative distribution handling across multiple Strikes.
-- Damage range and swinginess interpretation.
 
 ### v0.3.0 planned documentation updates
 
@@ -547,6 +524,7 @@ src/engine/degree-of-success.ts
 src/engine/attack-probability.ts
 src/engine/dice.ts
 src/engine/mortality.ts
+src/ui/panel-data.ts
 src/ui/mortality-panel.ts
 src/systems/pf2e-adapter.ts
 ```
@@ -558,5 +536,6 @@ tests/degree-of-success.test.ts
 tests/attack-probability.test.ts
 tests/dice.test.ts
 tests/mortality.test.ts
+tests/panel-data.test.ts
 tests/pf2e-adapter.test.ts
 ```
