@@ -1,4 +1,5 @@
 import { MODULE_ID, MODULE_TITLE } from './constants';
+import { logDebugCapture } from './debug-capture';
 import { registerSettings } from './settings';
 import { MortalityPanel } from './ui/mortality-panel';
 import { registerTokenControls } from './ui/token-controls';
@@ -16,6 +17,7 @@ Hooks.once('ready', () => {
   if (!grimArithmeticModule) return;
 
   grimArithmeticModule.api = {
-    openPanel: () => new MortalityPanel().render(true)
+    openPanel: () => new MortalityPanel().render(true),
+    captureTokenDebug: (token = canvas.tokens?.controlled?.[0]) => logDebugCapture(token)
   };
 });

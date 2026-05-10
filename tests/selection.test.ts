@@ -17,7 +17,7 @@ describe('resolveTokenSelection', () => {
     expect(resolveTokenSelection({ controlled: [], targets: [] })).toEqual({
       subjectToken: null,
       enemyToken: null,
-      errors: ['Select exactly one PC token.', 'Target exactly one enemy token.']
+      errors: ['No PC token selected. Select one PC token.', 'No target selected. Target one enemy token.']
     });
   });
 
@@ -29,6 +29,9 @@ describe('resolveTokenSelection', () => {
 
     expect(result.subjectToken).toBeNull();
     expect(result.enemyToken).toBeNull();
-    expect(result.errors).toEqual(['Select exactly one PC token.', 'Target exactly one enemy token.']);
+    expect(result.errors).toEqual([
+      'Multiple tokens selected. Select only one PC token.',
+      'Multiple targets selected. Target only one enemy token.'
+    ]);
   });
 });

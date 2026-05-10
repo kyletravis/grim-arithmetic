@@ -25,6 +25,7 @@ type ActorLike = {
 type ConditionLike = {
   slug?: string;
   value?: number;
+  system?: unknown;
 };
 
 type ItemLike = {
@@ -120,12 +121,17 @@ function getDisposition(token: TokenLike, actor: ActorLike): CombatantSnapshot['
 }
 
 function getConditionValue(actor: ActorLike, slug: string): number {
-  return actor.itemTypes?.condition?.find((condition) => condition.slug === slug)?.value ?? 0;
+  const condition = actor.itemTypes?.condition?.find((entry) => entry.slug === slug);
+  if (!condition) return 0;
+  return optionalNumber(condition.value) ?? optionalNumber(asRecord(asRecord(condition.system).value).value) ?? 0;
 }
 
 function getActorItems(actor: ActorLike | undefined): ItemLike[] {
   const items = actor?.items;
   if (Array.isArray(items)) return items.filter(isItemLike);
+
+  const contents = asRecord(items).contents;
+  if (Array.isArray(contents)) return contents.filter(isItemLike);
 
   if (isRecord(items) && typeof items.filter === 'function') {
     const filtered = (items.filter as (predicate: (item: ItemLike) => boolean) => unknown)(isItemLike);
@@ -140,7 +146,7 @@ function isItemLike(value: unknown): value is ItemLike {
 }
 
 function getAttackBonus(system: UnknownRecord): number | undefined {
-  return optionalNumber(asRecord(system.bonus).value) ?? optionalNumber(asRecord(system.attack).value);
+  return optionalNumberLike(asRecord(system.bonus).value) ?? optionalNumberLike(asRecord(system.attack).value);
 }
 
 function getPrimaryDamageFormula(system: UnknownRecord): string | undefined {
@@ -171,7 +177,20 @@ function optionalNumber(value: unknown): number | undefined {
   return isNumber(value) ? value : undefined;
 }
 
+function optionalNumberLike(value: unknown): number | undefined {
+  if (isNumber(value)) return value;
+  if (typeof value !== 'string') return undefined;
+  const parsed = Number(value.trim().replace(/^\+/, ''));
+  return isNumber(parsed) ? parsed : undefined;
+}
+
 function toStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return value.filter((entry): entry is string => typeof entry === 'string');
+  return value
+    .map((entry) => {
+      if (typeof entry === 'string') return entry;
+      const slug = asRecord(entry).slug;
+      return typeof slug === 'string' ? slug : null;
+    })
+    .filter((entry): entry is string => typeof entry === 'string');
 }

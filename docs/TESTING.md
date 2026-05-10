@@ -18,6 +18,7 @@ Foundry version/build:
 PF2e system version:
 Browser:
 Grim Arithmetic commit:
+Grim Arithmetic version shown in panel header:
 World name:
 Scene name:
 PC token used:
@@ -70,8 +71,8 @@ Steps:
 Expected:
 
 - [ ] Panel opens.
-- [ ] It says to select exactly one PC token.
-- [ ] It says to target exactly one enemy token.
+- [ ] It says no PC token is selected and asks for one PC token.
+- [ ] It says no target is selected and asks for one enemy token.
 - [ ] It does not crash.
 
 ### Case B — selected PC, no target
@@ -85,7 +86,7 @@ Steps:
 Expected:
 
 - [ ] Panel opens.
-- [ ] It says to target exactly one enemy token.
+- [ ] It says no target is selected and asks for one enemy token.
 - [ ] It does not crash.
 
 ### Case C — one PC selected, multiple targets
@@ -99,7 +100,7 @@ Steps:
 Expected:
 
 - [ ] Panel opens.
-- [ ] It says to target exactly one enemy token.
+- [ ] It says multiple targets are selected and asks for only one enemy token.
 - [ ] It does not crash.
 
 ---
@@ -121,8 +122,10 @@ Steps:
 Expected:
 
 - [ ] Panel opens.
+- [ ] Header shows `Grim Arithmetic v0.1.1` or the current `module.json` version.
 - [ ] Header shows `PC name vs NPC name`.
-- [ ] Enemy Strike line shows Strike name, attack bonus, and damage formula.
+- [ ] Enemy Strike selector lists supported melee Strikes.
+- [ ] Enemy Strike line shows selected Strike name, attack bonus, and damage formula.
 - [ ] Modeled HP appears.
 - [ ] Effective AC appears.
 - [ ] Wounded display appears.
@@ -156,6 +159,26 @@ Unexpected issues:
 ## 5. Control behavior tests
 
 With the same PC/NPC pair and the panel open:
+
+### Enemy Strike selector
+
+If the targeted NPC has multiple supported melee Strikes, change **Enemy Strike** between them.
+
+Expected:
+
+- [ ] The selected Strike line changes.
+- [ ] MAP auto mode follows the selected Strike's agile/normal trait.
+- [ ] Down chance recalculates.
+- [ ] Strike selection is preserved while changing other controls.
+
+### Refresh / Recalculate
+
+With the panel open, change token HP, targeting, or selection in Foundry, then click **Refresh / Recalculate**.
+
+Expected:
+
+- [ ] The panel re-reads current selection/target state.
+- [ ] Modeled HP and risk values update without closing/reopening the panel.
 
 ### Enemy turn Strike count
 
@@ -229,30 +252,14 @@ Open browser dev tools on the Foundry world and run these snippets.
 
 ```js
 const pc = canvas.tokens.controlled[0];
-console.log('PC token', pc);
-console.log('PC actor type', pc?.actor?.type);
-console.log('PC HP', pc?.actor?.system?.attributes?.hp);
-console.log('PC AC', pc?.actor?.system?.attributes?.ac);
-console.log('PC saves', pc?.actor?.system?.saves);
-console.log('PC resources', pc?.actor?.system?.resources);
-console.log('PC conditions', pc?.actor?.itemTypes?.condition?.map(c => ({ slug: c.slug, value: c.value })));
+game.modules.get('grim-arithmetic')?.api?.captureTokenDebug?.(pc);
 ```
 
 ### Targeted NPC token snapshot
 
 ```js
 const enemy = Array.from(game.user.targets)[0];
-console.log('Enemy token', enemy);
-console.log('Enemy actor type', enemy?.actor?.type);
-console.log('Enemy HP', enemy?.actor?.system?.attributes?.hp);
-console.log('Enemy AC', enemy?.actor?.system?.attributes?.ac);
-console.log('Enemy items summary', enemy?.actor?.items?.map?.(i => ({
-  id: i.id,
-  name: i.name,
-  type: i.type,
-  systemKeys: Object.keys(i.system ?? {})
-})));
-console.log('Enemy melee items', enemy?.actor?.items?.filter?.(i => i.type === 'melee')?.map?.(i => i.toObject?.() ?? i));
+game.modules.get('grim-arithmetic')?.api?.captureTokenDebug?.(enemy);
 ```
 
 ### Grim Arithmetic module API check
@@ -260,6 +267,7 @@ console.log('Enemy melee items', enemy?.actor?.items?.filter?.(i => i.type === '
 ```js
 console.log(game.modules.get('grim-arithmetic'));
 game.modules.get('grim-arithmetic')?.api?.openPanel?.();
+game.modules.get('grim-arithmetic')?.api?.captureTokenDebug?.(); // defaults to first selected token
 ```
 
 When sharing debug output, avoid posting private campaign text if any item descriptions include spoilers. The most useful data is structure/keys, attack bonuses, and damage formula shapes.
@@ -294,8 +302,8 @@ These are expected right now:
 - Resistance, weakness, immunity, deadly, fatal, precision, splash, and persistent damage are not modeled.
 - Reactions such as Shield Block or Champion reactions are not modeled.
 - Healing before/during enemy turn is not modeled.
-- Only the first supported enemy melee Strike is used.
-- PF2e Strike extraction is first-pass and may need patching after real actor data review.
+- Enemy Strike selection is supported for extracted melee Strikes, but complex conditional Strike modifiers are not modeled.
+- PF2e Strike extraction is hardened for common table-test shapes but may still need patching after unusual actor data review.
 
 ---
 

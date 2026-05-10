@@ -64,6 +64,8 @@ This backlog keeps the next work intentionally phased. The guiding principle is:
 
 ## v0.1.1 — Table-test hardening and UX polish
 
+**Status:** implemented locally; awaiting Foundry table smoke test / release tag.
+
 **Goal:** Make the existing MVP reliable and pleasant during real session use without expanding the risk model too much.
 
 ### Priority: High

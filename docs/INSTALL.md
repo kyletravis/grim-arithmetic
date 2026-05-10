@@ -200,13 +200,14 @@ In a PF2e scene:
 Expected:
 
 - A Grim Arithmetic panel opens.
+- The panel header shows the current module version, e.g. `Grim Arithmetic v0.1.1`.
 - It shows the PC vs enemy name.
-- It shows the enemy Strike, attack bonus, and damage formula.
+- It shows an enemy Strike selector plus the selected Strike, attack bonus, and damage formula.
 - It shows down chance and risk label.
 - It shows assumptions and not-modeled caveats.
 - It explicitly says permanent death probability is not modeled in MVP.
 
-If the panel says it cannot find a supported melee Strike, continue to the testing guide and capture the actor data shape.
+If the panel says it cannot find a supported melee Strike, continue to the testing guide and use `game.modules.get('grim-arithmetic')?.api?.captureTokenDebug?.(...)` to capture the sanitized actor data shape.
 
 ---
 
