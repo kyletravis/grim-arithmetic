@@ -16,7 +16,7 @@ const adapter: SystemAdapter<object> = {
         disposition: 'pc',
         hp: { current: 18, max: 31, temp: 2 },
         defenses: { ac: 19 },
-        deathState: { wounded: 1 },
+        deathState: { wounded: 1, doomed: 1, heroPoints: 1 },
         traits: ['human'],
         assumptions: []
       };
@@ -111,5 +111,29 @@ describe('buildMortalityPanelData', () => {
       'Targeted token is not recognized as an enemy/NPC by the PF2e adapter.',
       'Targeted enemy has no supported melee Strike with a numeric attack bonus and supported damage formula.'
     ]);
+  });
+
+  it('uses wounded override and actor Hero Point state in dying pressure output', () => {
+    const data = buildMortalityPanelData({
+      selection: { subjectToken: pcToken, enemyToken, errors: [] },
+      adapter,
+      controls: { ...DEFAULT_PANEL_CONTROLS, woundedOverride: '2' },
+      moduleVersion: '0.3.0'
+    });
+
+    expect(data.controls.heroPointMode).toEqual([
+      { value: 'actor', label: 'Use actor Hero Points', selected: true },
+      { value: 'available', label: 'Assume Hero Point available', selected: false },
+      { value: 'unavailable', label: 'Assume no Hero Point', selected: false }
+    ]);
+    expect(data.risk?.woundedNote).toBe('Override used for dying severity: Wounded 2');
+    expect(data.risk?.dyingSeverity).toMatchObject({
+      wounded: 2,
+      doomed: 1,
+      deathThreshold: 3,
+      normalDownDying: 3,
+      critDownDying: 4
+    });
+    expect(data.risk?.dyingSeverity.heroPointNote).toContain('Hero Point prevention is assumed available');
   });
 });

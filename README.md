@@ -4,7 +4,7 @@
 
 Grim Arithmetic is a Foundry VTT module for GM-facing mortality and encounter-risk analysis, beginning with Pathfinder 2e on Foundry VTT v13 Build 351+.
 
-Current status: v0.2.0 local build. The module has a tested exact dice-distribution risk engine, first-pass PF2e actor/Strike extraction, an enemy Strike selector, and a GM-only panel opened from a skull button in token controls.
+Current status: v0.3.0 local build. The module has a tested exact dice-distribution risk engine, PF2e actor/Strike extraction, an enemy Strike selector, wounded/doomed dying-severity output, Hero Point assumption messaging, and a GM-only panel opened from a skull button in token controls.
 
 ## Documents
 

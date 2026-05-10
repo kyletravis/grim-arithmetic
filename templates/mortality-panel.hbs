@@ -52,6 +52,15 @@
       </select>
     </label>
 
+    <label>
+      Hero Point prevention
+      <select data-grim-control="heroPointMode">
+        {{#each controls.heroPointMode}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
     <button type="button" class="grim-arithmetic-panel__refresh" data-grim-refresh>Refresh / Recalculate</button>
   </form>
 
@@ -96,6 +105,18 @@
 
         <dt>Expected HP after turn</dt>
         <dd>{{risk.expectedHpAfterTurn}}</dd>
+
+        <dt>Dying if downed</dt>
+        <dd>Normal hit: Dying {{risk.dyingSeverity.normalDownDying}}; crit: Dying {{risk.dyingSeverity.critDownDying}}</dd>
+
+        <dt>Death threshold</dt>
+        <dd>Dying {{risk.dyingSeverity.deathThreshold}} after Doomed {{risk.dyingSeverity.doomed}}</dd>
+
+        <dt>Immediate death flag</dt>
+        <dd>{{risk.dyingSeverity.immediateDeathFlag}}</dd>
+
+        <dt>Hero Point note</dt>
+        <dd>{{risk.dyingSeverity.heroPointNote}}</dd>
       </dl>
     </section>
 

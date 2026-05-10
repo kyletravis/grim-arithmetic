@@ -77,4 +77,66 @@ describe('immediateDownRisk', () => {
       swinginess: 'High swing: damage range is 11 around an average of 11.0.'
     });
   });
+
+  it.each([
+    [0, 1, 2],
+    [1, 2, 3],
+    [2, 3, 4],
+    [3, 4, 5]
+  ])('reports wounded %i dying severity for normal and critical downing hits', (wounded, normalDying, critDying) => {
+    const result = immediateDownRisk({
+      hp: 7,
+      ac: 20,
+      attackBonus: 10,
+      damageFormula: '1d4+2',
+      strikes: 1,
+      mapType: 'normal',
+      wounded,
+      doomed: 0,
+      assumeHeroPointAvailable: false
+    });
+
+    expect(result.dyingSeverity).toMatchObject({
+      wounded,
+      doomed: 0,
+      deathThreshold: 4,
+      normalDownDying: normalDying,
+      critDownDying: critDying
+    });
+  });
+
+  it('flags crit-downs that reach the doomed-adjusted death threshold', () => {
+    const result = immediateDownRisk({
+      hp: 10,
+      ac: 20,
+      attackBonus: 10,
+      damageFormula: '1d8+6',
+      strikes: 1,
+      mapType: 'normal',
+      wounded: 1,
+      doomed: 1,
+      assumeHeroPointAvailable: false
+    });
+
+    expect(result.dyingSeverity.deathThreshold).toBe(3);
+    expect(result.dyingSeverity.immediateDeathFlag).toContain('Crit-down would reach Dying 3');
+    expect(result.dyingSeverity.immediateDeathFlag).toContain('doomed-adjusted death threshold');
+  });
+
+  it('caveats Hero Point death prevention without turning it into permanent death probability', () => {
+    const result = immediateDownRisk({
+      hp: 10,
+      ac: 20,
+      attackBonus: 10,
+      damageFormula: '1d8+6',
+      strikes: 1,
+      mapType: 'normal',
+      wounded: 2,
+      doomed: 0,
+      assumeHeroPointAvailable: true
+    });
+
+    expect(result.dyingSeverity.heroPointNote).toContain('Hero Point prevention is assumed available');
+    expect(result.notModeled).toContain('Permanent death probability.');
+  });
 });

@@ -122,7 +122,7 @@ Steps:
 Expected:
 
 - [ ] Panel opens.
-- [ ] Header shows `Grim Arithmetic v0.2.0` or the current `module.json` version.
+- [ ] Header shows `Grim Arithmetic v0.3.0` or the current `module.json` version.
 - [ ] Header shows `PC name vs NPC name`.
 - [ ] Enemy Strike selector lists supported melee Strikes.
 - [ ] Enemy Strike line shows selected Strike name, attack bonus, and damage formula.
@@ -133,6 +133,10 @@ Expected:
 - [ ] Down chance appears as a percentage.
 - [ ] Risk label appears.
 - [ ] Expected HP after turn appears.
+- [ ] Dying if downed appears with normal-hit and crit values.
+- [ ] Death threshold appears with doomed value.
+- [ ] Immediate death flag appears.
+- [ ] Hero Point note appears.
 - [ ] Strike hit/crit chances appear.
 - [ ] Assumptions appear.
 - [ ] Not-modeled caveats appear.
@@ -151,6 +155,10 @@ Effective AC:
 Down chance:
 Risk label:
 Expected HP after turn:
+Dying if downed:
+Death threshold:
+Immediate death flag:
+Hero Point note:
 Strike hit/crit lines:
 Unexpected issues:
 ```
@@ -238,8 +246,24 @@ Change **Wounded display** between:
 Expected:
 
 - [ ] Wounded line changes.
-- [ ] Assumptions say wounded override is display-only for now.
-- [ ] Down chance does not need to change yet.
+- [ ] Dying if downed changes by the selected wounded value.
+- [ ] Immediate death flag updates when wounded reaches dangerous thresholds.
+- [ ] Assumptions mention the wounded override when not using current actor value.
+- [ ] Down chance does not need to change; wounded affects dying severity, not HP damage.
+
+### Hero Point prevention
+
+Change **Hero Point prevention** between:
+
+- Use actor Hero Points
+- Assume Hero Point available
+- Assume no Hero Point
+
+Expected:
+
+- [ ] Hero Point note updates.
+- [ ] Assumptions mention the Hero Point override when not using actor state.
+- [ ] No permanent death percentage appears.
 
 ---
 
@@ -297,7 +321,8 @@ Useful things to capture:
 These are expected right now:
 
 - Permanent death probability is not modeled.
-- Wounded override is display-only.
+- Wounded and doomed affect dying severity and immediate death flags, not down chance.
+- Hero Point availability is displayed/caveated but not modeled as survival probability.
 - Damage uses exact dice distributions for supported formulas.
 - Critical damage is simple double damage of the supported formula total.
 - Resistance, weakness, immunity, deadly, fatal, precision, splash, and persistent damage are not modeled.

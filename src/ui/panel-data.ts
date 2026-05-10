@@ -1,4 +1,4 @@
-import { immediateDownRisk, MapType } from '../engine/mortality';
+import { DyingSeverity, immediateDownRisk, MapType } from '../engine/mortality';
 import { TokenSelectionResult } from '../foundry/selection';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 
@@ -13,6 +13,7 @@ export interface PanelControls {
   mapMode: 'auto' | MapType;
   shieldBonus: 0 | 1 | 2;
   woundedOverride: 'current' | '0' | '1' | '2' | '3';
+  heroPointMode: 'actor' | 'available' | 'unavailable';
   attackId: string;
 }
 
@@ -33,6 +34,7 @@ export interface MortalityPanelData {
     mapMode: SelectOption[];
     shieldBonus: SelectOption[];
     woundedOverride: SelectOption[];
+    heroPointMode: SelectOption[];
   };
   subject?: CombatantSnapshot;
   enemy?: CombatantSnapshot;
@@ -52,6 +54,7 @@ export interface MortalityPanelData {
       critMax: number;
       swinginess: string;
     };
+    dyingSeverity: DyingSeverity;
     strikeChances: StrikeChanceData[];
     assumptions: string[];
     notModeled: string[];
@@ -63,6 +66,7 @@ export const DEFAULT_PANEL_CONTROLS: PanelControls = {
   mapMode: 'auto',
   shieldBonus: 0,
   woundedOverride: 'current',
+  heroPointMode: 'actor',
   attackId: ''
 };
 
@@ -110,13 +114,19 @@ export function buildMortalityPanelData<TokenLike>({
   const mapType = resolveMapType(controls.mapMode, attack.mapType);
   const effectiveAc = subject.defenses.ac + controls.shieldBonus;
   const modeledHp = subject.hp.current + (subject.hp.temp ?? 0);
+  const wounded = resolveWounded(subject, controls.woundedOverride);
+  const doomed = subject.deathState?.doomed ?? 0;
+  const assumeHeroPointAvailable = resolveHeroPointAvailability(subject, controls.heroPointMode);
   const result = immediateDownRisk({
     hp: modeledHp,
     ac: effectiveAc,
     attackBonus: attack.attackBonus,
     damageFormula: attack.damageFormula,
     strikes: controls.strikes,
-    mapType
+    mapType,
+    wounded,
+    doomed,
+    assumeHeroPointAvailable
   });
 
   const assumptions = [...attack.assumptions, ...result.assumptions];
@@ -124,7 +134,10 @@ export function buildMortalityPanelData<TokenLike>({
     assumptions.push(`Applies a +${controls.shieldBonus} shield/status AC adjustment.`);
   }
   if (controls.woundedOverride !== 'current') {
-    assumptions.push(`Displays wounded override ${controls.woundedOverride}; down-risk math does not use wounded yet.`);
+    assumptions.push(`Uses wounded override ${controls.woundedOverride} for dying severity if the PC is downed.`);
+  }
+  if (controls.heroPointMode !== 'actor') {
+    assumptions.push(`Uses Hero Point override: ${controls.heroPointMode}.`);
   }
 
   return {
@@ -144,6 +157,7 @@ export function buildMortalityPanelData<TokenLike>({
       modeledHp,
       woundedNote: getWoundedNote(subject, controls.woundedOverride),
       damage: result.damage,
+      dyingSeverity: result.dyingSeverity,
       strikeChances: result.hitChanceByStrike.map((hitChance, index) => ({
         index: index + 1,
         hitPercent: toPercent(hitChance),
@@ -190,7 +204,12 @@ export function buildControlOptions(
       value,
       label: value === 'current' ? 'Current actor value' : `Wounded ${value}`,
       selected: controls.woundedOverride === value
-    }))
+    })),
+    heroPointMode: [
+      ['actor', 'Use actor Hero Points'],
+      ['available', 'Assume Hero Point available'],
+      ['unavailable', 'Assume no Hero Point']
+    ].map(([value, label]) => ({ value, label, selected: controls.heroPointMode === value }))
   };
 }
 
@@ -226,8 +245,22 @@ function resolveMapType(mapMode: PanelControls['mapMode'], attackMapType: Attack
 }
 
 function getWoundedNote(subject: CombatantSnapshot, override: PanelControls['woundedOverride']): string {
-  if (override === 'current') return `Current actor wounded value: ${subject.deathState?.wounded ?? 0}`;
-  return `Override displayed: Wounded ${override}`;
+  if (override === 'current') return `Current actor wounded value used for dying severity: ${subject.deathState?.wounded ?? 0}`;
+  return `Override used for dying severity: Wounded ${override}`;
+}
+
+function resolveWounded(subject: CombatantSnapshot, override: PanelControls['woundedOverride']): number {
+  if (override === 'current') return subject.deathState?.wounded ?? 0;
+  return Number(override);
+}
+
+function resolveHeroPointAvailability(
+  subject: CombatantSnapshot,
+  heroPointMode: PanelControls['heroPointMode']
+): boolean {
+  if (heroPointMode === 'available') return true;
+  if (heroPointMode === 'unavailable') return false;
+  return (subject.deathState?.heroPoints ?? 0) > 0;
 }
 
 function toPercent(probability: number): number {

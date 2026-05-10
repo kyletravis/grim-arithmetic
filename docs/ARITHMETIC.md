@@ -1,7 +1,7 @@
 # Grim Arithmetic Calculation Guide
 
 > **Purpose:** Explain, in plain English and implementation-level detail, what goes into Grim Arithmetic's risk calculation.  
-> **Current baseline:** v0.2.0 exact-distribution MVP
+> **Current baseline:** v0.3.0 dying-pressure MVP
 > **Audience:** GMs, testers, contributors, and anyone asking “where did that percentage come from?”
 
 Grim Arithmetic is a decision-support tool, not a combat oracle. Its current MVP answers one narrow question:
@@ -28,14 +28,15 @@ The current calculation uses:
 - exact probability mass functions from supported dice formulas
 - simple doubled total damage distribution on critical hits
 - cumulative exact damage distribution across the modeled Strike sequence
+- wounded and doomed values for dying severity if the PC is downed
+- optional Hero Point death-prevention assumption messaging
 
 The current calculation does **not** model:
 
 - permanent death probability
 - recovery checks
 - healing before or during the enemy turn
-- Hero Point death prevention
-- wounded/doomed effects on dying severity
+- Hero Point survival probability
 - Shield Block damage prevention
 - Champion reactions or other defensive reactions
 - resistance, weakness, or immunity
@@ -75,7 +76,9 @@ The MVP uses:
 - **Current HP**
 - **Temporary HP**, if available
 - **AC**
-- **Wounded value**, display-only right now
+- **Wounded value**, used to report dying severity if downed
+- **Doomed value**, used to report the adjusted death threshold
+- **Hero Points**, used only for the Hero Point availability note
 
 The modeled HP is:
 
@@ -467,6 +470,64 @@ A mean-only model would have treated the average crit as 9 and reported the full
 
 ---
 
+## Dying severity and immediate death flags
+
+v0.3.0 still treats **down chance** as the probability that modeled damage reduces the selected PC to 0 HP or below. It now also reports what that down would mean for PF2e dying pressure.
+
+When a downing hit occurs, Grim Arithmetic reports two severity numbers:
+
+```text
+normal hit down: Dying 1 + wounded
+critical hit down: Dying 2 + wounded
+```
+
+Doomed lowers the dying value at which the PC dies:
+
+```text
+death threshold = max(1, 4 - doomed)
+```
+
+Examples:
+
+```text
+Wounded 0, Doomed 0:
+normal down -> Dying 1
+crit down   -> Dying 2
+death threshold -> Dying 4
+
+Wounded 1, Doomed 1:
+normal down -> Dying 2
+crit down   -> Dying 3
+death threshold -> Dying 3
+```
+
+The panel's **Immediate death flag** is threshold-oriented, not a probability:
+
+- If normal-down severity reaches the doomed-adjusted threshold, the flag says so.
+- Otherwise, if crit-down severity reaches the threshold, the flag says so.
+- Otherwise, if crit-down severity is one step below the threshold, the flag calls that out.
+- Otherwise, it reports the normal/crit dying values for table awareness.
+
+This is deliberately **not** permanent death probability. It does not model recovery checks, initiative order, healing, follow-up attacks after the PC is down, Hero Point decisions, table-specific death-prevention rules, or enemy behavior after a target falls.
+
+### Wounded override
+
+The Wounded control now affects dying severity output. It does not change the down chance, because wounded does not change whether damage reduces HP to 0.
+
+Use this when the actor's wounded condition is missing, stale, or you want to test table hypotheticals such as “what if this PC were already Wounded 2?”
+
+### Hero Point assumption
+
+The Hero Point control has three modes:
+
+- **Use actor Hero Points** — assume death prevention is available if the adapter sees one or more Hero Points.
+- **Assume Hero Point available** — force the Hero Point note to available.
+- **Assume no Hero Point** — force the Hero Point note to unavailable.
+
+This only changes the explanatory note. Grim Arithmetic does not convert Hero Point use into a survival probability.
+
+---
+
 ## Current interpretation guidance
 
 Use the MVP result as:
@@ -488,13 +549,6 @@ Do **not** use the MVP result as:
 ## Planned updates to this document
 
 As backlog items land, update this guide with new sections.
-
-### v0.3.0 planned documentation updates
-
-- Entering dying from normal hits vs critical hits.
-- Wounded and doomed effects.
-- Hero Point assumptions.
-- Difference between down-risk and immediate death flags.
 
 ### v0.4.0 planned documentation updates
 
