@@ -1,17 +1,15 @@
 import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
 
 export default [
   {
     ignores: ['dist/**', 'node_modules/**', 'coverage/**']
   },
   js.configs.recommended,
+  ...tseslint.configs.recommended,
   {
     files: ['**/*.ts'],
     languageOptions: {
-      parserOptions: {
-        ecmaVersion: 2022,
-        sourceType: 'module'
-      },
       globals: {
         game: 'readonly',
         ui: 'readonly',
@@ -24,9 +22,6 @@ export default [
         CONST: 'readonly',
         console: 'readonly'
       }
-    },
-    rules: {
-      'no-unused-vars': 'off'
     }
   }
 ];
