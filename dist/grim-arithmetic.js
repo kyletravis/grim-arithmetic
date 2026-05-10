@@ -284,74 +284,163 @@ function A(e) {
 //#endregion
 //#region src/ui/mortality-panel.ts
 var j = class extends Application {
+	controls = {
+		strikes: 2,
+		mapMode: "auto",
+		shieldBonus: 0,
+		woundedOverride: "current"
+	};
 	static get defaultOptions() {
 		return foundry.utils.mergeObject(super.defaultOptions, {
 			id: `${e}-panel`,
 			title: t,
 			template: `modules/${e}/templates/mortality-panel.hbs`,
-			width: 460,
+			width: 500,
 			height: "auto",
 			resizable: !0,
 			classes: ["grim-arithmetic-window"]
 		});
 	}
+	constructor(e) {
+		super(e), this.controls.strikes = L(P("defaultStrikes", 2));
+	}
 	async getData() {
-		let e = "Permanent death probability is planned for a future milestone and is not modeled in MVP.", t = g();
+		let e = "Permanent death probability is planned for a future milestone and is not modeled in MVP.", t = g(), n = N(this.controls);
 		if (t.errors.length > 0) return {
 			message: "Select a PC token and target one enemy token to estimate immediate down risk.",
 			permanentDeath: e,
-			errors: t.errors
+			errors: t.errors,
+			controls: n
 		};
-		let n = new y(), r = n.getCombatantFromToken(t.subjectToken), i = n.getCombatantFromToken(t.enemyToken), a = n.getAttacksFromToken(t.enemyToken)[0], o = M(r, i, a);
-		if (o.length > 0 || !r || !i || !a) return {
+		let r = new y(), i = r.getCombatantFromToken(t.subjectToken), a = r.getCombatantFromToken(t.enemyToken), o = r.getAttacksFromToken(t.enemyToken)[0], s = M(i, a, o);
+		if (s.length > 0 || !i || !a || !o) return {
 			message: "Grim Arithmetic could not extract enough PF2e data for this token pair yet.",
 			permanentDeath: e,
-			errors: o
+			errors: s,
+			controls: n
 		};
-		let s = N("defaultStrikes", 2), c = a.mapType === "unknown" ? "normal" : a.mapType, u = l({
-			hp: r.hp.current + (r.hp.temp ?? 0),
-			ac: r.defenses.ac,
-			attackBonus: a.attackBonus,
-			damageFormula: a.damageFormula,
-			strikes: s,
+		let c = F(this.controls.mapMode, o.mapType), u = i.defenses.ac + this.controls.shieldBonus, d = i.hp.current + (i.hp.temp ?? 0), f = l({
+			hp: d,
+			ac: u,
+			attackBonus: o.attackBonus,
+			damageFormula: o.damageFormula,
+			strikes: this.controls.strikes,
 			mapType: c
-		});
-		return {
+		}), p = [...o.assumptions, ...f.assumptions];
+		return this.controls.shieldBonus > 0 && p.push(`Applies a +${this.controls.shieldBonus} shield/status AC adjustment.`), this.controls.woundedOverride !== "current" && p.push(`Displays wounded override ${this.controls.woundedOverride}; down-risk math does not use wounded yet.`), {
 			message: "Immediate down-risk estimate based on the selected PC and targeted enemy.",
 			permanentDeath: e,
 			errors: [],
-			subject: r,
-			enemy: i,
-			attack: a,
+			controls: n,
+			subject: i,
+			enemy: a,
+			attack: o,
 			risk: {
-				downPercent: P(u.downProbability),
-				expectedHpAfterTurn: u.expectedHpAfterTurn.toFixed(1),
-				riskLabel: u.riskLabel,
-				strikeChances: u.hitChanceByStrike.map((e, t) => ({
+				downPercent: H(f.downProbability),
+				expectedHpAfterTurn: f.expectedHpAfterTurn.toFixed(1),
+				riskLabel: f.riskLabel,
+				effectiveAc: u,
+				modeledHp: d,
+				woundedNote: I(i, this.controls.woundedOverride),
+				strikeChances: f.hitChanceByStrike.map((e, t) => ({
 					index: t + 1,
-					hitPercent: P(e),
-					critPercent: P(u.critChanceByStrike[t] ?? 0)
+					hitPercent: H(e),
+					critPercent: H(f.critChanceByStrike[t] ?? 0)
 				})),
-				assumptions: [...a.assumptions, ...u.assumptions],
-				notModeled: u.notModeled
+				assumptions: p,
+				notModeled: f.notModeled
 			}
 		};
+	}
+	activateListeners(e) {
+		super.activateListeners(e), e.find("[data-grim-control]").on("change", (e) => {
+			let t = e.currentTarget, n = V(t);
+			n && (this.updateControl(n, t.value), this.render(!1));
+		});
+	}
+	updateControl(e, t) {
+		e === "strikes" && (this.controls.strikes = L(Number(t))), e === "mapMode" && (this.controls.mapMode = R(t)), e === "shieldBonus" && (this.controls.shieldBonus = z(t)), e === "woundedOverride" && (this.controls.woundedOverride = B(t));
 	}
 };
 function M(e, t, n) {
 	let r = [];
 	return e || r.push("Could not read selected PC HP/AC from PF2e actor data."), t || r.push("Could not read targeted enemy HP/AC from PF2e actor data."), n || r.push("Could not find a supported melee Strike on the targeted enemy."), r;
 }
-function N(t, n) {
+function N(e) {
+	return {
+		strikes: [
+			"1",
+			"2",
+			"3"
+		].map((t) => ({
+			value: t,
+			label: `${t} Strike${t === "1" ? "" : "s"}`,
+			selected: String(e.strikes) === t
+		})),
+		mapMode: [
+			["auto", "Auto"],
+			["normal", "Normal"],
+			["agile", "Agile"],
+			["none", "None"]
+		].map(([t, n]) => ({
+			value: t,
+			label: n,
+			selected: e.mapMode === t
+		})),
+		shieldBonus: [
+			"0",
+			"1",
+			"2"
+		].map((t) => ({
+			value: t,
+			label: t === "0" ? "No shield bonus" : `+${t} AC`,
+			selected: String(e.shieldBonus) === t
+		})),
+		woundedOverride: [
+			"current",
+			"0",
+			"1",
+			"2",
+			"3"
+		].map((t) => ({
+			value: t,
+			label: t === "current" ? "Current actor value" : `Wounded ${t}`,
+			selected: e.woundedOverride === t
+		}))
+	};
+}
+function P(t, n) {
 	let r = game.settings.get(e, t);
 	return typeof r == "number" ? r : n;
 }
-function P(e) {
+function F(e, t) {
+	return e === "auto" ? t === "unknown" ? "normal" : t : e;
+}
+function I(e, t) {
+	return t === "current" ? `Current actor wounded value: ${e.deathState?.wounded ?? 0}` : `Override displayed: Wounded ${t}`;
+}
+function L(e) {
+	return e === 1 || e === 2 || e === 3 ? e : 2;
+}
+function R(e) {
+	return e === "normal" || e === "agile" || e === "none" ? e : "auto";
+}
+function z(e) {
+	return e === "1" ? 1 : e === "2" ? 2 : 0;
+}
+function B(e) {
+	return e === "0" || e === "1" || e === "2" || e === "3" ? e : "current";
+}
+function V(e) {
+	let t = e.dataset?.grimControl;
+	return t === "strikes" || t === "mapMode" || t === "shieldBonus" || t === "woundedOverride" ? t : null;
+}
+function H(e) {
 	return Math.round(e * 100);
 }
 //#endregion
 //#region src/ui/token-controls.ts
-function F() {
+function U() {
 	Hooks.on("getSceneControlButtons", (t) => {
 		if (!game.user?.isGM) return;
 		let n = t.find((e) => e.name === "token");
@@ -365,7 +454,7 @@ function F() {
 	});
 }
 Hooks.once("init", () => {
-	console.log(`${t} | Initializing`), n(), F();
+	console.log(`${t} | Initializing`), n(), U();
 }), Hooks.once("ready", () => {
 	if (!game.user?.isGM) return;
 	let t = game.modules.get(e);
