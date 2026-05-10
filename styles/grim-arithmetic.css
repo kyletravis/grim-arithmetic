@@ -12,6 +12,45 @@
   font-style: italic;
 }
 
+.grim-arithmetic-panel h3 {
+  margin: 0.75rem 0 0.35rem;
+}
+
+.grim-arithmetic-panel dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0;
+}
+
+.grim-arithmetic-panel dt {
+  font-weight: 700;
+}
+
+.grim-arithmetic-panel dd {
+  margin: 0;
+}
+
+.grim-arithmetic-panel ul,
+.grim-arithmetic-panel ol {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.grim-arithmetic-panel__errors {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  border-left: 3px solid #b7791f;
+  background: rgba(183, 121, 31, 0.12);
+}
+
+.grim-arithmetic-panel__summary {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(139, 30, 30, 0.35);
+  border-radius: 4px;
+}
+
 .grim-arithmetic-panel__caveat {
   margin-top: 0.75rem;
   padding: 0.5rem;

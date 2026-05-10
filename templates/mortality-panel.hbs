@@ -6,6 +6,58 @@
 
   <p>{{message}}</p>
 
+  {{#if errors.length}}
+    <div class="grim-arithmetic-panel__errors">
+      <h3>Needs attention</h3>
+      <ul>
+        {{#each errors}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </div>
+  {{/if}}
+
+  {{#if risk}}
+    <section class="grim-arithmetic-panel__summary">
+      <h3>{{subject.name}} vs {{enemy.name}}</h3>
+      <dl>
+        <dt>Enemy Strike</dt>
+        <dd>{{attack.name}} — +{{attack.attackBonus}}, {{attack.damageFormula}}</dd>
+
+        <dt>Down chance</dt>
+        <dd><strong>{{risk.downPercent}}%</strong> — {{risk.riskLabel}}</dd>
+
+        <dt>Expected HP after turn</dt>
+        <dd>{{risk.expectedHpAfterTurn}}</dd>
+      </dl>
+    </section>
+
+    <section class="grim-arithmetic-panel__strikes">
+      <h3>Strike chances</h3>
+      <ol>
+        {{#each risk.strikeChances}}
+          <li>Strike {{index}}: hit {{hitPercent}}%, crit {{critPercent}}%</li>
+        {{/each}}
+      </ol>
+    </section>
+
+    <section class="grim-arithmetic-panel__details">
+      <h3>Assumptions</h3>
+      <ul>
+        {{#each risk.assumptions}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+
+      <h3>Not modeled yet</h3>
+      <ul>
+        {{#each risk.notModeled}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </section>
+  {{/if}}
+
   <aside class="grim-arithmetic-panel__caveat">
     {{permanentDeath}}
   </aside>
