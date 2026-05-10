@@ -72,6 +72,7 @@ describe('buildMortalityPanelData', () => {
     ]);
     expect(data.attack).toMatchObject({ id: 'claw', name: 'Claw', mapType: 'agile' });
     expect(data.risk?.assumptions).toContain('agile strike assumption');
+    expect(data.risk?.damage).toMatchObject({ min: 5, max: 10, average: '7.5', critMin: 10, critMax: 20 });
   });
 
   it('falls back to the first supported Strike when the previous selection no longer exists', () => {

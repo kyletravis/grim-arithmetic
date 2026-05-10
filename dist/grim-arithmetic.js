@@ -2,7 +2,7 @@ var e = {
 	id: "grim-arithmetic",
 	title: "Grim Arithmetic",
 	description: "GM-facing PF2e mortality and encounter-risk analysis for Foundry VTT.",
-	version: "0.1.1",
+	version: "0.2.0",
 	authors: [{ name: "Kyle Travis" }],
 	compatibility: {
 		minimum: "13",
@@ -129,40 +129,40 @@ var m = -1, h = class {
 	getCombatantFromToken(e) {
 		let t = e.actor;
 		if (!t) return null;
-		let n = S(t.system), r = S(n.attributes), i = S(r.hp), a = S(r.ac), o = i.value, s = i.max, c = a.value;
-		if (!w(o) || !w(s) || !w(c)) return null;
-		let l = S(n.saves), u = S(S(n.resources).heroPoints), d = S(n.traits);
+		let n = x(t.system), r = x(n.attributes), i = x(r.hp), a = x(r.ac), o = i.value, s = i.max, c = a.value;
+		if (!C(o) || !C(s) || !C(c)) return null;
+		let l = x(n.saves), u = x(x(n.resources).heroPoints), d = x(n.traits);
 		return {
 			id: e.id ?? t.id ?? "",
 			name: e.name ?? t.name ?? "Unknown Combatant",
-			disposition: g(e, t),
+			disposition: ee(e, t),
 			hp: {
 				current: o,
 				max: s,
-				temp: T(i.temp)
+				temp: w(i.temp)
 			},
 			defenses: {
 				ac: c,
-				fort: T(S(l.fortitude).value),
-				reflex: T(S(l.reflex).value),
-				will: T(S(l.will).value)
+				fort: w(x(l.fortitude).value),
+				reflex: w(x(l.reflex).value),
+				will: w(x(l.will).value)
 			},
 			deathState: {
-				dying: _(t, "dying"),
-				wounded: _(t, "wounded"),
-				doomed: _(t, "doomed"),
-				heroPoints: T(u.value)
+				dying: g(t, "dying"),
+				wounded: g(t, "wounded"),
+				doomed: g(t, "doomed"),
+				heroPoints: w(u.value)
 			},
-			traits: D(d.value),
+			traits: E(d.value),
 			assumptions: []
 		};
 	}
 	getAttacksFromToken(e) {
 		let t = e.actor;
-		return v(t).filter((e) => e.type === "melee").map((e) => {
-			let t = S(e.system), n = b(t), r = x(t);
-			if (!w(n) || typeof r != "string") return null;
-			let i = D(S(t.traits).value);
+		return _(t).filter((e) => e.type === "melee").map((e) => {
+			let t = x(e.system), n = y(t), r = b(t);
+			if (!C(n) || typeof r != "string") return null;
+			let i = E(x(t.traits).value);
 			return {
 				id: e.id ?? "",
 				name: e.name ?? "Unknown Strike",
@@ -175,81 +175,81 @@ var m = -1, h = class {
 		}).filter((e) => e !== null);
 	}
 };
-function g(e, t) {
+function ee(e, t) {
 	return t.type === "character" ? "pc" : e.document?.disposition === m ? "enemy" : "neutral";
 }
-function _(e, t) {
+function g(e, t) {
 	let n = e.itemTypes?.condition?.find((e) => e.slug === t);
-	return n ? T(n.value) ?? T(S(S(n.system).value).value) ?? 0 : 0;
+	return n ? w(n.value) ?? w(x(x(n.system).value).value) ?? 0 : 0;
 }
-function v(e) {
+function _(e) {
 	let t = e?.items;
-	if (Array.isArray(t)) return t.filter(y);
-	let n = S(t).contents;
-	if (Array.isArray(n)) return n.filter(y);
-	if (C(t) && typeof t.filter == "function") {
-		let e = t.filter(y);
+	if (Array.isArray(t)) return t.filter(v);
+	let n = x(t).contents;
+	if (Array.isArray(n)) return n.filter(v);
+	if (S(t) && typeof t.filter == "function") {
+		let e = t.filter(v);
 		return Array.isArray(e) ? e : [];
 	}
 	return [];
 }
+function v(e) {
+	return S(e);
+}
 function y(e) {
-	return C(e);
+	return T(x(e.bonus).value) ?? T(x(e.attack).value);
 }
 function b(e) {
-	return E(S(e.bonus).value) ?? E(S(e.attack).value);
-}
-function x(e) {
-	let t = S(e.damageRolls), n = Object.values(t).find(C);
+	let t = x(e.damageRolls), n = Object.values(t).find(S);
 	if (!n) return;
 	let r = n.damage, i = n.formula;
 	if (typeof r == "string") return r;
 	if (typeof i == "string") return i;
 }
-function S(e) {
-	return C(e) ? e : {};
+function x(e) {
+	return S(e) ? e : {};
 }
-function C(e) {
+function S(e) {
 	return typeof e == "object" && !!e;
 }
-function w(e) {
+function C(e) {
 	return typeof e == "number" && Number.isFinite(e);
 }
-function T(e) {
-	return w(e) ? e : void 0;
+function w(e) {
+	return C(e) ? e : void 0;
 }
-function E(e) {
-	if (w(e)) return e;
+function T(e) {
+	if (C(e)) return e;
 	if (typeof e != "string") return;
 	let t = Number(e.trim().replace(/^\+/, ""));
-	return w(t) ? t : void 0;
+	return C(t) ? t : void 0;
 }
-function D(e) {
+function E(e) {
 	return Array.isArray(e) ? e.map((e) => {
 		if (typeof e == "string") return e;
-		let t = S(e).slug;
+		let t = x(e).slug;
 		return typeof t == "string" ? t : null;
 	}).filter((e) => typeof e == "string") : [];
 }
 //#endregion
 //#region src/engine/degree-of-success.ts
-var O = [
+var D = [
 	"criticalFailure",
 	"failure",
 	"success",
 	"criticalSuccess"
 ];
-function k(e) {
+function O(e) {
 	let { die: t, total: n, dc: r } = e, i;
-	return i = n >= r + 10 ? "criticalSuccess" : n >= r ? "success" : n <= r - 10 ? "criticalFailure" : "failure", t === 20 ? A(i, 1) : t === 1 ? A(i, -1) : i;
+	return i = n >= r + 10 ? "criticalSuccess" : n >= r ? "success" : n <= r - 10 ? "criticalFailure" : "failure", t === 20 ? k(i, 1) : t === 1 ? k(i, -1) : i;
 }
-function A(e, t) {
-	let n = O.indexOf(e);
-	return O[Math.max(0, Math.min(O.length - 1, n + t))];
+function k(e, t) {
+	let n = D.indexOf(e);
+	return D[Math.max(0, Math.min(D.length - 1, n + t))];
 }
 //#endregion
 //#region src/engine/attack-probability.ts
-function ee(e) {
+function te(e) {
 	let t = {
 		criticalSuccess: 0,
 		success: 0,
@@ -257,7 +257,7 @@ function ee(e) {
 		criticalFailure: 0
 	};
 	for (let n = 1; n <= 20; n += 1) {
-		let r = k({
+		let r = O({
 			die: n,
 			total: n + e.attackBonus,
 			dc: e.ac
@@ -273,56 +273,84 @@ function ee(e) {
 }
 //#endregion
 //#region src/engine/dice.ts
-function te(e) {
+function ne(e) {
+	let t = re(e).match(/[+-]?[^+-]+/g) ?? [], n = new Map([[0, 1]]);
+	for (let e of t) n = A(n, ie(e));
+	return j(n, e);
+}
+function re(e) {
 	let t = e.replace(/\s+/g, "");
 	if (!/^[+-]?(\d+d\d+|\d+)([+-](\d+d\d+|\d+))*$/.test(t)) throw Error(`Unsupported damage formula: ${e}`);
-	return (t.match(/[+-]?[^+-]+/g) ?? []).reduce((e, t) => e + j(t), 0);
+	return t;
 }
-function j(e) {
+function ie(e) {
 	let t = e.startsWith("-") ? -1 : 1, n = e.replace(/^[+-]/, ""), r = n.match(/^(\d+)d(\d+)$/);
-	if (r) {
-		let e = Number(r[1]), n = Number(r[2]);
-		return t * e * ((n + 1) / 2);
+	if (!r) return new Map([[t * Number(n), 1]]);
+	let i = Number(r[1]), a = Number(r[2]);
+	if (!Number.isInteger(i) || !Number.isInteger(a) || i < 1 || a < 1) throw Error(`Unsupported damage term: ${e}`);
+	let o = new Map([[0, 1]]), s = /* @__PURE__ */ new Map();
+	for (let e = 1; e <= a; e += 1) s.set(t * e, 1 / a);
+	for (let e = 0; e < i; e += 1) o = A(o, s);
+	return o;
+}
+function A(e, t) {
+	let n = /* @__PURE__ */ new Map();
+	for (let [r, i] of e) for (let [e, a] of t) {
+		let t = r + e;
+		n.set(t, (n.get(t) ?? 0) + i * a);
 	}
-	return t * Number(n);
+	return n;
+}
+function j(e, t) {
+	let n = Array.from(e.entries()).map(([e, t]) => ({
+		damage: e,
+		probability: t
+	})).sort((e, t) => e.damage - t.damage);
+	if (n.length === 0 || n.reduce((e, t) => e + t.probability, 0) <= 0) throw Error(`Unsupported damage formula: ${t}`);
+	let r = n.reduce((e, t) => e + t.damage * t.probability, 0);
+	return {
+		min: n[0].damage,
+		max: n[n.length - 1].damage,
+		mean: r,
+		outcomes: n
+	};
 }
 //#endregion
 //#region src/engine/mortality.ts
 function M(e) {
-	let t = te(e.damageFormula), n = N(e.mapType).slice(0, e.strikes), r = [], i = [], a = 0, o = new Map([[0, 1]]);
-	for (let s of n) {
-		let n = ee({
-			attackBonus: e.attackBonus + s,
+	let t = ne(e.damageFormula), n = I(t), r = N(e.mapType).slice(0, e.strikes), i = [], a = [], o = 0, s = 0, c = 0, l = new Map([[0, 1]]);
+	for (let u of r) {
+		let r = te({
+			attackBonus: e.attackBonus + u,
 			ac: e.ac
 		});
-		r.push(n.success), i.push(n.criticalSuccess);
-		let c = t, l = t * 2, u = n.failure + n.criticalFailure;
-		a += n.success * c + n.criticalSuccess * l, o = P(o, [
+		i.push(r.success), a.push(r.criticalSuccess);
+		let d = r.failure + r.criticalFailure;
+		o += r.success * t.mean + r.criticalSuccess * n.mean, s += r.success * L(t.outcomes, e.hp), c += r.criticalSuccess * L(n.outcomes, e.hp), l = P(l, [
 			{
 				damage: 0,
-				probability: u
+				probability: d
 			},
-			{
-				damage: c,
-				probability: n.success
-			},
-			{
-				damage: l,
-				probability: n.criticalSuccess
-			}
+			...F(t.outcomes, r.success),
+			...F(n.outcomes, r.criticalSuccess)
 		]);
 	}
-	let s = I(F(o, e.hp));
+	let u = z(R(l, e.hp));
 	return {
-		downProbability: s,
-		expectedHpAfterTurn: Math.max(0, e.hp - a),
-		hitChanceByStrike: r,
-		critChanceByStrike: i,
-		riskLabel: L(s),
-		topRiskDrivers: R(s, i),
+		downProbability: u,
+		expectedHpAfterTurn: Math.max(0, e.hp - o),
+		hitChanceByStrike: i,
+		critChanceByStrike: a,
+		riskLabel: B(u),
+		topRiskDrivers: V({
+			downProbability: u,
+			hitDownProbability: s,
+			critDownProbability: c,
+			highestCritChance: Math.max(...a)
+		}),
 		assumptions: [
-			"Uses average damage, not full dice distribution.",
-			"Critical damage is modeled as simple double damage.",
+			"Uses exact damage distributions for supported formulas.",
+			"Critical damage is modeled as simple double damage of the supported formula total.",
 			`Enemy turn model: ${e.strikes} Strike${e.strikes === 1 ? "" : "s"}.`,
 			`MAP model: ${e.mapType}.`
 		],
@@ -332,7 +360,8 @@ function M(e) {
 			"Reactions such as Shield Block or Champion reactions.",
 			"Healing before or during the enemy turn.",
 			"Permanent death probability."
-		]
+		],
+		damage: H(t, n)
 	};
 }
 function N(e) {
@@ -360,47 +389,80 @@ function P(e, t) {
 	return n;
 }
 function F(e, t) {
+	return t === 0 ? [] : e.map((e) => ({
+		damage: e.damage,
+		probability: e.probability * t
+	}));
+}
+function I(e) {
+	return {
+		min: e.min * 2,
+		max: e.max * 2,
+		mean: e.mean * 2,
+		outcomes: e.outcomes.map((e) => ({
+			damage: e.damage * 2,
+			probability: e.probability
+		}))
+	};
+}
+function L(e, t) {
+	return e.reduce((e, n) => e + (n.damage >= t ? n.probability : 0), 0);
+}
+function R(e, t) {
 	let n = 0;
 	for (let [r, i] of e) r >= t && (n += i);
 	return n;
 }
-function I(e) {
+function z(e) {
 	return Math.max(0, Math.min(1, e));
 }
-function L(e) {
+function B(e) {
 	return e < .05 ? "Low" : e < .15 ? "Guarded" : e < .35 ? "Dangerous" : e < .6 ? "Severe" : "Grim";
 }
-function R(e, t) {
-	if (e === 0) return ["No average hit or crit in the selected sequence downs the PC."];
-	let n = Math.max(...t);
-	return [`Down risk is primarily crit-driven; highest strike crit chance is ${Math.round(n * 100)}%.`];
+function V({ downProbability: e, hitDownProbability: t, critDownProbability: n, highestCritChance: r }) {
+	return e === 0 ? ["No exact supported hit or crit damage roll in the selected sequence downs the PC."] : t === 0 && n > 0 && n < r ? ["Only some crit damage rolls can down the PC; exact distribution reduces false precision from average damage."] : t === 0 && n > 0 ? [`Down risk is crit-driven; highest strike crit chance is ${Math.round(r * 100)}%.`] : ["Cumulative exact hit and crit damage rolls can down the PC in the modeled sequence."];
+}
+function H(e, t) {
+	let n = e.mean.toFixed(1);
+	return {
+		min: e.min,
+		max: e.max,
+		average: n,
+		critMin: t.min,
+		critMax: t.max,
+		swinginess: U(e, n)
+	};
+}
+function U(e, t) {
+	let n = e.max - e.min + 1;
+	return n >= e.mean ? `High swing: damage range is ${n} around an average of ${t}.` : `Moderate swing: damage range is ${n} around an average of ${t}.`;
 }
 //#endregion
 //#region src/ui/panel-data.ts
-var z = {
+var W = {
 	strikes: 2,
 	mapMode: "auto",
 	shieldBonus: 0,
 	woundedOverride: "current",
 	attackId: ""
-}, B = "Permanent death probability is planned for a future milestone and is not modeled in MVP.";
-function V({ selection: e, adapter: t, controls: n, moduleVersion: r }) {
+}, G = "Permanent death probability is planned for a future milestone and is not modeled in MVP.";
+function ae({ selection: e, adapter: t, controls: n, moduleVersion: r }) {
 	if (e.errors.length > 0 || !e.subjectToken || !e.enemyToken) return {
 		moduleVersion: r,
 		message: "Select one PC token and target one enemy token to estimate immediate down risk.",
-		permanentDeath: B,
+		permanentDeath: G,
 		errors: e.errors,
-		controls: H(n, [])
+		controls: K(n, [])
 	};
-	let i = t.getCombatantFromToken(e.subjectToken), a = t.getCombatantFromToken(e.enemyToken), o = t.getAttacksFromToken(e.enemyToken), s = W(o, n.attackId), c = U(i, a, s), l = H(n, o, s?.id);
+	let i = t.getCombatantFromToken(e.subjectToken), a = t.getCombatantFromToken(e.enemyToken), o = t.getAttacksFromToken(e.enemyToken), s = J(o, n.attackId), c = q(i, a, s), l = K(n, o, s?.id);
 	if (c.length > 0 || !i || !a || !s) return {
 		moduleVersion: r,
 		message: "Grim Arithmetic could not extract enough PF2e data for this token pair yet.",
-		permanentDeath: B,
+		permanentDeath: G,
 		errors: c,
 		controls: l
 	};
-	let u = G(n.mapMode, s.mapType), d = i.defenses.ac + n.shieldBonus, f = i.hp.current + (i.hp.temp ?? 0), p = M({
+	let u = oe(n.mapMode, s.mapType), d = i.defenses.ac + n.shieldBonus, f = i.hp.current + (i.hp.temp ?? 0), p = M({
 		hp: f,
 		ac: d,
 		attackBonus: s.attackBonus,
@@ -411,30 +473,31 @@ function V({ selection: e, adapter: t, controls: n, moduleVersion: r }) {
 	return n.shieldBonus > 0 && m.push(`Applies a +${n.shieldBonus} shield/status AC adjustment.`), n.woundedOverride !== "current" && m.push(`Displays wounded override ${n.woundedOverride}; down-risk math does not use wounded yet.`), {
 		moduleVersion: r,
 		message: "Immediate down-risk estimate based on the selected PC and targeted enemy.",
-		permanentDeath: B,
+		permanentDeath: G,
 		errors: [],
 		controls: l,
 		subject: i,
 		enemy: a,
 		attack: s,
 		risk: {
-			downPercent: q(p.downProbability),
+			downPercent: Y(p.downProbability),
 			expectedHpAfterTurn: p.expectedHpAfterTurn.toFixed(1),
 			riskLabel: p.riskLabel,
 			effectiveAc: d,
 			modeledHp: f,
-			woundedNote: K(i, n.woundedOverride),
+			woundedNote: se(i, n.woundedOverride),
+			damage: p.damage,
 			strikeChances: p.hitChanceByStrike.map((e, t) => ({
 				index: t + 1,
-				hitPercent: q(e),
-				critPercent: q(p.critChanceByStrike[t] ?? 0)
+				hitPercent: Y(e),
+				critPercent: Y(p.critChanceByStrike[t] ?? 0)
 			})),
 			assumptions: m,
 			notModeled: p.notModeled
 		}
 	};
 }
-function H(e, t, n = e.attackId) {
+function K(e, t, n = e.attackId) {
 	let r = t.some((e) => e.id === n) ? n : t[0]?.id ?? "";
 	return {
 		strikes: [
@@ -483,26 +546,26 @@ function H(e, t, n = e.attackId) {
 		}))
 	};
 }
-function U(e, t, n) {
+function q(e, t, n) {
 	let r = [];
 	return e || r.push("Could not read selected PC HP/AC from PF2e actor data."), t || r.push("Could not read targeted enemy HP/AC from PF2e actor data."), e && e.disposition !== "pc" && r.push("Selected token is not recognized as a PC/character by the PF2e adapter."), t && t.disposition !== "enemy" && r.push("Targeted token is not recognized as an enemy/NPC by the PF2e adapter."), n || r.push("Targeted enemy has no supported melee Strike with a numeric attack bonus and supported damage formula."), r;
 }
-function W(e, t) {
+function J(e, t) {
 	return e.find((e) => e.id === t) ?? e[0];
 }
-function G(e, t) {
+function oe(e, t) {
 	return e === "auto" ? t === "unknown" ? "normal" : t : e;
 }
-function K(e, t) {
+function se(e, t) {
 	return t === "current" ? `Current actor wounded value: ${e.deathState?.wounded ?? 0}` : `Override displayed: Wounded ${t}`;
 }
-function q(e) {
+function Y(e) {
 	return Math.round(e * 100);
 }
 //#endregion
 //#region src/ui/mortality-panel.ts
-var J = class extends Application {
-	controls = { ...z };
+var X = class extends Application {
+	controls = { ...W };
 	static get defaultOptions() {
 		return foundry.utils.mergeObject(super.defaultOptions, {
 			id: `${t}-panel`,
@@ -515,10 +578,10 @@ var J = class extends Application {
 		});
 	}
 	constructor(e) {
-		super(e), this.controls.strikes = X(Y("defaultStrikes", 2));
+		super(e), this.controls.strikes = Z(ce("defaultStrikes", 2));
 	}
 	async getData() {
-		return V({
+		return ae({
 			selection: f(),
 			adapter: new h(),
 			controls: this.controls,
@@ -527,43 +590,43 @@ var J = class extends Application {
 	}
 	activateListeners(e) {
 		super.activateListeners(e), e.find("[data-grim-control]").on("change", (e) => {
-			let t = e.currentTarget, n = re(t);
+			let t = e.currentTarget, n = de(t);
 			n && (this.updateControl(n, t.value), this.render(!1));
 		}), e.find("[data-grim-refresh]").on("click", () => {
 			this.render(!1);
 		});
 	}
 	updateControl(e, t) {
-		e === "strikes" && (this.controls.strikes = X(Number(t))), e === "mapMode" && (this.controls.mapMode = Z(t)), e === "shieldBonus" && (this.controls.shieldBonus = Q(t)), e === "woundedOverride" && (this.controls.woundedOverride = ne(t)), e === "attackId" && (this.controls.attackId = t);
+		e === "strikes" && (this.controls.strikes = Z(Number(t))), e === "mapMode" && (this.controls.mapMode = le(t)), e === "shieldBonus" && (this.controls.shieldBonus = ue(t)), e === "woundedOverride" && (this.controls.woundedOverride = Q(t)), e === "attackId" && (this.controls.attackId = t);
 	}
 };
-function Y(e, n) {
+function ce(e, n) {
 	let r = game.settings.get(t, e);
 	return typeof r == "number" ? r : n;
 }
-function X(e) {
+function Z(e) {
 	return e === 1 || e === 2 || e === 3 ? e : 2;
 }
-function Z(e) {
+function le(e) {
 	return e === "normal" || e === "agile" || e === "none" ? e : "auto";
 }
-function Q(e) {
+function ue(e) {
 	return e === "1" ? 1 : e === "2" ? 2 : 0;
 }
-function ne(e) {
+function Q(e) {
 	return e === "0" || e === "1" || e === "2" || e === "3" ? e : "current";
 }
-function re(e) {
+function de(e) {
 	let t = e.dataset?.grimControl;
 	return t === "strikes" || t === "mapMode" || t === "shieldBonus" || t === "woundedOverride" || t === "attackId" ? t : null;
 }
 //#endregion
 //#region src/ui/token-controls.ts
 var $ = `${t}-open-panel`;
-function ie() {
-	new J().render(!0);
+function fe() {
+	new X().render(!0);
 }
-function ae() {
+function pe() {
 	Hooks.on("getSceneControlButtons", (e) => {
 		let t = e.tokens;
 		t && (t.tools[$] = {
@@ -573,17 +636,17 @@ function ae() {
 			order: Object.keys(t.tools).length,
 			button: !0,
 			visible: !!game.user?.isGM,
-			onChange: ie
+			onChange: fe
 		});
 	});
 }
 Hooks.once("init", () => {
-	console.log(`${n} | Initializing`), d(), ae();
+	console.log(`${n} | Initializing`), d(), pe();
 }), Hooks.once("ready", () => {
 	if (!game.user?.isGM) return;
 	let e = game.modules.get(t);
 	e && (e.api = {
-		openPanel: () => new J().render(!0),
+		openPanel: () => new X().render(!0),
 		captureTokenDebug: (e = canvas.tokens?.controlled?.[0]) => a(e)
 	});
 });

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { immediateDownRisk } from '../src/engine/mortality';
 
 describe('immediateDownRisk', () => {
-  it('returns zero down probability when average hit and crit cannot down target', () => {
+  it('returns zero down probability when no exact damage roll can down target', () => {
     const result = immediateDownRisk({
       hp: 30,
       ac: 20,
@@ -13,21 +13,22 @@ describe('immediateDownRisk', () => {
     });
 
     expect(result.downProbability).toBe(0);
-    expect(result.assumptions).toContain('Uses average damage, not full dice distribution.');
+    expect(result.assumptions).toContain('Uses exact damage distributions for supported formulas.');
   });
 
-  it('returns crit chance as down probability when only crit average damage downs target', () => {
+  it('uses exact crit damage distribution instead of average crit thresholds', () => {
     const result = immediateDownRisk({
-      hp: 12,
+      hp: 7,
       ac: 20,
       attackBonus: 10,
-      damageFormula: '1d8+2',
+      damageFormula: '1d4+2',
       strikes: 1,
       mapType: 'normal'
     });
 
-    expect(result.downProbability).toBeGreaterThan(0);
-    expect(result.topRiskDrivers[0]).toContain('crit');
+    expect(result.downProbability).toBeCloseTo(0.0375);
+    expect(result.damage).toMatchObject({ min: 3, max: 6, average: '4.5', critMin: 6, critMax: 12 });
+    expect(result.topRiskDrivers[0]).toContain('Only some crit damage rolls can down the PC');
   });
 
   it('supports three strike MAP sequences', () => {
@@ -44,16 +45,36 @@ describe('immediateDownRisk', () => {
     expect(result.critChanceByStrike).toHaveLength(3);
   });
 
-  it('counts cumulative crit damage that downs the target across multiple strikes', () => {
+  it('counts cumulative exact damage rolls that down the target across multiple strikes', () => {
     const result = immediateDownRisk({
-      hp: 20,
+      hp: 10,
       ac: 20,
       attackBonus: 10,
-      damageFormula: '1d6+3',
+      damageFormula: '1d4+2',
       strikes: 2,
       mapType: 'none'
     });
 
-    expect(result.downProbability).toBeGreaterThan(0);
+    expect(result.downProbability).toBeCloseTo(0.165625);
+  });
+
+  it('reports exact distribution summary and swinginess for supported formulas', () => {
+    const result = immediateDownRisk({
+      hp: 12,
+      ac: 20,
+      attackBonus: 10,
+      damageFormula: '2d6+4',
+      strikes: 1,
+      mapType: 'normal'
+    });
+
+    expect(result.damage).toEqual({
+      min: 6,
+      max: 16,
+      average: '11.0',
+      critMin: 12,
+      critMax: 32,
+      swinginess: 'High swing: damage range is 11 around an average of 11.0.'
+    });
   });
 });

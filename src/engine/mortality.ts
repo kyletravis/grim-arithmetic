@@ -1,5 +1,5 @@
 import { attackOutcomeProbabilities } from './attack-probability';
-import { averageDamage } from './dice';
+import { DamageDistribution, DamageOutcome, damageDistribution } from './dice';
 
 export type MapType = 'normal' | 'agile' | 'none';
 
@@ -12,6 +12,15 @@ export interface ImmediateDownRiskInput {
   mapType: MapType;
 }
 
+export interface DamageSummary {
+  min: number;
+  max: number;
+  average: string;
+  critMin: number;
+  critMax: number;
+  swinginess: string;
+}
+
 export interface ImmediateDownRiskResult {
   downProbability: number;
   expectedHpAfterTurn: number;
@@ -21,15 +30,19 @@ export interface ImmediateDownRiskResult {
   topRiskDrivers: string[];
   assumptions: string[];
   notModeled: string[];
+  damage: DamageSummary;
 }
 
 export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownRiskResult {
-  const baseDamage = averageDamage(input.damageFormula);
+  const baseDamage = damageDistribution(input.damageFormula);
+  const critDamage = doubleDistribution(baseDamage);
   const mapPenalties = getMapPenalties(input.mapType).slice(0, input.strikes);
   const hitChanceByStrike: number[] = [];
   const critChanceByStrike: number[] = [];
 
   let expectedDamage = 0;
+  let directHitDownProbability = 0;
+  let directCritDownProbability = 0;
   let damageStates = new Map<number, number>([[0, 1]]);
 
   for (const penalty of mapPenalties) {
@@ -41,15 +54,15 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
     hitChanceByStrike.push(outcome.success);
     critChanceByStrike.push(outcome.criticalSuccess);
 
-    const hitDamage = baseDamage;
-    const critDamage = baseDamage * 2;
     const missProbability = outcome.failure + outcome.criticalFailure;
-    expectedDamage += outcome.success * hitDamage + outcome.criticalSuccess * critDamage;
+    expectedDamage += outcome.success * baseDamage.mean + outcome.criticalSuccess * critDamage.mean;
+    directHitDownProbability += outcome.success * probabilityAtLeast(baseDamage.outcomes, input.hp);
+    directCritDownProbability += outcome.criticalSuccess * probabilityAtLeast(critDamage.outcomes, input.hp);
 
     damageStates = expandDamageStates(damageStates, [
       { damage: 0, probability: missProbability },
-      { damage: hitDamage, probability: outcome.success },
-      { damage: critDamage, probability: outcome.criticalSuccess }
+      ...scaleOutcomes(baseDamage.outcomes, outcome.success),
+      ...scaleOutcomes(critDamage.outcomes, outcome.criticalSuccess)
     ]);
   }
 
@@ -62,10 +75,15 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
     hitChanceByStrike,
     critChanceByStrike,
     riskLabel: riskLabel(downProbability),
-    topRiskDrivers: buildRiskDrivers(downProbability, critChanceByStrike),
+    topRiskDrivers: buildRiskDrivers({
+      downProbability,
+      hitDownProbability: directHitDownProbability,
+      critDownProbability: directCritDownProbability,
+      highestCritChance: Math.max(...critChanceByStrike)
+    }),
     assumptions: [
-      'Uses average damage, not full dice distribution.',
-      'Critical damage is modeled as simple double damage.',
+      'Uses exact damage distributions for supported formulas.',
+      'Critical damage is modeled as simple double damage of the supported formula total.',
       `Enemy turn model: ${input.strikes} Strike${input.strikes === 1 ? '' : 's'}.`,
       `MAP model: ${input.mapType}.`
     ],
@@ -75,7 +93,8 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
       'Reactions such as Shield Block or Champion reactions.',
       'Healing before or during the enemy turn.',
       'Permanent death probability.'
-    ]
+    ],
+    damage: buildDamageSummary(baseDamage, critDamage)
   };
 }
 
@@ -109,6 +128,30 @@ function expandDamageStates(
   return nextStates;
 }
 
+function scaleOutcomes(outcomes: DamageOutcome[], branchProbability: number): DamageBranch[] {
+  if (branchProbability === 0) return [];
+  return outcomes.map((outcome) => ({
+    damage: outcome.damage,
+    probability: outcome.probability * branchProbability
+  }));
+}
+
+function doubleDistribution(distribution: DamageDistribution): DamageDistribution {
+  return {
+    min: distribution.min * 2,
+    max: distribution.max * 2,
+    mean: distribution.mean * 2,
+    outcomes: distribution.outcomes.map((outcome) => ({
+      damage: outcome.damage * 2,
+      probability: outcome.probability
+    }))
+  };
+}
+
+function probabilityAtLeast(outcomes: DamageOutcome[], threshold: number): number {
+  return outcomes.reduce((sum, outcome) => sum + (outcome.damage >= threshold ? outcome.probability : 0), 0);
+}
+
 function sumDownProbability(damageStates: Map<number, number>, hp: number): number {
   let probability = 0;
 
@@ -131,11 +174,46 @@ function riskLabel(probability: number): ImmediateDownRiskResult['riskLabel'] {
   return 'Grim';
 }
 
-function buildRiskDrivers(downProbability: number, critChanceByStrike: number[]): string[] {
-  if (downProbability === 0) return ['No average hit or crit in the selected sequence downs the PC.'];
+function buildRiskDrivers({
+  downProbability,
+  hitDownProbability,
+  critDownProbability,
+  highestCritChance
+}: {
+  downProbability: number;
+  hitDownProbability: number;
+  critDownProbability: number;
+  highestCritChance: number;
+}): string[] {
+  if (downProbability === 0) return ['No exact supported hit or crit damage roll in the selected sequence downs the PC.'];
 
-  const highestCrit = Math.max(...critChanceByStrike);
-  return [
-    `Down risk is primarily crit-driven; highest strike crit chance is ${Math.round(highestCrit * 100)}%.`
-  ];
+  if (hitDownProbability === 0 && critDownProbability > 0 && critDownProbability < highestCritChance) {
+    return ['Only some crit damage rolls can down the PC; exact distribution reduces false precision from average damage.'];
+  }
+
+  if (hitDownProbability === 0 && critDownProbability > 0) {
+    return [`Down risk is crit-driven; highest strike crit chance is ${Math.round(highestCritChance * 100)}%.`];
+  }
+
+  return ['Cumulative exact hit and crit damage rolls can down the PC in the modeled sequence.'];
+}
+
+function buildDamageSummary(baseDamage: DamageDistribution, critDamage: DamageDistribution): DamageSummary {
+  const average = baseDamage.mean.toFixed(1);
+  return {
+    min: baseDamage.min,
+    max: baseDamage.max,
+    average,
+    critMin: critDamage.min,
+    critMax: critDamage.max,
+    swinginess: describeSwinginess(baseDamage, average)
+  };
+}
+
+function describeSwinginess(distribution: DamageDistribution, average: string): string {
+  const inclusiveRange = distribution.max - distribution.min + 1;
+  if (inclusiveRange >= distribution.mean) {
+    return `High swing: damage range is ${inclusiveRange} around an average of ${average}.`;
+  }
+  return `Moderate swing: damage range is ${inclusiveRange} around an average of ${average}.`;
 }

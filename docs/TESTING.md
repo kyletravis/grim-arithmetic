@@ -122,13 +122,14 @@ Steps:
 Expected:
 
 - [ ] Panel opens.
-- [ ] Header shows `Grim Arithmetic v0.1.1` or the current `module.json` version.
+- [ ] Header shows `Grim Arithmetic v0.2.0` or the current `module.json` version.
 - [ ] Header shows `PC name vs NPC name`.
 - [ ] Enemy Strike selector lists supported melee Strikes.
 - [ ] Enemy Strike line shows selected Strike name, attack bonus, and damage formula.
 - [ ] Modeled HP appears.
 - [ ] Effective AC appears.
 - [ ] Wounded display appears.
+- [ ] Damage range, average damage, and swinginess appear.
 - [ ] Down chance appears as a percentage.
 - [ ] Risk label appears.
 - [ ] Expected HP after turn appears.
@@ -297,8 +298,8 @@ These are expected right now:
 
 - Permanent death probability is not modeled.
 - Wounded override is display-only.
-- Damage uses average damage, not full dice distribution.
-- Critical damage is simple double damage.
+- Damage uses exact dice distributions for supported formulas.
+- Critical damage is simple double damage of the supported formula total.
 - Resistance, weakness, immunity, deadly, fatal, precision, splash, and persistent damage are not modeled.
 - Reactions such as Shield Block or Champion reactions are not modeled.
 - Healing before/during enemy turn is not modeled.
