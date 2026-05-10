@@ -74,6 +74,11 @@
   border-radius: 4px;
 }
 
+.grim-arithmetic-panel__summary dt {
+  color: #3f2418;
+  text-shadow: none;
+}
+
 .grim-arithmetic-panel__caveat {
   margin-top: 0.75rem;
   padding: 0.5rem;
