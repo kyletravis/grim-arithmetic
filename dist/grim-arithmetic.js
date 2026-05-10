@@ -25,9 +25,32 @@ function n() {
 	});
 }
 //#endregion
-//#region src/main.ts
+//#region src/ui/mortality-panel.ts
+var r = class extends Application {
+	static get defaultOptions() {
+		return foundry.utils.mergeObject(super.defaultOptions, {
+			id: `${e}-panel`,
+			title: t,
+			template: `modules/${e}/templates/mortality-panel.hbs`,
+			width: 420,
+			height: "auto",
+			resizable: !0,
+			classes: ["grim-arithmetic-window"]
+		});
+	}
+	async getData() {
+		return {
+			message: "Select a PC token and target one enemy token to estimate immediate down risk.",
+			permanentDeath: "Permanent death probability is planned for a future milestone and is not modeled in MVP."
+		};
+	}
+};
 Hooks.once("init", () => {
 	console.log(`${t} | Initializing`), n();
+}), Hooks.once("ready", () => {
+	if (!game.user?.isGM) return;
+	let t = game.modules.get(e);
+	t && (t.api = { openPanel: () => new r().render(!0) });
 });
 //#endregion
 
