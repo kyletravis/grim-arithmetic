@@ -45,8 +45,23 @@ var r = class extends Application {
 		};
 	}
 };
+//#endregion
+//#region src/ui/token-controls.ts
+function i() {
+	Hooks.on("getSceneControlButtons", (t) => {
+		if (!game.user?.isGM) return;
+		let n = t.find((e) => e.name === "token");
+		n && n.tools.push({
+			name: `${e}-open-panel`,
+			title: "Grim Arithmetic",
+			icon: "fas fa-skull",
+			button: !0,
+			onClick: () => new r().render(!0)
+		});
+	});
+}
 Hooks.once("init", () => {
-	console.log(`${t} | Initializing`), n();
+	console.log(`${t} | Initializing`), n(), i();
 }), Hooks.once("ready", () => {
 	if (!game.user?.isGM) return;
 	let t = game.modules.get(e);

@@ -1,10 +1,12 @@
 import { MODULE_ID, MODULE_TITLE } from './constants';
 import { registerSettings } from './settings';
 import { MortalityPanel } from './ui/mortality-panel';
+import { registerTokenControls } from './ui/token-controls';
 
 Hooks.once('init', () => {
   console.log(`${MODULE_TITLE} | Initializing`);
   registerSettings();
+  registerTokenControls();
 });
 
 Hooks.once('ready', () => {
