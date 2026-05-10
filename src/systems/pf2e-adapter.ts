@@ -27,6 +27,13 @@ type ConditionLike = {
   value?: number;
 };
 
+type ItemLike = {
+  id?: string;
+  name?: string;
+  type?: string;
+  system?: unknown;
+};
+
 const FOUNDRY_HOSTILE_DISPOSITION = -1;
 
 export class Pf2eAdapter implements SystemAdapter<TokenLike> {
@@ -79,8 +86,30 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
   }
 
   getAttacksFromToken(token: TokenLike): AttackSnapshot[] {
-    void token;
-    return [];
+    const actor = token.actor;
+    const items = getActorItems(actor);
+
+    return items
+      .filter((item) => item.type === 'melee')
+      .map((item): AttackSnapshot | null => {
+        const system = asRecord(item.system);
+        const attackBonus = getAttackBonus(system);
+        const damageFormula = getPrimaryDamageFormula(system);
+        if (!isNumber(attackBonus) || typeof damageFormula !== 'string') return null;
+
+        const traits = toStringArray(asRecord(system.traits).value);
+
+        return {
+          id: item.id ?? '',
+          name: item.name ?? 'Unknown Strike',
+          attackBonus,
+          damageFormula,
+          traits,
+          mapType: traits.includes('agile') ? 'agile' : 'normal',
+          assumptions: ['PF2e Strike extraction is first-pass and may miss conditional modifiers.']
+        };
+      })
+      .filter((attack): attack is AttackSnapshot => attack !== null);
   }
 }
 
@@ -92,6 +121,38 @@ function getDisposition(token: TokenLike, actor: ActorLike): CombatantSnapshot['
 
 function getConditionValue(actor: ActorLike, slug: string): number {
   return actor.itemTypes?.condition?.find((condition) => condition.slug === slug)?.value ?? 0;
+}
+
+function getActorItems(actor: ActorLike | undefined): ItemLike[] {
+  const items = actor?.items;
+  if (Array.isArray(items)) return items.filter(isItemLike);
+
+  if (isRecord(items) && typeof items.filter === 'function') {
+    const filtered = (items.filter as (predicate: (item: ItemLike) => boolean) => unknown)(isItemLike);
+    return Array.isArray(filtered) ? filtered : [];
+  }
+
+  return [];
+}
+
+function isItemLike(value: unknown): value is ItemLike {
+  return isRecord(value);
+}
+
+function getAttackBonus(system: UnknownRecord): number | undefined {
+  return optionalNumber(asRecord(system.bonus).value) ?? optionalNumber(asRecord(system.attack).value);
+}
+
+function getPrimaryDamageFormula(system: UnknownRecord): string | undefined {
+  const damageRolls = asRecord(system.damageRolls);
+  const firstRoll = Object.values(damageRolls).find(isRecord);
+  if (!firstRoll) return undefined;
+
+  const damage = firstRoll.damage;
+  const formula = firstRoll.formula;
+  if (typeof damage === 'string') return damage;
+  if (typeof formula === 'string') return formula;
+  return undefined;
 }
 
 function asRecord(value: unknown): UnknownRecord {

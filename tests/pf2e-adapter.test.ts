@@ -66,3 +66,94 @@ describe('Pf2eAdapter combatant extraction', () => {
     expect(adapter.getCombatantFromToken(token)).toBeNull();
   });
 });
+
+describe('Pf2eAdapter Strike extraction', () => {
+  it('extracts first-pass PF2e melee Strike snapshots from item data', () => {
+    const adapter = new Pf2eAdapter();
+    const token = {
+      actor: {
+        items: [
+          {
+            id: 'jaws-1',
+            name: 'Jaws',
+            type: 'melee',
+            system: {
+              bonus: { value: 12 },
+              damageRolls: {
+                primary: { damage: '2d8+6' }
+              },
+              traits: { value: ['agile', 'unarmed'] }
+            }
+          },
+          {
+            id: 'ignored-1',
+            name: 'Ignored Lore',
+            type: 'lore',
+            system: {}
+          }
+        ]
+      }
+    };
+
+    expect(adapter.getAttacksFromToken(token)).toEqual([
+      {
+        id: 'jaws-1',
+        name: 'Jaws',
+        attackBonus: 12,
+        damageFormula: '2d8+6',
+        traits: ['agile', 'unarmed'],
+        mapType: 'agile',
+        assumptions: ['PF2e Strike extraction is first-pass and may miss conditional modifiers.']
+      }
+    ]);
+  });
+
+  it('falls back from system.bonus.value to system.attack.value and normal MAP', () => {
+    const adapter = new Pf2eAdapter();
+    const token = {
+      actor: {
+        items: [
+          {
+            id: 'claw-1',
+            name: 'Claw',
+            type: 'melee',
+            system: {
+              attack: { value: 9 },
+              damageRolls: {
+                primary: { formula: '1d6+4' }
+              },
+              traits: { value: ['unarmed'] }
+            }
+          }
+        ]
+      }
+    };
+
+    expect(adapter.getAttacksFromToken(token)[0]).toMatchObject({
+      id: 'claw-1',
+      attackBonus: 9,
+      damageFormula: '1d6+4',
+      mapType: 'normal'
+    });
+  });
+
+  it('skips malformed melee items instead of throwing', () => {
+    const adapter = new Pf2eAdapter();
+    const token = {
+      actor: {
+        items: [
+          {
+            id: 'bad-1',
+            name: 'Bad Strike',
+            type: 'melee',
+            system: {
+              damageRolls: {}
+            }
+          }
+        ]
+      }
+    };
+
+    expect(adapter.getAttacksFromToken(token)).toEqual([]);
+  });
+});
