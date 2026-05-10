@@ -30,7 +30,7 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
   const critChanceByStrike: number[] = [];
 
   let expectedDamage = 0;
-  let survivalProbability = 1;
+  let damageStates = new Map<number, number>([[0, 1]]);
 
   for (const penalty of mapPenalties) {
     const outcome = attackOutcomeProbabilities({
@@ -43,16 +43,17 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
 
     const hitDamage = baseDamage;
     const critDamage = baseDamage * 2;
+    const missProbability = outcome.failure + outcome.criticalFailure;
     expectedDamage += outcome.success * hitDamage + outcome.criticalSuccess * critDamage;
 
-    const downChanceThisStrike =
-      (hitDamage >= input.hp ? outcome.success : 0) +
-      (critDamage >= input.hp ? outcome.criticalSuccess : 0);
-
-    survivalProbability *= 1 - downChanceThisStrike;
+    damageStates = expandDamageStates(damageStates, [
+      { damage: 0, probability: missProbability },
+      { damage: hitDamage, probability: outcome.success },
+      { damage: critDamage, probability: outcome.criticalSuccess }
+    ]);
   }
 
-  const downProbability = clampProbability(1 - survivalProbability);
+  const downProbability = clampProbability(sumDownProbability(damageStates, input.hp));
   const expectedHpAfterTurn = Math.max(0, input.hp - expectedDamage);
 
   return {
@@ -82,6 +83,40 @@ function getMapPenalties(mapType: MapType): number[] {
   if (mapType === 'agile') return [0, -4, -8];
   if (mapType === 'none') return [0, 0, 0];
   return [0, -5, -10];
+}
+
+interface DamageBranch {
+  damage: number;
+  probability: number;
+}
+
+function expandDamageStates(
+  currentStates: Map<number, number>,
+  branches: DamageBranch[]
+): Map<number, number> {
+  const nextStates = new Map<number, number>();
+
+  for (const [damageSoFar, stateProbability] of currentStates) {
+    for (const branch of branches) {
+      if (branch.probability === 0) continue;
+
+      const nextDamage = damageSoFar + branch.damage;
+      const nextProbability = stateProbability * branch.probability;
+      nextStates.set(nextDamage, (nextStates.get(nextDamage) ?? 0) + nextProbability);
+    }
+  }
+
+  return nextStates;
+}
+
+function sumDownProbability(damageStates: Map<number, number>, hp: number): number {
+  let probability = 0;
+
+  for (const [damage, stateProbability] of damageStates) {
+    if (damage >= hp) probability += stateProbability;
+  }
+
+  return probability;
 }
 
 function clampProbability(value: number): number {
