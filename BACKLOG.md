@@ -1,7 +1,7 @@
 # Grim Arithmetic Backlog
 
 > **Project:** Grim Arithmetic  
-> **Current baseline:** v0.3.0 dying-pressure MVP
+> **Current baseline:** v0.4.0 damage-adjustment MVP
 > **Target Foundry:** v13, verified against the v13.351+ development/test path  
 > **Initial system:** Pathfinder 2e (`pf2e`)  
 > **Default visibility:** GM-only
@@ -241,6 +241,8 @@ Suggested sections:
 ---
 
 ## v0.4.0 — Damage adjustments: resistance, weakness, immunity
+
+**Status:** implemented locally; awaiting Foundry server smoke test / release bundle.
 
 **Goal:** Account for the most common PF2e damage adjustments that materially change down-risk.
 

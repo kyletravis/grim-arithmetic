@@ -29,7 +29,13 @@ describe('Pf2eAdapter combatant extraction', () => {
           resources: {
             heroPoints: { value: 1 }
           },
-          traits: { value: ['human', 'druid'] }
+          traits: { value: ['human', 'druid'] },
+          weaknesses: [{ type: 'cold', value: 4 }],
+          resistances: [
+            { type: 'fire', value: 5 },
+            { type: 'physical', value: 3 }
+          ],
+          immunities: [{ type: 'poison' }]
         },
         itemTypes: {
           condition: [condition('wounded', 1), condition('dying', 0), condition('doomed', 0)]
@@ -46,7 +52,12 @@ describe('Pf2eAdapter combatant extraction', () => {
       hp: { current: 23, max: 31, temp: 4 },
       defenses: { ac: 19, fort: 8, reflex: 7, will: 10 },
       deathState: { dying: 0, wounded: 1, doomed: 0, heroPoints: 1 },
-      traits: ['human', 'druid']
+      traits: ['human', 'druid'],
+      damageAdjustments: {
+        resistances: [{ type: 'fire', value: 5 }, { type: 'physical', value: 3 }],
+        weaknesses: [{ type: 'cold', value: 4 }],
+        immunities: ['poison']
+      }
     });
   });
 
@@ -80,7 +91,7 @@ describe('Pf2eAdapter Strike extraction', () => {
             system: {
               bonus: { value: 12 },
               damageRolls: {
-                primary: { damage: '2d8+6' }
+                primary: { damage: '2d8+6', damageType: 'piercing' }
               },
               traits: { value: ['agile', 'unarmed'] }
             }
@@ -101,6 +112,7 @@ describe('Pf2eAdapter Strike extraction', () => {
         name: 'Jaws',
         attackBonus: 12,
         damageFormula: '2d8+6',
+        damageType: 'piercing',
         traits: ['agile', 'unarmed'],
         mapType: 'agile',
         assumptions: ['PF2e Strike extraction is first-pass and may miss conditional modifiers.']

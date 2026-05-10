@@ -17,6 +17,11 @@ const adapter: SystemAdapter<object> = {
         hp: { current: 18, max: 31, temp: 2 },
         defenses: { ac: 19 },
         deathState: { wounded: 1, doomed: 1, heroPoints: 1 },
+        damageAdjustments: {
+          resistances: [{ type: 'slashing', value: 5 }],
+          weaknesses: [{ type: 'slashing', value: 2 }],
+          immunities: []
+        },
         traits: ['human'],
         assumptions: []
       };
@@ -39,6 +44,7 @@ const adapter: SystemAdapter<object> = {
         name: 'Jaws',
         attackBonus: 12,
         damageFormula: '2d8+6',
+        damageType: 'bludgeoning',
         traits: ['unarmed'],
         mapType: 'normal',
         assumptions: ['first strike assumption']
@@ -48,6 +54,7 @@ const adapter: SystemAdapter<object> = {
         name: 'Claw',
         attackBonus: 10,
         damageFormula: '1d6+4',
+        damageType: 'slashing',
         traits: ['agile'],
         mapType: 'agile',
         assumptions: ['agile strike assumption']
@@ -72,7 +79,8 @@ describe('buildMortalityPanelData', () => {
     ]);
     expect(data.attack).toMatchObject({ id: 'claw', name: 'Claw', mapType: 'agile' });
     expect(data.risk?.assumptions).toContain('agile strike assumption');
-    expect(data.risk?.damage).toMatchObject({ min: 5, max: 10, average: '7.5', critMin: 10, critMax: 20 });
+    expect(data.risk?.damage).toMatchObject({ min: 2, max: 7, average: '4.5', critMin: 7, critMax: 17 });
+    expect(data.risk?.damageAdjustment.note).toBe('Applied slashing resistance 5 and slashing weakness 2.');
   });
 
   it('falls back to the first supported Strike when the previous selection no longer exists', () => {

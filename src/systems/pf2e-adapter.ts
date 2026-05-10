@@ -1,4 +1,4 @@
-import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from './base-adapter';
+import { AttackSnapshot, CombatantSnapshot, DamageAdjustmentValue, SystemAdapter } from './base-adapter';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -81,6 +81,11 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
         doomed: getConditionValue(actor, 'doomed'),
         heroPoints: optionalNumber(heroPoints.value)
       },
+      damageAdjustments: {
+        resistances: getAdjustmentValues(system.resistances),
+        weaknesses: getAdjustmentValues(system.weaknesses),
+        immunities: getImmunities(system.immunities)
+      },
       traits: toStringArray(traits.value),
       assumptions: []
     };
@@ -95,7 +100,8 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
       .map((item): AttackSnapshot | null => {
         const system = asRecord(item.system);
         const attackBonus = getAttackBonus(system);
-        const damageFormula = getPrimaryDamageFormula(system);
+        const damageRoll = getPrimaryDamageRoll(system);
+        const damageFormula = getDamageFormula(damageRoll);
         if (!isNumber(attackBonus) || typeof damageFormula !== 'string') return null;
 
         const traits = toStringArray(asRecord(system.traits).value);
@@ -105,6 +111,7 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
           name: item.name ?? 'Unknown Strike',
           attackBonus,
           damageFormula,
+          damageType: getDamageType(damageRoll),
           traits,
           mapType: traits.includes('agile') ? 'agile' : 'normal',
           assumptions: ['PF2e Strike extraction is first-pass and may miss conditional modifiers.']
@@ -149,9 +156,12 @@ function getAttackBonus(system: UnknownRecord): number | undefined {
   return optionalNumberLike(asRecord(system.bonus).value) ?? optionalNumberLike(asRecord(system.attack).value);
 }
 
-function getPrimaryDamageFormula(system: UnknownRecord): string | undefined {
+function getPrimaryDamageRoll(system: UnknownRecord): UnknownRecord | undefined {
   const damageRolls = asRecord(system.damageRolls);
-  const firstRoll = Object.values(damageRolls).find(isRecord);
+  return Object.values(damageRolls).find(isRecord);
+}
+
+function getDamageFormula(firstRoll: UnknownRecord | undefined): string | undefined {
   if (!firstRoll) return undefined;
 
   const damage = firstRoll.damage;
@@ -159,6 +169,39 @@ function getPrimaryDamageFormula(system: UnknownRecord): string | undefined {
   if (typeof damage === 'string') return damage;
   if (typeof formula === 'string') return formula;
   return undefined;
+}
+
+function getDamageType(firstRoll: UnknownRecord | undefined): string | undefined {
+  if (!firstRoll) return undefined;
+  const damageType = firstRoll.damageType ?? firstRoll.type ?? firstRoll.category;
+  return typeof damageType === 'string' ? damageType : undefined;
+}
+
+function getAdjustmentValues(value: unknown): DamageAdjustmentValue[] {
+  const entries = Array.isArray(value) ? value : Object.values(asRecord(value));
+
+  return entries
+    .filter(isRecord)
+    .map((entry) => {
+      const type = entry.type ?? entry.slug ?? entry.label;
+      const amount = optionalNumberLike(entry.value) ?? optionalNumberLike(entry.amount);
+      if (typeof type !== 'string' || amount === undefined) return null;
+      return { type, value: amount };
+    })
+    .filter((entry): entry is DamageAdjustmentValue => entry !== null);
+}
+
+function getImmunities(value: unknown): string[] {
+  const entries = Array.isArray(value) ? value : Object.values(asRecord(value));
+
+  return entries
+    .map((entry) => {
+      if (typeof entry === 'string') return entry;
+      const record = asRecord(entry);
+      const type = record.type ?? record.slug ?? record.label;
+      return typeof type === 'string' ? type : null;
+    })
+    .filter((entry): entry is string => typeof entry === 'string');
 }
 
 function asRecord(value: unknown): UnknownRecord {

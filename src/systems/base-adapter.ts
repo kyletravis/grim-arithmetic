@@ -1,3 +1,14 @@
+export interface DamageAdjustmentValue {
+  type: string;
+  value: number;
+}
+
+export interface DamageAdjustments {
+  resistances: DamageAdjustmentValue[];
+  weaknesses: DamageAdjustmentValue[];
+  immunities: string[];
+}
+
 export interface CombatantSnapshot {
   id: string;
   name: string;
@@ -19,6 +30,7 @@ export interface CombatantSnapshot {
     doomed?: number;
     heroPoints?: number;
   };
+  damageAdjustments?: DamageAdjustments;
   traits: string[];
   assumptions: string[];
 }
@@ -28,6 +40,7 @@ export interface AttackSnapshot {
   name: string;
   attackBonus: number;
   damageFormula: string;
+  damageType?: string;
   traits: string[];
   mapType: 'normal' | 'agile' | 'none' | 'unknown';
   assumptions: string[];
