@@ -2,6 +2,12 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.4.1 - PF2e IWR extraction fix
+
+- Read PF2e immunities, weaknesses, and resistances from `system.attributes`, which is where current PF2e character data exposes them.
+- Keep legacy top-level IWR fallback for older or fixture-like data shapes.
+- Include IWR fields in sanitized debug capture when present.
+
 ## v0.4.0 - Damage adjustments
 
 - Extract simple PF2e resistances, weaknesses, and immunities from actor data.

@@ -31,11 +31,7 @@ export function buildDebugCapture(token: DebugTokenLike): unknown {
           id: actor.id,
           name: actor.name,
           type: actor.type,
-          system: {
-            attributes: pickAttributes(system),
-            saves: system.saves,
-            traits: system.traits
-          },
+          system: buildActorSystemCapture(system),
           itemTypes: pickItemTypes(actor.itemTypes),
           meleeItems: getActorItems(actor.items)
             .filter((item) => item.type === 'melee')
@@ -61,12 +57,35 @@ export function logDebugCapture(token: DebugTokenLike): unknown {
   return capture;
 }
 
+function buildActorSystemCapture(system: UnknownRecord): UnknownRecord {
+  const legacyDamageAdjustments = withoutUndefined({
+    immunities: system.immunities,
+    weaknesses: system.weaknesses,
+    resistances: system.resistances
+  });
+
+  return withoutUndefined({
+    attributes: pickAttributes(system),
+    saves: system.saves,
+    traits: system.traits,
+    legacyDamageAdjustments:
+      Object.keys(legacyDamageAdjustments).length > 0 ? legacyDamageAdjustments : undefined
+  });
+}
+
 function pickAttributes(system: UnknownRecord): unknown {
   const attributes = asRecord(system.attributes);
-  return {
+  return withoutUndefined({
     hp: attributes.hp,
-    ac: attributes.ac
-  };
+    ac: attributes.ac,
+    immunities: attributes.immunities,
+    weaknesses: attributes.weaknesses,
+    resistances: attributes.resistances
+  });
+}
+
+function withoutUndefined(record: UnknownRecord): UnknownRecord {
+  return Object.fromEntries(Object.entries(record).filter(([, value]) => value !== undefined));
 }
 
 function pickItemTypes(itemTypes: unknown): unknown {
