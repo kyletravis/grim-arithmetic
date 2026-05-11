@@ -2,6 +2,12 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.4.2 - Foundry v14.361 compatibility metadata
+
+- Mark the module manifest as verified against Foundry VTT v14.361 after initial server smoke testing.
+- Update README and testing/install docs to describe v13 minimum plus v14.361 verified status.
+- No runtime code changes were required for the initial v14.361 smoke test.
+
 ## v0.4.1 - PF2e IWR extraction fix
 
 - Read PF2e immunities, weaknesses, and resistances from `system.attributes`, which is where current PF2e character data exposes them.

@@ -1,8 +1,8 @@
 # Grim Arithmetic Backlog
 
 > **Project:** Grim Arithmetic  
-> **Current baseline:** v0.4.0 damage-adjustment MVP
-> **Target Foundry:** v13, verified against the v13.351+ development/test path  
+> **Current baseline:** v0.4.2 compatibility metadata/docs update
+> **Target Foundry:** v13 minimum, verified by initial smoke test on Foundry v14.361  
 > **Initial system:** Pathfinder 2e (`pf2e`)  
 > **Default visibility:** GM-only
 

@@ -4,12 +4,13 @@ This guide covers installing the current development build of **Grim Arithmetic*
 
 Current target:
 
-- Foundry VTT: **v13 Build 351 minimum**
-- Manifest compatibility generation: `minimum: "13"`, `verified: "13"` for Foundry package discovery compatibility
+- Foundry VTT: **v13 minimum**
+- Verified smoke-test target: **Foundry VTT v14.361**
+- Manifest compatibility: `minimum: "13"`, `verified: "14.361"`
 - System: **Pathfinder 2e (`pf2e`)**
 - Module ID/folder name: `grim-arithmetic`
 
-> Grim Arithmetic is not packaged as a release yet. For now, install it by copying or syncing this repository into Foundry’s `Data/modules/grim-arithmetic/` directory.
+> Grim Arithmetic has public release packages for tester installs. For development/server smoke testing, you can still copy or sync this repository into Foundry’s `Data/modules/grim-arithmetic/` directory.
 
 ---
 
@@ -279,7 +280,7 @@ Open browser dev tools and look for errors beginning with:
 Grim Arithmetic
 ```
 
-Also check whether Foundry v13 APIs differ from our first implementation around:
+Also check whether Foundry APIs differ between the tested v13 path and v14.361 around:
 
 - `Application`
 - `Hooks.on('getSceneControlButtons', ...)`

@@ -1,6 +1,6 @@
-# Testing Grim Arithmetic in Foundry VTT v13 / PF2e
+# Testing Grim Arithmetic in Foundry VTT v13/v14 / PF2e
 
-This guide walks through a manual test pass for Grim Arithmetic on a real Foundry VTT v13.351+ PF2e server.
+This guide walks through a manual test pass for Grim Arithmetic on a real PF2e server. Grim Arithmetic targets Foundry VTT v13+ and has been initially smoke-tested on Foundry VTT v14.361.
 
 Use this after following [INSTALL.md](./INSTALL.md).
 
@@ -14,7 +14,7 @@ Before testing, record the environment. This makes bug reports much easier.
 Date:
 Tester:
 Server/host:
-Foundry version/build:
+Foundry version/build, e.g. v14.361:
 PF2e system version:
 Browser:
 Grim Arithmetic commit:
@@ -344,7 +344,7 @@ These are expected right now:
 
 **Date:**
 **Tester:**
-**Foundry version/build:**
+**Foundry version/build, e.g. v14.361:**
 **PF2e system version:**
 **Browser:**
 **Grim Arithmetic commit:**
@@ -393,4 +393,4 @@ A passing first external test means:
 - [ ] If actor extraction succeeds, panel displays a down-risk estimate.
 - [ ] If actor extraction fails, captured debug data is enough to patch the adapter.
 
-Either outcome is useful. If extraction fails, the next task is simply to update `src/systems/pf2e-adapter.ts` against real PF2e v13 actor data.
+Either outcome is useful. If extraction fails, the next task is simply to update `src/systems/pf2e-adapter.ts` against real PF2e actor data for the Foundry/PF2e version under test.
