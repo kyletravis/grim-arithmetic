@@ -4,7 +4,7 @@
 
 Grim Arithmetic is a Foundry VTT module for GM-facing mortality and encounter-risk analysis, beginning with Pathfinder 2e on Foundry VTT v13+, now smoke-tested on Foundry VTT v14.361.
 
-Current status: v0.4.2 alpha build. The module has a tested exact dice-distribution risk engine, PF2e actor/Strike extraction, an enemy Strike selector, wounded/doomed dying-severity output, Hero Point assumption messaging, simple resistance/weakness/immunity handling for confidently typed Strike damage, and a GM-only panel opened from a skull button in token controls.
+Current status: v0.4.2 manifest-installable build. The module has a tested exact dice-distribution risk engine, PF2e actor/Strike extraction, an enemy Strike selector, wounded/doomed dying-severity output, Hero Point assumption messaging, simple resistance/weakness/immunity handling for confidently typed Strike damage, and a GM-only panel opened from a skull button in token controls.
 
 Grim Arithmetic is an independent module and is not affiliated with, endorsed by, or sponsored by Foundry Gaming LLC, Paizo Inc., or the Pathfinder/Starfinder brands.
 
@@ -53,7 +53,7 @@ templates/mortality-panel.hbs
 
 During early development, `dist/` is committed so a copied module directory is immediately loadable by Foundry.
 
-## Alpha Manifest Install
+## Manifest Install
 
 After a GitHub Release has `module.json` and `grim-arithmetic-vX.Y.Z.zip` attached, install from this manifest URL:
 
@@ -61,4 +61,4 @@ After a GitHub Release has `module.json` and `grim-arithmetic-vX.Y.Z.zip` attach
 https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json
 ```
 
-For pinned alpha testing, use the version-specific release manifest URL from the matching GitHub Release.
+For pinned testing, use the version-specific release manifest URL from the matching GitHub Release.
