@@ -3,6 +3,7 @@ dist/
 coverage/
 releases/
 plans/
+screenshots/
 .DS_Store
 *.log
 .env

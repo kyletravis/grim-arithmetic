@@ -76,6 +76,19 @@ describe('buildDangerBoardData', () => {
     });
   });
 
+  it('exposes a kebab-case riskClass for color-coded risk pills', () => {
+    const data = buildDangerBoardData(
+      matrix([
+        pair({ pcId: 'a', riskLabel: 'Severe', downProbability: 0.5 }),
+        pair({ pcId: 'b', riskLabel: 'Guarded', downProbability: 0.1 }),
+        pair({ pcId: 'c', riskLabel: 'Low', downProbability: 0.02 })
+      ])
+    );
+
+    const classes = data.topEndangeredPcs.map((e) => e.riskClass);
+    expect(classes).toEqual(['severe', 'guarded', 'low']);
+  });
+
   it('formats the danger label as "PC vs Enemy Attack — XX% Label"', () => {
     const data = buildDangerBoardData(
       matrix([

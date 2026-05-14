@@ -9,6 +9,7 @@ export interface DangerBoardEntry {
   attackName: string;
   downPercent: number;
   riskLabel: string;
+  riskClass: string;
   label: string;
 }
 
@@ -74,6 +75,7 @@ function toEntry(pair: PairRisk): DangerBoardEntry {
     attackName: pair.attackName,
     downPercent,
     riskLabel: pair.riskLabel,
+    riskClass: pair.riskLabel.toLowerCase(),
     label: `${pair.pcName} vs ${pair.enemyName} ${pair.attackName} — ${downPercent}% ${pair.riskLabel}`
   };
 }

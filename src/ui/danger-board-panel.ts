@@ -30,7 +30,7 @@ export class DangerBoardPanel extends Application {
       id: `${MODULE_ID}-danger-board`,
       title: `${MODULE_TITLE} — Encounter Danger Board`,
       template: `modules/${MODULE_ID}/templates/danger-board-panel.hbs`,
-      width: 520,
+      width: 640,
       height: 'auto',
       resizable: true,
       classes: ['grim-arithmetic-window']
