@@ -2,6 +2,16 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.5.0 - Encounter-wide immediate risk view
+
+- Read PC and hostile NPC tokens from the active combat encounter without requiring individual token selection.
+- Compute pairwise immediate down-risk for every supported (PC × hostile × Strike) triple by reusing the existing `immediateDownRisk()` engine.
+- Add a ranked **danger board** to the panel showing "Most endangered PCs" and "Most dangerous enemies", formatted as `PC vs Enemy Attack — XX% Label`.
+- Catch per-pair errors so one bad Strike does not poison the whole encounter board.
+- Add a `MAX_PAIRS = 200` performance guardrail that short-circuits to a skipped board with a clear caveat instead of freezing Foundry on very large scenes.
+- Preserve the single-pair selected-PC / targeted-enemy detail view exactly as before; both views coexist when both data sources exist.
+- Update `docs/ARITHMETIC.md` with the encounter-wide section and `docs/TESTING.md` with new manual smoke test steps.
+
 ## v0.4.2 - Foundry v14.361 compatibility metadata
 
 - Mark the module manifest as verified against Foundry VTT v14.361 after initial server smoke testing.
