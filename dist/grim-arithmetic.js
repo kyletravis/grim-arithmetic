@@ -15,7 +15,7 @@ var e = {
 	}] },
 	esmodules: ["dist/grim-arithmetic.js"],
 	styles: ["styles/grim-arithmetic.css"],
-	templates: ["templates/mortality-panel.hbs"],
+	templates: ["templates/mortality-panel.hbs", "templates/pair-detail-panel.hbs"],
 	url: "https://github.com/kyletravis/grim-arithmetic",
 	manifest: "https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json",
 	download: "https://github.com/kyletravis/grim-arithmetic/releases/download/v0.5.0/grim-arithmetic-v0.5.0.zip"
