@@ -288,13 +288,15 @@ Suggested sections:
 
 ### Implemented
 
+- Split the panel UI into two windows: an **Encounter Danger Board** (main, opened by the skull button) and a **Pair Detail** popup (one reusable instance). The previous combined `MortalityPanel` is removed.
 - Read PC tokens and hostile NPC tokens from the active combat encounter (`game.combat.combatants`), with an opt-in scene-token fallback that surfaces a caveat.
 - Surface unsupported actors as a caveat list rather than throwing.
 - Compute pairwise immediate down-risk for every supported (PC × hostile × Strike) triple by reusing `immediateDownRisk()`.
 - Catch per-pair failures so one bad Strike does not poison the whole encounter board.
 - Render a ranked danger board: "Most endangered PCs" (each PC once, sorted by their worst threat) and "Most dangerous enemies" (each enemy once, sorted by their worst pair).
-- Preserve the existing one PC vs one enemy detail view.
+- Pair Detail window opens from danger board row buttons (with the correct PC, enemy, and Strike preselected) or from a "selected PC + targeted enemy" button (preserves the v0.4.x select-and-target workflow).
 - Add a `MAX_PAIRS = 200` performance guardrail that short-circuits to a skipped board with a clear caveat instead of freezing Foundry on very large scenes.
+- Graceful errors if a referenced token is no longer on the canvas (combat ended or scene changed).
 
 ### Acceptance criteria (met on feature branch)
 

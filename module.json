@@ -30,7 +30,6 @@
     "styles/grim-arithmetic.css"
   ],
   "templates": [
-    "templates/mortality-panel.hbs",
     "templates/pair-detail-panel.hbs",
     "templates/danger-board-panel.hbs"
   ],

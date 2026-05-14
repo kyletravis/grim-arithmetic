@@ -585,7 +585,7 @@ Do **not** use the MVP result as:
 
 ## Encounter-wide danger board in v0.5.0
 
-v0.5.0 adds an encounter-level view alongside the single-pair detail view. The single-pair math above is unchanged — the encounter view simply runs that same engine against every supported pair in the active combat.
+v0.5.0 splits the UI into **two windows**: an Encounter Danger Board (main, opened by the skull button) and a Pair Detail popup (one reusable instance, opened from danger board rows or from the "selected PC + targeted enemy" button). The single-pair math is unchanged — the encounter view simply runs that same engine against every supported pair in the active combat, and the detail window renders one pair at a time using the same `buildMortalityPanelData` builder.
 
 ### How pairs are generated
 
@@ -661,7 +661,9 @@ src/foundry/selection.ts
 src/foundry/encounter-participants.ts
 src/ui/panel-data.ts
 src/ui/danger-board.ts
-src/ui/mortality-panel.ts
+src/ui/danger-board-panel.ts
+src/ui/pair-detail-panel.ts
+src/ui/pair-detail-resolver.ts
 src/systems/pf2e-adapter.ts
 ```
 
@@ -678,4 +680,5 @@ tests/encounter-participants.test.ts
 tests/encounter-risk.test.ts
 tests/danger-board.test.ts
 tests/encounter-guardrail.test.ts
+tests/pair-detail-panel.test.ts
 ```
