@@ -725,6 +725,7 @@ function G(e) {
 		attackName: e.attackName,
 		downPercent: t,
 		riskLabel: e.riskLabel,
+		riskClass: e.riskLabel.toLowerCase(),
 		label: `${e.pcName} vs ${e.enemyName} ${e.attackName} — ${t}% ${e.riskLabel}`
 	};
 }
@@ -977,7 +978,7 @@ var Xe = "Encounter-wide immediate risk. Click a row to see the detail math, or 
 			id: `${t}-danger-board`,
 			title: `${n} — Encounter Danger Board`,
 			template: `modules/${t}/templates/danger-board-panel.hbs`,
-			width: 520,
+			width: 640,
 			height: "auto",
 			resizable: !0,
 			classes: ["grim-arithmetic-window"]

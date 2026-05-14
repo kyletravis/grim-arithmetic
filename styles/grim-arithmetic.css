@@ -86,54 +86,148 @@
   background: rgba(139, 30, 30, 0.12);
 }
 
+.grim-arithmetic-panel__hint {
+  margin: 0 0 0.5rem;
+  opacity: 0.85;
+  font-style: italic;
+}
+
 .grim-arithmetic-panel__danger-board {
-  margin-top: 0.75rem;
-  padding: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.5rem 0.25rem;
   border: 1px solid rgba(139, 30, 30, 0.45);
   border-radius: 4px;
   background: rgba(139, 30, 30, 0.05);
 }
 
-.grim-arithmetic-panel__danger-board h4 {
-  margin: 0.5rem 0 0.25rem;
-}
-
-.grim-arithmetic-panel__danger-list {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
-.grim-arithmetic-panel__danger-caveats {
-  margin-top: 0.5rem;
-  padding-left: 1.25rem;
-  font-size: 0.85em;
-  opacity: 0.85;
-}
-
-.grim-arithmetic-panel__danger-board-empty {
-  margin: 0.25rem 0;
+.grim-arithmetic-panel__section-title {
+  margin: 0.25rem 0 0.4rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   opacity: 0.85;
 }
 
 .grim-arithmetic-panel__board-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin: 0.5rem 0 0.75rem;
 }
 
 .grim-arithmetic-panel__board-actions button {
   min-height: 2rem;
+  padding: 0 0.6rem;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
-.grim-arithmetic-panel__danger-list li {
-  display: flex;
+.grim-arithmetic-panel__danger-board-empty {
+  margin: 0.5rem 0;
+  opacity: 0.85;
+}
+
+.grim-arithmetic-panel__danger-grid {
+  counter-reset: grim-rank;
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+}
+
+.grim-arithmetic-panel__danger-row {
+  counter-increment: grim-rank;
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto auto auto;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
-  margin: 0.15rem 0;
+  padding: 0.35rem 0.5rem;
+  margin: 0.2rem 0;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
 }
 
-.grim-arithmetic-panel__danger-list button {
-  flex-shrink: 0;
+.grim-arithmetic-panel__danger-row-rank {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  opacity: 0.55;
+  text-align: right;
+}
+
+.grim-arithmetic-panel__danger-row-rank::before {
+  content: counter(grim-rank) ".";
+}
+
+.grim-arithmetic-panel__danger-row-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grim-arithmetic-panel__danger-row-vs {
+  opacity: 0.6;
+  margin: 0 0.15rem;
+}
+
+.grim-arithmetic-panel__danger-row-percent {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+  min-width: 2.75rem;
+}
+
+.grim-arithmetic-panel__danger-row-action {
   min-height: 1.75rem;
+  padding: 0 0.5rem;
+  white-space: nowrap;
+}
+
+.grim-arithmetic-panel__risk-pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.grim-arithmetic-panel__risk-pill--low {
+  background: rgba(34, 139, 34, 0.15);
+  color: #1d6b1d;
+  border-color: rgba(34, 139, 34, 0.35);
+}
+
+.grim-arithmetic-panel__risk-pill--guarded {
+  background: rgba(180, 160, 30, 0.15);
+  color: #7a6610;
+  border-color: rgba(180, 160, 30, 0.4);
+}
+
+.grim-arithmetic-panel__risk-pill--dangerous {
+  background: rgba(204, 110, 25, 0.18);
+  color: #8a4710;
+  border-color: rgba(204, 110, 25, 0.45);
+}
+
+.grim-arithmetic-panel__risk-pill--severe {
+  background: rgba(180, 30, 30, 0.18);
+  color: #871313;
+  border-color: rgba(180, 30, 30, 0.5);
+}
+
+.grim-arithmetic-panel__risk-pill--grim {
+  background: rgba(60, 10, 10, 0.85);
+  color: #f5e2e2;
+  border-color: rgba(0, 0, 0, 0.65);
+}
+
+.grim-arithmetic-panel__danger-caveats {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.85em;
+  opacity: 0.85;
 }
