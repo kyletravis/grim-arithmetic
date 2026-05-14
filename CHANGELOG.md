@@ -2,6 +2,19 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.5.0 - Encounter danger board (main) + Pair detail (popup)
+
+- **UI split**: the Token Controls skull button now opens an **Encounter Danger Board** as the main window. The single-PC vs single-enemy detail view lives in a separate **Pair Detail** popup (one reusable instance).
+- Read PC and hostile NPC tokens from the active combat encounter without requiring individual token selection.
+- Compute pairwise immediate down-risk for every supported (PC × hostile × Strike) triple by reusing the existing `immediateDownRisk()` engine.
+- Danger board shows "Most endangered PCs" and "Most dangerous enemies" formatted as `PC vs Enemy Attack — XX% Label`. Each row has a **Detail** button that opens the Pair Detail window for that exact pair.
+- A top-level "Open detail for selected PC + targeted enemy" button preserves the v0.4.x select-and-target workflow.
+- Catch per-pair errors so one bad Strike does not poison the whole encounter board.
+- Add a `MAX_PAIRS = 200` performance guardrail that short-circuits to a skipped board with a clear caveat instead of freezing Foundry on very large scenes.
+- Graceful errors if a referenced token is no longer on the canvas (combat ended or scene changed).
+- Remove the previous combined `MortalityPanel` and its template.
+- Update `docs/ARITHMETIC.md`, `docs/TESTING.md`, and `BACKLOG.md` to match the split UX.
+
 ## v0.4.2 - Foundry v14.361 compatibility metadata
 
 - Mark the module manifest as verified against Foundry VTT v14.361 after initial server smoke testing.

@@ -1,7 +1,7 @@
 # Grim Arithmetic Backlog
 
 > **Project:** Grim Arithmetic  
-> **Current baseline:** v0.4.2 compatibility metadata/docs update
+> **Current baseline:** v0.5.0 encounter-wide immediate risk view
 > **Target Foundry:** v13 minimum, verified by initial smoke test on Foundry v14.361  
 > **Initial system:** Pathfinder 2e (`pf2e`)  
 > **Default visibility:** GM-only
@@ -282,43 +282,29 @@ Suggested sections:
 
 ## v0.5.0 — Encounter-wide immediate risk view
 
+**Status:** implemented on feature branch; awaiting Foundry server smoke test before release.
+
 **Goal:** Provide encounter-level insight without full Monte Carlo simulation.
 
-### Priority: Medium / High
+### Implemented
 
-#### 1. Read active combat or scene tokens
+- Split the panel UI into two windows: an **Encounter Danger Board** (main, opened by the skull button) and a **Pair Detail** popup (one reusable instance). The previous combined `MortalityPanel` is removed.
+- Read PC tokens and hostile NPC tokens from the active combat encounter (`game.combat.combatants`), with an opt-in scene-token fallback that surfaces a caveat.
+- Surface unsupported actors as a caveat list rather than throwing.
+- Compute pairwise immediate down-risk for every supported (PC × hostile × Strike) triple by reusing `immediateDownRisk()`.
+- Catch per-pair failures so one bad Strike does not poison the whole encounter board.
+- Render a ranked danger board: "Most endangered PCs" (each PC once, sorted by their worst threat) and "Most dangerous enemies" (each enemy once, sorted by their worst pair).
+- Pair Detail window opens from danger board row buttons (with the correct PC, enemy, and Strike preselected) or from a "selected PC + targeted enemy" button (preserves the v0.4.x select-and-target workflow).
+- Add a `MAX_PAIRS = 200` performance guardrail that short-circuits to a skipped board with a clear caveat instead of freezing Foundry on very large scenes.
+- Graceful errors if a referenced token is no longer on the canvas (combat ended or scene changed).
 
-- Identify PC tokens.
-- Identify hostile NPC tokens.
-- Filter unsupported actors with clear caveats.
-
-#### 2. Compute pairwise immediate risk
-
-- For each supported enemy/PC pair, compute immediate down-risk using selected assumptions.
-- Allow limiting to combatants in current encounter.
-
-#### 3. Display ranked danger list
-
-Example:
-
-```text
-Most endangered PCs
-1. Mira vs Troll Claw — 38% Severe
-2. Seam vs Voidglutton Bite — 22% Dangerous
-3. Geary vs Cultist Dagger — 4% Low
-```
-
-#### 4. Identify most dangerous enemy and most endangered PC
-
-- Summarize biggest immediate risk driver.
-- Provide a compact “danger board” for the GM.
-
-### Acceptance criteria
+### Acceptance criteria (met on feature branch)
 
 - Works with current combat encounter.
 - Does not require selecting/targeting individual tokens.
 - Still supports one PC vs one enemy detail view.
 - Clear performance guardrails for large scenes.
+- `npm run check` passes.
 
 ---
 
