@@ -1,6 +1,6 @@
 import { getCurrentTokenSelection } from '../foundry/selection';
 import { getEncounterParticipants } from '../foundry/encounter-participants';
-import { computeEncounterRiskMatrix } from '../engine/encounter-risk';
+import { computeEncounterRiskMatrix, MAX_PAIRS } from '../engine/encounter-risk';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from '../constants';
 import { buildDangerBoardData } from './danger-board';
@@ -52,7 +52,8 @@ export class MortalityPanel extends Application {
     const participants = getEncounterParticipants(adapter);
     const matrix = computeEncounterRiskMatrix(participants, {
       adapter,
-      controls: this.controls
+      controls: this.controls,
+      pairLimit: MAX_PAIRS
     });
     const dangerBoard = buildDangerBoardData(matrix);
 

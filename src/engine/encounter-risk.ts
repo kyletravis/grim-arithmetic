@@ -27,6 +27,8 @@ export interface ComputeMatrixOptions<TokenLike> {
   pairLimit?: number;
 }
 
+export const MAX_PAIRS = 200;
+
 const NO_ATTACKS_CAVEAT = (enemyName: string): string =>
   `${enemyName} has no supported melee Strike with numeric attack bonus and damage formula.`;
 
