@@ -1,0 +1,155 @@
+<section class="grim-arithmetic-panel">
+  <header class="grim-arithmetic-panel__header">
+    <h2>Grim Arithmetic v{{moduleVersion}} — Pair Detail</h2>
+    <p class="grim-arithmetic-panel__tagline">Immediate mortality pressure, not fate.</p>
+  </header>
+
+  <p>{{message}}</p>
+
+  <form class="grim-arithmetic-panel__controls">
+    <label>
+      Enemy Strike
+      <select data-grim-control="attackId" {{#unless controls.attacks.length}}disabled{{/unless}}>
+        {{#each controls.attacks}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      Enemy turn
+      <select data-grim-control="strikes">
+        {{#each controls.strikes}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      MAP
+      <select data-grim-control="mapMode">
+        {{#each controls.mapMode}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      Shield / AC adjustment
+      <select data-grim-control="shieldBonus">
+        {{#each controls.shieldBonus}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      Wounded display
+      <select data-grim-control="woundedOverride">
+        {{#each controls.woundedOverride}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <label>
+      Hero Point prevention
+      <select data-grim-control="heroPointMode">
+        {{#each controls.heroPointMode}}
+          <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
+        {{/each}}
+      </select>
+    </label>
+
+    <button type="button" class="grim-arithmetic-panel__refresh" data-grim-refresh>Refresh / Recalculate</button>
+  </form>
+
+  {{#if errors.length}}
+    <div class="grim-arithmetic-panel__errors">
+      <h3>Needs attention</h3>
+      <ul>
+        {{#each errors}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </div>
+  {{/if}}
+
+  {{#if risk}}
+    <section class="grim-arithmetic-panel__summary">
+      <h3>{{subject.name}} vs {{enemy.name}}</h3>
+      <dl>
+        <dt>Enemy Strike</dt>
+        <dd>{{attack.name}} — +{{attack.attackBonus}}, {{attack.damageFormula}}</dd>
+
+        <dt>Modeled HP</dt>
+        <dd>{{risk.modeledHp}}</dd>
+
+        <dt>Effective AC</dt>
+        <dd>{{risk.effectiveAc}}</dd>
+
+        <dt>Wounded</dt>
+        <dd>{{risk.woundedNote}}</dd>
+
+        <dt>Damage range</dt>
+        <dd>{{risk.damage.min}}–{{risk.damage.max}} normal, {{risk.damage.critMin}}–{{risk.damage.critMax}} crit</dd>
+
+        <dt>Average damage</dt>
+        <dd>{{risk.damage.average}}</dd>
+
+        <dt>Damage swing</dt>
+        <dd>{{risk.damage.swinginess}}</dd>
+
+        <dt>Damage adjustment</dt>
+        <dd>{{risk.damageAdjustment.note}}</dd>
+
+        <dt>Down chance</dt>
+        <dd><strong>{{risk.downPercent}}%</strong> — {{risk.riskLabel}}</dd>
+
+        <dt>Expected HP after turn</dt>
+        <dd>{{risk.expectedHpAfterTurn}}</dd>
+
+        <dt>Dying if downed</dt>
+        <dd>Normal hit: Dying {{risk.dyingSeverity.normalDownDying}}; crit: Dying {{risk.dyingSeverity.critDownDying}}</dd>
+
+        <dt>Death threshold</dt>
+        <dd>Dying {{risk.dyingSeverity.deathThreshold}} after Doomed {{risk.dyingSeverity.doomed}}</dd>
+
+        <dt>Immediate death flag</dt>
+        <dd>{{risk.dyingSeverity.immediateDeathFlag}}</dd>
+
+        <dt>Hero Point note</dt>
+        <dd>{{risk.dyingSeverity.heroPointNote}}</dd>
+      </dl>
+    </section>
+
+    <section class="grim-arithmetic-panel__strikes">
+      <h3>Strike chances</h3>
+      <ol>
+        {{#each risk.strikeChances}}
+          <li>Strike {{index}}: hit {{hitPercent}}%, crit {{critPercent}}%</li>
+        {{/each}}
+      </ol>
+    </section>
+
+    <section class="grim-arithmetic-panel__details">
+      <h3>Assumptions</h3>
+      <ul>
+        {{#each risk.assumptions}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+
+      <h3>Not modeled yet</h3>
+      <ul>
+        {{#each risk.notModeled}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </section>
+  {{/if}}
+
+  <aside class="grim-arithmetic-panel__caveat">
+    {{permanentDeath}}
+  </aside>
+</section>
