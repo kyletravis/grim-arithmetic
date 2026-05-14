@@ -1,6 +1,9 @@
 import { EncounterRiskMatrix, PairRisk } from '../engine/encounter-risk';
 
 export interface DangerBoardEntry {
+  pcId: string;
+  enemyId: string;
+  attackId: string;
   pcName: string;
   enemyName: string;
   attackName: string;
@@ -63,6 +66,9 @@ function pickTopByKey(pairs: PairRisk[], keyFn: (p: PairRisk) => string): PairRi
 function toEntry(pair: PairRisk): DangerBoardEntry {
   const downPercent = Math.round(pair.downProbability * 100);
   return {
+    pcId: pair.pcId,
+    enemyId: pair.enemyId,
+    attackId: pair.attackId,
     pcName: pair.pcName,
     enemyName: pair.enemyName,
     attackName: pair.attackName,

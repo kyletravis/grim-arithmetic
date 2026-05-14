@@ -31,7 +31,8 @@
   ],
   "templates": [
     "templates/mortality-panel.hbs",
-    "templates/pair-detail-panel.hbs"
+    "templates/pair-detail-panel.hbs",
+    "templates/danger-board-panel.hbs"
   ],
   "url": "https://github.com/kyletravis/grim-arithmetic",
   "manifest": "https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json",
