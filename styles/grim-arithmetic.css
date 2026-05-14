@@ -85,3 +85,32 @@
   border-left: 3px solid #8b1e1e;
   background: rgba(139, 30, 30, 0.12);
 }
+
+.grim-arithmetic-panel__danger-board {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(139, 30, 30, 0.45);
+  border-radius: 4px;
+  background: rgba(139, 30, 30, 0.05);
+}
+
+.grim-arithmetic-panel__danger-board h4 {
+  margin: 0.5rem 0 0.25rem;
+}
+
+.grim-arithmetic-panel__danger-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.grim-arithmetic-panel__danger-caveats {
+  margin-top: 0.5rem;
+  padding-left: 1.25rem;
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.grim-arithmetic-panel__danger-board-empty {
+  margin: 0.25rem 0;
+  opacity: 0.85;
+}

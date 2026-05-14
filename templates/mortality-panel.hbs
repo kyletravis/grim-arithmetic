@@ -75,6 +75,38 @@
     </div>
   {{/if}}
 
+  {{#if dangerBoard}}
+    <section class="grim-arithmetic-panel__danger-board">
+      <h3>Encounter danger board</h3>
+      {{#if dangerBoard.empty}}
+        <p class="grim-arithmetic-panel__danger-board-empty">
+          No encounter-wide risk to show. Start a combat with PCs and hostile NPCs, or select a PC and target an enemy for the detail view below.
+        </p>
+      {{else}}
+        <h4>Most endangered PCs</h4>
+        <ol class="grim-arithmetic-panel__danger-list">
+          {{#each dangerBoard.topEndangeredPcs}}
+            <li>{{label}}</li>
+          {{/each}}
+        </ol>
+
+        <h4>Most dangerous enemies</h4>
+        <ol class="grim-arithmetic-panel__danger-list">
+          {{#each dangerBoard.topDangerousEnemies}}
+            <li>{{label}}</li>
+          {{/each}}
+        </ol>
+      {{/if}}
+      {{#if dangerBoard.caveats.length}}
+        <ul class="grim-arithmetic-panel__danger-caveats">
+          {{#each dangerBoard.caveats}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      {{/if}}
+    </section>
+  {{/if}}
+
   {{#if risk}}
     <section class="grim-arithmetic-panel__summary">
       <h3>{{subject.name}} vs {{enemy.name}}</h3>

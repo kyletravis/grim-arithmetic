@@ -1,6 +1,9 @@
 import { getCurrentTokenSelection } from '../foundry/selection';
+import { getEncounterParticipants } from '../foundry/encounter-participants';
+import { computeEncounterRiskMatrix } from '../engine/encounter-risk';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from '../constants';
+import { buildDangerBoardData } from './danger-board';
 import {
   buildMortalityPanelData,
   DEFAULT_PANEL_CONTROLS,
@@ -38,12 +41,22 @@ export class MortalityPanel extends Application {
   }
 
   override async getData(): Promise<MortalityPanelData> {
-    return buildMortalityPanelData({
+    const adapter = new Pf2eAdapter();
+    const detail = buildMortalityPanelData({
       selection: getCurrentTokenSelection(),
-      adapter: new Pf2eAdapter(),
+      adapter,
       controls: this.controls,
       moduleVersion: MODULE_VERSION
     });
+
+    const participants = getEncounterParticipants(adapter);
+    const matrix = computeEncounterRiskMatrix(participants, {
+      adapter,
+      controls: this.controls
+    });
+    const dangerBoard = buildDangerBoardData(matrix);
+
+    return { ...detail, dangerBoard };
   }
 
   override activateListeners(html: HtmlLike): void {

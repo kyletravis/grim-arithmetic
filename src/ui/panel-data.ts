@@ -1,6 +1,7 @@
 import { DyingSeverity, immediateDownRisk, MapType } from '../engine/mortality';
 import { TokenSelectionResult } from '../foundry/selection';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
+import { DangerBoardData } from './danger-board';
 
 export interface StrikeChanceData {
   index: number;
@@ -66,6 +67,7 @@ export interface MortalityPanelData {
     assumptions: string[];
     notModeled: string[];
   };
+  dangerBoard?: DangerBoardData;
 }
 
 export const DEFAULT_PANEL_CONTROLS: PanelControls = {
