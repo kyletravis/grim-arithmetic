@@ -1,7 +1,7 @@
 # Grim Arithmetic Calculation Guide
 
 > **Purpose:** Explain, in plain English and implementation-level detail, what goes into Grim Arithmetic's risk calculation.  
-> **Current baseline:** v0.4.0 damage-adjustment MVP
+> **Current baseline:** v0.5.0 encounter-wide immediate risk view
 > **Audience:** GMs, testers, contributors, and anyone asking “where did that percentage come from?”
 
 Grim Arithmetic is a decision-support tool, not a combat oracle. Its current MVP answers one narrow question:
@@ -583,14 +583,61 @@ Do **not** use the MVP result as:
 
 ---
 
+## Encounter-wide danger board in v0.5.0
+
+v0.5.0 adds an encounter-level view alongside the single-pair detail view. The single-pair math above is unchanged — the encounter view simply runs that same engine against every supported pair in the active combat.
+
+### How pairs are generated
+
+When a combat encounter is active, Grim Arithmetic reads combatants from `game.combat`:
+
+- Tokens whose actor disposition resolves to `pc` go into the **PCs** list.
+- Tokens whose token-document disposition resolves to `enemy` (PF2e hostile, Foundry disposition `-1`) go into the **hostiles** list.
+- Allied or neutral combatants are excluded with a caveat naming each one.
+- Combatants the system adapter cannot extract are surfaced as **unsupported actors** rather than throwing.
+
+For each PC and each supported melee Strike on each hostile, Grim Arithmetic builds an `ImmediateDownRiskInput` from the same panel controls used by the single-pair detail view, calls the existing `immediateDownRisk()` engine, and records the result as a `PairRisk`:
+
+```text
+PairRisk = { pcId, pcName, enemyId, enemyName, attackId, attackName, downProbability, riskLabel, caveats[] }
+```
+
+If `immediateDownRisk()` throws for one pair (for example, a malformed damage formula), the error is caught and surfaced as a per-pair caveat. Other pairs continue computing.
+
+A hostile with no supported attacks does not contribute pairs; an encounter-level caveat names the hostile.
+
+### Ranking
+
+The danger board ranks two things:
+
+1. **Most endangered PCs** — each PC appears at most once. The shown entry is the PC's worst pair (highest `downProbability`) across every hostile and every Strike. The list is sorted descending and truncated to a top-N (default 5).
+2. **Most dangerous enemies** — each hostile appears at most once. The shown entry is the hostile's worst pair (highest `downProbability`) against any PC. Same sort/truncation.
+
+Each entry is formatted as:
+
+```text
+PC vs Enemy Attack — XX% Label
+```
+
+For example: `Mira vs Troll Claw — 38% Severe`. The percentage is rounded to the nearest whole; the label is the same Low / Guarded / Dangerous / Severe / Grim mapping as the detail view.
+
+### Performance guardrails
+
+To avoid freezing the Foundry UI on very large scenes, the matrix function refuses to compute when the projected pair count (PCs × hostile-attack permutations) exceeds `MAX_PAIRS` (default **200**). When the guardrail trips, the danger board renders as **skipped** with a single caveat instead of partial or unbounded results. The single-pair detail view is unaffected.
+
+### What the danger board does not do
+
+- It does not run a Monte Carlo simulation, model turn order, or simulate tactics.
+- It does not account for healing, reactions, or follow-up rounds.
+- It does not change any of the single-pair math; the same engine, assumptions, and caveats apply.
+
+These remain deferred to v0.6.0+.
+
+---
+
 ## Planned updates to this document
 
 As backlog items land, update this guide with new sections.
-
-### v0.5.0 planned documentation updates
-
-- Encounter-wide pairwise risk ranking.
-- Most endangered PC and most dangerous enemy calculations.
 
 ### v0.6.0+ planned documentation updates
 
@@ -609,7 +656,11 @@ src/engine/degree-of-success.ts
 src/engine/attack-probability.ts
 src/engine/dice.ts
 src/engine/mortality.ts
+src/engine/encounter-risk.ts
+src/foundry/selection.ts
+src/foundry/encounter-participants.ts
 src/ui/panel-data.ts
+src/ui/danger-board.ts
 src/ui/mortality-panel.ts
 src/systems/pf2e-adapter.ts
 ```
@@ -623,4 +674,8 @@ tests/dice.test.ts
 tests/mortality.test.ts
 tests/panel-data.test.ts
 tests/pf2e-adapter.test.ts
+tests/encounter-participants.test.ts
+tests/encounter-risk.test.ts
+tests/danger-board.test.ts
+tests/encounter-guardrail.test.ts
 ```

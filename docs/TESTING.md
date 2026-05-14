@@ -269,7 +269,82 @@ Expected:
 
 ---
 
-## 6. PF2e actor-data debug capture
+## 6. Encounter-wide danger board (v0.5.0)
+
+Use this when the panel is open and you want to test the encounter-level view added in v0.5.0.
+
+### Setup
+
+- A scene with **at least 2 PC tokens** and **at least 2 hostile NPC tokens**, each NPC having at least one supported melee Strike.
+
+### Case A — combat active, no token selection
+
+Steps:
+
+1. Start a combat encounter in Foundry and add the PCs and NPCs to the tracker.
+2. Clear all selected tokens. Clear all targets.
+3. Open Grim Arithmetic.
+
+Expected:
+
+- [ ] Panel opens without errors.
+- [ ] An **Encounter danger board** section is visible.
+- [ ] **Most endangered PCs** lists each PC at most once, sorted by their highest immediate down-risk against any hostile.
+- [ ] **Most dangerous enemies** lists each hostile at most once, sorted by their worst pair against any PC.
+- [ ] Each entry is formatted `PC vs Enemy Attack — XX% Label`.
+- [ ] No single-pair detail summary is shown when there is no selection/target.
+
+### Case B — combat active, selection + target present
+
+Steps:
+
+1. With the same encounter active, select one PC and target one hostile NPC.
+2. Click **Refresh / Recalculate** if needed.
+
+Expected:
+
+- [ ] Encounter danger board still renders.
+- [ ] The single-pair detail view (summary + Strike chances + assumptions + permanent-death caveat) **also** renders below it.
+- [ ] Numbers in the detail view are unchanged from previous releases for this PC × NPC × Strike triple.
+
+### Case C — no combat active
+
+Steps:
+
+1. End the active combat encounter.
+2. Refresh the panel.
+
+Expected:
+
+- [ ] Encounter danger board section renders an empty state caveat ("No active combat encounter.").
+- [ ] If a PC is selected and an enemy targeted, the detail view still works exactly as before.
+
+### Case D — large encounter guardrail
+
+Steps:
+
+1. With a scene that has many PCs and many hostiles such that PCs × hostile-attack-permutations would exceed 200, start combat and open the panel.
+
+Expected:
+
+- [ ] The danger board reports a "Encounter too large" caveat instead of attempting to compute.
+- [ ] Foundry does not freeze.
+- [ ] The detail view (if selection + target are present) still works.
+
+Record observed values:
+
+```text
+PCs in combat:
+Hostiles in combat:
+Most endangered PCs (top 3):
+Most dangerous enemies (top 3):
+Guardrail triggered?:
+Unexpected issues:
+```
+
+---
+
+## 7. PF2e actor-data debug capture
 
 If Grim Arithmetic cannot extract HP, AC, or Strike data, capture sanitized actor shape information.
 
@@ -301,7 +376,7 @@ When sharing debug output, avoid posting private campaign text if any item descr
 
 ---
 
-## 7. Server-side log capture
+## 8. Server-side log capture
 
 On the Foundry server, inspect today’s logs. Adjust path if your deployment uses a different data directory.
 
@@ -318,7 +393,7 @@ Useful things to capture:
 
 ---
 
-## 8. Known MVP limitations
+## 9. Known MVP limitations
 
 These are expected right now:
 
@@ -337,7 +412,7 @@ These are expected right now:
 
 ---
 
-## 9. Bug report template
+## 10. Bug report template
 
 ```md
 ## Grim Arithmetic Test Report
@@ -381,7 +456,7 @@ paste here
 
 ---
 
-## 10. Pass/fail criteria for current build
+## 11. Pass/fail criteria for current build
 
 A passing first external test means:
 
