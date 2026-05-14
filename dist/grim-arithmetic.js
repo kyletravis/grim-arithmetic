@@ -915,7 +915,8 @@ var X = class extends Application {
 			moduleVersion: r
 		}), n = Fe(ye(ne(e), {
 			adapter: e,
-			controls: this.controls
+			controls: this.controls,
+			pairLimit: 200
 		}));
 		return {
 			...t,
