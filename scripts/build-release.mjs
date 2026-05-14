@@ -16,7 +16,8 @@ const requiredPaths = [
   'module.json',
   'dist/grim-arithmetic.js',
   'styles/grim-arithmetic.css',
-  'templates/mortality-panel.hbs',
+  'templates/danger-board-panel.hbs',
+  'templates/pair-detail-panel.hbs',
   'README.md',
   'LICENSE',
   'CHANGELOG.md'

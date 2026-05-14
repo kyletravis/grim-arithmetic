@@ -1,5 +1,5 @@
 import { MODULE_ID } from '../constants';
-import { MortalityPanel } from './mortality-panel';
+import { DangerBoardPanel } from './danger-board-panel';
 
 interface SceneControlToolV13 {
   name: string;
@@ -19,8 +19,8 @@ type SceneControlsV13 = Record<string, SceneControlV13>;
 
 const TOOL_NAME = `${MODULE_ID}-open-panel`;
 
-function openMortalityPanel(): void {
-  new MortalityPanel().render(true);
+function openDangerBoard(): void {
+  new DangerBoardPanel().render(true);
 }
 
 export function registerTokenControls(): void {
@@ -35,7 +35,7 @@ export function registerTokenControls(): void {
       order: Object.keys(tokenControls.tools).length,
       button: true,
       visible: Boolean(game.user?.isGM),
-      onChange: openMortalityPanel
+      onChange: openDangerBoard
     };
   });
 }

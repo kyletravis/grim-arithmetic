@@ -1,4 +1,4 @@
-import { getCurrentTokenSelection } from '../foundry/selection';
+import { getCurrentTokenSelection, TokenSelectionResult } from '../foundry/selection';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from '../constants';
 import {
@@ -7,6 +7,9 @@ import {
   MortalityPanelData,
   PanelControls
 } from './panel-data';
+import { resolvePairSelection } from './pair-detail-resolver';
+
+export { resolvePairSelection };
 
 type HtmlLike = {
   find: (selector: string) => {
@@ -17,14 +20,17 @@ type HtmlLike = {
   };
 };
 
-export class MortalityPanel extends Application {
+export class PairDetailPanel extends Application {
+  private static instance?: PairDetailPanel;
+
   private controls: PanelControls = { ...DEFAULT_PANEL_CONTROLS };
+  private explicitSelection?: TokenSelectionResult<unknown>;
 
   static override get defaultOptions(): ApplicationOptions {
     return foundry.utils.mergeObject(super.defaultOptions, {
-      id: `${MODULE_ID}-panel`,
-      title: MODULE_TITLE,
-      template: `modules/${MODULE_ID}/templates/mortality-panel.hbs`,
+      id: `${MODULE_ID}-pair-detail`,
+      title: `${MODULE_TITLE} — Pair Detail`,
+      template: `modules/${MODULE_ID}/templates/pair-detail-panel.hbs`,
       width: 500,
       height: 'auto',
       resizable: true,
@@ -32,14 +38,34 @@ export class MortalityPanel extends Application {
     });
   }
 
-  constructor(options?: ApplicationOptions) {
-    super(options);
-    this.controls.strikes = clampStrikeCount(getSettingNumber('defaultStrikes', 2));
+  static getInstance(): PairDetailPanel {
+    if (!PairDetailPanel.instance) {
+      PairDetailPanel.instance = new PairDetailPanel();
+    }
+    return PairDetailPanel.instance;
+  }
+
+  static openForPair(pcId: string, enemyId: string, attackId?: string): void {
+    const pcToken = (canvas.tokens?.get(pcId) ?? null) as unknown;
+    const enemyToken = (canvas.tokens?.get(enemyId) ?? null) as unknown;
+    const instance = PairDetailPanel.getInstance();
+    instance.explicitSelection = resolvePairSelection(pcToken, enemyToken);
+    if (attackId !== undefined) {
+      instance.controls.attackId = attackId;
+    }
+    instance.render(true);
+  }
+
+  static openForSelection(): void {
+    const instance = PairDetailPanel.getInstance();
+    instance.explicitSelection = undefined;
+    instance.render(true);
   }
 
   override async getData(): Promise<MortalityPanelData> {
+    const selection = this.explicitSelection ?? getCurrentTokenSelection();
     return buildMortalityPanelData({
-      selection: getCurrentTokenSelection(),
+      selection,
       adapter: new Pf2eAdapter(),
       controls: this.controls,
       moduleVersion: MODULE_VERSION
@@ -71,11 +97,6 @@ export class MortalityPanel extends Application {
     if (key === 'heroPointMode') this.controls.heroPointMode = parseHeroPointMode(value);
     if (key === 'attackId') this.controls.attackId = value;
   }
-}
-
-function getSettingNumber(key: string, fallback: number): number {
-  const value = game.settings.get(MODULE_ID, key);
-  return typeof value === 'number' ? value : fallback;
 }
 
 function clampStrikeCount(value: number): 1 | 2 | 3 {

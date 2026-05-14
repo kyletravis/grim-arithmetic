@@ -269,7 +269,114 @@ Expected:
 
 ---
 
-## 6. PF2e actor-data debug capture
+## 6. Encounter danger board + Pair detail (v0.5.0)
+
+v0.5.0 splits the previous combined panel into **two windows**:
+
+- **Encounter Danger Board** — main window opened by the Token Controls skull button.
+- **Pair Detail** — separate popup window for the single-PC vs single-enemy detail view. One reusable instance; clicking another Detail button re-renders the same window with the new pair.
+
+### Setup
+
+- A scene with **at least 2 PC tokens** and **at least 2 hostile NPC tokens**, each NPC having at least one supported melee Strike.
+
+### Case A — danger board, no token selection
+
+Steps:
+
+1. Start a combat encounter and add the PCs and NPCs to the tracker.
+2. Clear all selected tokens. Clear all targets.
+3. Click the Grim Arithmetic skull button.
+
+Expected:
+
+- [ ] Danger board window opens (title contains "Encounter Danger Board").
+- [ ] **No** single-pair detail content is shown in this window.
+- [ ] **Most endangered PCs** lists each PC at most once, sorted by their highest immediate down-risk against any hostile.
+- [ ] **Most dangerous enemies** lists each hostile at most once, sorted by their worst pair against any PC.
+- [ ] Each entry is formatted `PC vs Enemy Attack — XX% Label` and has its own **Detail** button.
+- [ ] An "Open detail for selected PC + targeted enemy" button is present near the top.
+
+### Case B — open detail from a danger board row
+
+Steps:
+
+1. With the danger board open from Case A, click the **Detail** button on the top "Most endangered PCs" row.
+
+Expected:
+
+- [ ] A new **Pair Detail** window opens (separate window).
+- [ ] The detail window has the correct PC, enemy, and Strike preselected.
+- [ ] The danger board window stays open and unchanged.
+- [ ] Click the **Detail** button on a different row (different PC or different enemy).
+- [ ] The **same** Pair Detail window re-renders with the new pair instead of opening a second window.
+
+### Case C — open detail from selection + target
+
+Steps:
+
+1. Close any open Pair Detail window.
+2. With the danger board open, select one PC token in the canvas and target one hostile NPC.
+3. Click "Open detail for selected PC + targeted enemy" on the danger board.
+
+Expected:
+
+- [ ] Pair Detail window opens, populated with the selected PC and targeted enemy (the v0.4.x workflow).
+- [ ] Numbers in the detail view match what previous releases produced for this PC × NPC × Strike triple.
+
+### Case D — Pair Detail when canvas state changes
+
+Steps:
+
+1. With a Pair Detail window open from Case B, end the active combat or delete the PC token.
+2. Click the danger board's **Refresh** button, then re-click a Detail row.
+
+Expected:
+
+- [ ] If the referenced token is gone, the Pair Detail window shows a friendly error ("PC token is no longer on the canvas…") instead of throwing.
+- [ ] No console exceptions related to Grim Arithmetic.
+
+### Case E — no combat active
+
+Steps:
+
+1. End the active combat encounter.
+2. Click the skull button.
+
+Expected:
+
+- [ ] Danger board opens with the empty-state caveat ("No encounter-wide risk to show…").
+- [ ] "Open detail for selected PC + targeted enemy" still works when a PC is selected and an enemy is targeted.
+
+### Case F — large encounter guardrail
+
+Steps:
+
+1. With a scene that has many PCs and many hostiles such that PCs × hostile-attack-permutations would exceed 200, start combat and open the danger board.
+
+Expected:
+
+- [ ] Danger board reports "Encounter-wide risk was not computed (performance guardrail)…".
+- [ ] Foundry does not freeze.
+- [ ] "Open detail for selected PC + targeted enemy" still works.
+
+Record observed values:
+
+```text
+PCs in combat:
+Hostiles in combat:
+Most endangered PCs (top 3):
+Most dangerous enemies (top 3):
+Detail-from-row worked?:
+Detail-from-selection worked?:
+Same detail window reused for multiple rows?:
+Guardrail triggered?:
+Unexpected issues:
+```
+
+---
+
+## 7. PF2e actor-data debug capture
 
 If Grim Arithmetic cannot extract HP, AC, or Strike data, capture sanitized actor shape information.
 
@@ -301,7 +408,7 @@ When sharing debug output, avoid posting private campaign text if any item descr
 
 ---
 
-## 7. Server-side log capture
+## 8. Server-side log capture
 
 On the Foundry server, inspect today’s logs. Adjust path if your deployment uses a different data directory.
 
@@ -318,7 +425,7 @@ Useful things to capture:
 
 ---
 
-## 8. Known MVP limitations
+## 9. Known MVP limitations
 
 These are expected right now:
 
@@ -337,7 +444,7 @@ These are expected right now:
 
 ---
 
-## 9. Bug report template
+## 10. Bug report template
 
 ```md
 ## Grim Arithmetic Test Report
@@ -381,7 +488,7 @@ paste here
 
 ---
 
-## 10. Pass/fail criteria for current build
+## 11. Pass/fail criteria for current build
 
 A passing first external test means:
 
