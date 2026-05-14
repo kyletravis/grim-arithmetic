@@ -1,0 +1,61 @@
+<section class="grim-arithmetic-panel">
+  <header class="grim-arithmetic-panel__header">
+    <h2>Grim Arithmetic v{{moduleVersion}} — Encounter Danger Board</h2>
+    <p class="grim-arithmetic-panel__tagline">Immediate mortality pressure, not fate.</p>
+  </header>
+
+  <p>{{message}}</p>
+
+  <div class="grim-arithmetic-panel__board-actions">
+    <button type="button" data-grim-open-detail-selection>Open detail for selected PC + targeted enemy</button>
+    <button type="button" class="grim-arithmetic-panel__refresh" data-grim-refresh>Refresh</button>
+  </div>
+
+  <section class="grim-arithmetic-panel__danger-board">
+    {{#if dangerBoard.skipped}}
+      <p class="grim-arithmetic-panel__danger-board-empty">
+        Encounter-wide risk was not computed (performance guardrail). Reduce combatants or use the selection-target button above for a single-pair view.
+      </p>
+    {{else if dangerBoard.empty}}
+      <p class="grim-arithmetic-panel__danger-board-empty">
+        No encounter-wide risk to show. Start a combat with PCs and hostile NPCs, or use the selection-target button above for a single-pair view.
+      </p>
+    {{else}}
+      <h3>Most endangered PCs</h3>
+      <ol class="grim-arithmetic-panel__danger-list">
+        {{#each dangerBoard.topEndangeredPcs}}
+          <li>
+            <span>{{label}}</span>
+            <button type="button"
+                    data-grim-open-detail-pair
+                    data-grim-pc-id="{{pcId}}"
+                    data-grim-enemy-id="{{enemyId}}"
+                    data-grim-attack-id="{{attackId}}">Detail</button>
+          </li>
+        {{/each}}
+      </ol>
+
+      <h3>Most dangerous enemies</h3>
+      <ol class="grim-arithmetic-panel__danger-list">
+        {{#each dangerBoard.topDangerousEnemies}}
+          <li>
+            <span>{{label}}</span>
+            <button type="button"
+                    data-grim-open-detail-pair
+                    data-grim-pc-id="{{pcId}}"
+                    data-grim-enemy-id="{{enemyId}}"
+                    data-grim-attack-id="{{attackId}}">Detail</button>
+          </li>
+        {{/each}}
+      </ol>
+    {{/if}}
+
+    {{#if dangerBoard.caveats.length}}
+      <ul class="grim-arithmetic-panel__danger-caveats">
+        {{#each dangerBoard.caveats}}
+          <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    {{/if}}
+  </section>
+</section>

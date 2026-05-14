@@ -48,6 +48,34 @@ describe('buildDangerBoardData', () => {
     });
   });
 
+  it('passes pcId, enemyId, and attackId through to entries so the UI can wire detail buttons', () => {
+    const data = buildDangerBoardData(
+      matrix([
+        pair({
+          pcId: 'pc-1',
+          enemyId: 'npc-1',
+          attackId: 'claw-1',
+          pcName: 'Mira',
+          enemyName: 'Troll',
+          attackName: 'Claw',
+          downProbability: 0.4,
+          riskLabel: 'Severe'
+        })
+      ])
+    );
+
+    expect(data.topEndangeredPcs[0]).toMatchObject({
+      pcId: 'pc-1',
+      enemyId: 'npc-1',
+      attackId: 'claw-1'
+    });
+    expect(data.topDangerousEnemies[0]).toMatchObject({
+      pcId: 'pc-1',
+      enemyId: 'npc-1',
+      attackId: 'claw-1'
+    });
+  });
+
   it('formats the danger label as "PC vs Enemy Attack — XX% Label"', () => {
     const data = buildDangerBoardData(
       matrix([
