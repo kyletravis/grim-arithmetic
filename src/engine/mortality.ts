@@ -145,7 +145,7 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
 }
 
 
-function buildDamageAdjustmentSummary(
+export function buildDamageAdjustmentSummary(
   damageType: string | undefined,
   targetAdjustments: DamageAdjustments | undefined
 ): DamageAdjustmentSummary {
@@ -192,7 +192,7 @@ function joinAdjustmentParts(parts: string[]): string {
   return `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`;
 }
 
-function applyDamageAdjustment(
+export function applyDamageAdjustment(
   distribution: DamageDistribution,
   adjustment: DamageAdjustmentSummary
 ): DamageDistribution {
@@ -294,7 +294,7 @@ function describeImmediateDeathFlag({
   return `If downed, severity would be Dying ${normalDownDying} on a normal hit or Dying ${critDownDying} on a critical hit.`;
 }
 
-function getMapPenalties(mapType: MapType): number[] {
+export function getMapPenalties(mapType: MapType): number[] {
   if (mapType === 'agile') return [0, -4, -8];
   if (mapType === 'none') return [0, 0, 0];
   return [0, -5, -10];
@@ -332,7 +332,7 @@ function scaleOutcomes(outcomes: DamageOutcome[], branchProbability: number): Da
   }));
 }
 
-function doubleDistribution(distribution: DamageDistribution): DamageDistribution {
+export function doubleDistribution(distribution: DamageDistribution): DamageDistribution {
   return {
     min: distribution.min * 2,
     max: distribution.max * 2,
