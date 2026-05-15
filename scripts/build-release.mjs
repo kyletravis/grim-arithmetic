@@ -18,6 +18,7 @@ const requiredPaths = [
   'styles/grim-arithmetic.css',
   'templates/danger-board-panel.hbs',
   'templates/pair-detail-panel.hbs',
+  'templates/forecast-panel.hbs',
   'README.md',
   'LICENSE',
   'CHANGELOG.md'

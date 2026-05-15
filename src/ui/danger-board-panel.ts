@@ -1,8 +1,10 @@
 import { computeEncounterRiskMatrix, MAX_PAIRS } from '../engine/encounter-risk';
 import { getEncounterParticipants } from '../foundry/encounter-participants';
+import { isMonteCarloEnabled } from '../settings';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from '../constants';
 import { buildDangerBoardData, DangerBoardData } from './danger-board';
+import { ForecastPanel } from './forecast-panel';
 import { DEFAULT_PANEL_CONTROLS } from './panel-data';
 import { PairDetailPanel } from './pair-detail-panel';
 
@@ -19,6 +21,7 @@ export interface DangerBoardPanelData {
   moduleVersion: string;
   message: string;
   dangerBoard: DangerBoardData;
+  forecastEnabled: boolean;
 }
 
 const HEADER_MESSAGE =
@@ -49,7 +52,8 @@ export class DangerBoardPanel extends Application {
     return {
       moduleVersion: MODULE_VERSION,
       message: HEADER_MESSAGE,
-      dangerBoard
+      dangerBoard,
+      forecastEnabled: isMonteCarloEnabled()
     };
   }
 
@@ -67,6 +71,10 @@ export class DangerBoardPanel extends Application {
 
     html.find('[data-grim-open-detail-selection]').on('click', () => {
       PairDetailPanel.openForSelection();
+    });
+
+    html.find('[data-grim-open-forecast]').on('click', () => {
+      ForecastPanel.open();
     });
 
     html.find('[data-grim-refresh]').on('click', () => {

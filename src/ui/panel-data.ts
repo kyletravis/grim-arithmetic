@@ -1,4 +1,5 @@
 import { DyingSeverity, immediateDownRisk, MapType } from '../engine/mortality';
+import type { IterationCount, SimulationResult, TacticsProfileId } from '../engine/simulation-types';
 import { TokenSelectionResult } from '../foundry/selection';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 
@@ -275,4 +276,262 @@ function resolveHeroPointAvailability(
 
 function toPercent(probability: number): number {
   return Math.round(probability * 100);
+}
+
+// --- Forecast (Monte Carlo) panel ---
+
+export interface SimulationControls {
+  iterations: IterationCount;
+  tacticsProfile: TacticsProfileId;
+  /** Free-form seed; blank means "random each run". */
+  seed: string;
+}
+
+export const DEFAULT_SIMULATION_CONTROLS: SimulationControls = {
+  iterations: 5000,
+  tacticsProfile: 'focus-fire',
+  seed: ''
+};
+
+export type ForecastRunState =
+  | { kind: 'idle' }
+  | { kind: 'running'; completed: number; total: number }
+  | { kind: 'done'; result: SimulationResult }
+  | { kind: 'error'; message: string };
+
+export interface ForecastControlsView {
+  iterations: SelectOption[];
+  tacticsProfile: SelectOption[];
+  seed: string;
+}
+
+export interface ForecastProgressView {
+  completed: number;
+  total: number;
+  percent: number;
+}
+
+export interface ForecastResultView {
+  iterationsCompleted: number;
+  iterationsRequested: number;
+  seed: string;
+  tacticsProfileLabel: string;
+  aborted: boolean;
+  anyPcDownPercent: number;
+  tpkPercent: number;
+  meanFirstDownRound: string;
+  medianFirstDownRound: string;
+  perPc: ForecastPcRow[];
+  perEnemy: ForecastEnemyRow[];
+  caveats: string[];
+}
+
+export interface ForecastPcRow {
+  id: string;
+  name: string;
+  downPercent: number;
+  deathPercent: number;
+  meanEndingHp: string;
+  topContributingEnemyName: string;
+  riskClass: string;
+  riskLabel: string;
+}
+
+export interface ForecastEnemyRow {
+  id: string;
+  name: string;
+  damageSharePercent: number;
+  topTargetName: string;
+}
+
+export interface ForecastPanelData {
+  moduleVersion: string;
+  enabled: boolean;
+  disabledMessage: string;
+  message: string;
+  state: 'idle' | 'running' | 'done' | 'error';
+  controls: ForecastControlsView;
+  progress?: ForecastProgressView;
+  result?: ForecastResultView;
+  errorMessage?: string;
+  /** Always-visible assumptions block. */
+  assumptions: string[];
+}
+
+export const TACTICS_PROFILE_LABELS: Record<TacticsProfileId, string> = {
+  'random-legal': 'Random legal',
+  'spread-damage': 'Spread damage',
+  'focus-fire': 'Focus fire',
+  predator: 'Predator',
+  'boss-cinematic': 'Boss cinematic'
+};
+
+export const TACTICS_PROFILE_DESCRIPTIONS: Record<TacticsProfileId, string> = {
+  'random-legal': 'Enemies pick any legal PC target and any attack independently per strike.',
+  'spread-damage': 'Enemies spread strikes across higher-HP standing PCs; never target downed.',
+  'focus-fire': 'Enemies concentrate every strike on the lowest-HP standing PC.',
+  predator: 'Enemies prioritize wounded > low-HP > full-HP PCs; attack downed only as a last resort.',
+  'boss-cinematic': 'Enemy uses the highest-damage attack on the toughest standing PC, all strikes on the same target.'
+};
+
+const ITERATION_CHOICES: IterationCount[] = [1000, 5000, 10000];
+
+export function buildForecastPanelData({
+  moduleVersion,
+  enabled,
+  controls,
+  state
+}: {
+  moduleVersion: string;
+  enabled: boolean;
+  controls: SimulationControls;
+  state: ForecastRunState;
+}): ForecastPanelData {
+  const baseAssumptions = [
+    'PCs take no actions in this model.',
+    'No healing, reactions, or recovery checks.',
+    `Tactics profile: ${TACTICS_PROFILE_LABELS[controls.tacticsProfile]} — ${TACTICS_PROFILE_DESCRIPTIONS[controls.tacticsProfile]}`,
+    `Iterations: ${controls.iterations}.`
+  ];
+
+  if (!enabled) {
+    return {
+      moduleVersion,
+      enabled: false,
+      disabledMessage:
+        'Monte Carlo simulation is disabled in Grim Arithmetic module settings. Enable it in Configure Settings to run forecasts on this client.',
+      message: '',
+      state: 'idle',
+      controls: buildForecastControlsView(controls),
+      assumptions: baseAssumptions
+    };
+  }
+
+  const controlsView = buildForecastControlsView(controls);
+
+  if (state.kind === 'idle') {
+    return {
+      moduleVersion,
+      enabled: true,
+      disabledMessage: '',
+      message:
+        'Configure the run and click Run forecast to simulate the active encounter under the selected tactics profile.',
+      state: 'idle',
+      controls: controlsView,
+      assumptions: baseAssumptions
+    };
+  }
+  if (state.kind === 'running') {
+    return {
+      moduleVersion,
+      enabled: true,
+      disabledMessage: '',
+      message: 'Simulation in progress…',
+      state: 'running',
+      controls: controlsView,
+      progress: {
+        completed: state.completed,
+        total: state.total,
+        percent: state.total > 0 ? Math.round((state.completed / state.total) * 100) : 0
+      },
+      assumptions: baseAssumptions
+    };
+  }
+  if (state.kind === 'error') {
+    return {
+      moduleVersion,
+      enabled: true,
+      disabledMessage: '',
+      message: 'Forecast failed.',
+      state: 'error',
+      controls: controlsView,
+      errorMessage: state.message,
+      assumptions: baseAssumptions
+    };
+  }
+  // done
+  const result = state.result;
+  return {
+    moduleVersion,
+    enabled: true,
+    disabledMessage: '',
+    message: result.aborted
+      ? `Forecast aborted after ${result.iterationsCompleted} of ${result.iterationsRequested} iterations.`
+      : `Forecast complete (${result.iterationsCompleted} iterations).`,
+    state: 'done',
+    controls: controlsView,
+    result: buildForecastResultView(result),
+    assumptions: [
+      ...baseAssumptions,
+      ...result.caveats.map((c) => `Setup: ${c}`)
+    ]
+  };
+}
+
+function buildForecastControlsView(controls: SimulationControls): ForecastControlsView {
+  return {
+    iterations: ITERATION_CHOICES.map((value) => ({
+      value: String(value),
+      label: `${value.toLocaleString()} iterations`,
+      selected: controls.iterations === value
+    })),
+    tacticsProfile: (Object.keys(TACTICS_PROFILE_LABELS) as TacticsProfileId[]).map((id) => ({
+      value: id,
+      label: TACTICS_PROFILE_LABELS[id],
+      selected: controls.tacticsProfile === id
+    })),
+    seed: controls.seed
+  };
+}
+
+function buildForecastResultView(result: SimulationResult): ForecastResultView {
+  const pcNamesById = new Map(result.perPc.map((pc) => [pc.id, pc.name]));
+  const enemyNamesById = new Map(result.perEnemy.map((enemy) => [enemy.id, enemy.name]));
+
+  return {
+    iterationsCompleted: result.iterationsCompleted,
+    iterationsRequested: result.iterationsRequested,
+    seed: String(result.seed),
+    tacticsProfileLabel: TACTICS_PROFILE_LABELS[result.tacticsProfile],
+    aborted: result.aborted,
+    anyPcDownPercent: Math.round(result.anyPcDownProbability * 100),
+    tpkPercent: Math.round(result.tpkProbability * 100),
+    meanFirstDownRound:
+      result.meanFirstDownRound === null ? 'n/a' : result.meanFirstDownRound.toFixed(1),
+    medianFirstDownRound:
+      result.medianFirstDownRound === null ? 'n/a' : String(result.medianFirstDownRound),
+    perPc: result.perPc.map((pc) => ({
+      id: pc.id,
+      name: pc.name,
+      downPercent: Math.round(pc.downProbability * 100),
+      deathPercent: Math.round(pc.deathProbability * 100),
+      meanEndingHp: pc.meanEndingHp.toFixed(1),
+      topContributingEnemyName: pc.topContributingEnemyId
+        ? enemyNamesById.get(pc.topContributingEnemyId) ?? pc.topContributingEnemyId
+        : '—',
+      riskClass: forecastRiskClass(pc.downProbability),
+      riskLabel: forecastRiskLabel(pc.downProbability)
+    })),
+    perEnemy: result.perEnemy.map((enemy) => ({
+      id: enemy.id,
+      name: enemy.name,
+      damageSharePercent: Math.round(enemy.damageShare * 100),
+      topTargetName: enemy.topTargetId
+        ? pcNamesById.get(enemy.topTargetId) ?? enemy.topTargetId
+        : '—'
+    })),
+    caveats: result.caveats
+  };
+}
+
+function forecastRiskLabel(probability: number): string {
+  if (probability < 0.05) return 'Low';
+  if (probability < 0.15) return 'Guarded';
+  if (probability < 0.35) return 'Dangerous';
+  if (probability < 0.6) return 'Severe';
+  return 'Grim';
+}
+
+function forecastRiskClass(probability: number): string {
+  return forecastRiskLabel(probability).toLowerCase();
 }

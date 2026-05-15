@@ -8,6 +8,9 @@
 
   <div class="grim-arithmetic-panel__board-actions">
     <button type="button" data-grim-open-detail-selection>Detail from selection + target</button>
+    {{#if forecastEnabled}}
+      <button type="button" data-grim-open-forecast>Forecast encounter</button>
+    {{/if}}
     <button type="button" data-grim-refresh>Refresh</button>
   </div>
 
