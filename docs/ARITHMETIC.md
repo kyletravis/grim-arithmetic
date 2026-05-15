@@ -631,19 +631,108 @@ To avoid freezing the Foundry UI on very large scenes, the matrix function refus
 - It does not account for healing, reactions, or follow-up rounds.
 - It does not change any of the single-pair math; the same engine, assumptions, and caveats apply.
 
-These remain deferred to v0.6.0+.
+These are addressed by the Monte Carlo simulation in v0.6.0; see the next section.
 
 ---
 
-## Planned updates to this document
+## Monte Carlo encounter simulation in v0.6.0
 
-As backlog items land, update this guide with new sections.
+v0.6.0 adds an entirely new feature alongside the v0.5.0 danger board: a Monte Carlo simulation of the active encounter. The danger board's single-pair down-risk math is unchanged. The simulation is **opt-in per run** and lives in its own window.
 
-### v0.6.0+ planned documentation updates
+### What the simulation answers
 
-- Monte Carlo simulation assumptions.
-- Tactics profiles.
-- Iteration counts, seeds, and confidence/stability guidance.
+The danger board answers: *"if the enemies all swung at the PCs right now, who would drop?"* — narrow, per-pair, no turn order, no tactics.
+
+The Monte Carlo simulation answers: *"if we played out this encounter many times under explicit assumptions, what tends to happen?"* — broader, full encounter, configurable tactics. Headline metrics:
+
+- **Any-PC-down probability** — fraction of iterations where at least one PC was downed.
+- **TPK probability** — fraction of iterations where every PC was downed.
+- **Expected first-down round** — mean / median round in which the first PC dropped.
+- **Per-PC down and death rates**, mean ending HP, biggest contributing enemy.
+- **Per-enemy damage share** and top target.
+
+### Where the UI lives
+
+Per the v0.6.0 UX plan, the Monte Carlo UI lives in its own singleton **Forecast window** (~800w), distinct from the Danger Board. The Danger Board gets one new header button ("Forecast encounter") that opens the singleton — one click between the two views, intentional. The danger board's "what's lethal right now" identity stays uncluttered, and the forecast has room for per-PC tables, per-enemy tables, and an always-visible assumptions block without compressing the existing endangered/dangerous lists.
+
+### The pipeline
+
+The simulation engine is pure TypeScript (no Foundry imports) and runs on every iteration in a strict order:
+
+```text
+seeded RNG  →  initiative roll  →  per-turn tactics plan
+            →  per-Strike sampler  →  state transition (damage, dying)
+            →  termination check
+```
+
+For each Strike the sampler:
+
+1. Draws a d20 face via `rng.nextInt(1, 20)`.
+2. Applies the existing PF2e nat-1 / nat-20 step-shift rules through the shared `degreeOfSuccess()` helper.
+3. On `success` or `criticalSuccess`, samples a damage total from the exact analytic PMF (the v0.4.0 / v0.5.0 `damageDistribution()` + `doubleDistribution()` path) using inverse-CDF over `rng.next()`.
+4. Applies defender resistance / weakness / immunity via the same v0.4.0 helper the panel uses.
+
+The state transition function (`applyDamage`) handles the v0.3.0 dying / wounded / doomed rules: temp HP drains first; PCs entering dying take `1 + wounded` on a normal hit, `2 + wounded` on a critical hit; death threshold is `max(1, 4 - doomed)`. Enemies at 0 HP are marked dead directly (no dying spiral).
+
+### Tactics profiles
+
+Five tactics profiles ship in v0.6.0. Each is a pure function of state plus the seeded RNG, so the same setup + seed + profile always produces identical results.
+
+- **Random legal** — pick any legal PC target and any attack independently per strike. Conservative baseline: if even random play produces a high down rate, the encounter is structurally dangerous, not just dangerous under optimal tactics.
+- **Spread damage** — distribute strikes across higher-HP standing PCs; never target downed. Use this when modeling enemies that try to keep all PCs in the fight at once.
+- **Focus fire** — concentrate every strike on the lowest-HP standing PC. Use this when modeling enemies that "kill the wounded one." Tends to drive higher per-PC death rates than spread.
+- **Predator** — prioritize wounded > low-HP > full-HP standing PCs; attack downed only if no standing PCs remain. Models monsters with "hunt the weak" lore.
+- **Boss cinematic** — use the highest-mean-damage attack on the toughest (highest-HP) standing PC, all strikes on the same target. Models the dramatic boss-vs-tank matchup; the MAP-penalized follow-ups hit hard because the chosen attack is high-damage.
+
+A profile that lands on a target dropped by an earlier strike in the same turn still resolves the remaining strikes — the plan is committed when the turn begins. This is intentional and slightly more lethal than a "smart" enemy that would retarget; it is the conservative-for-the-PCs assumption.
+
+### Iterations and stability
+
+Three iteration counts are exposed in the UI:
+
+| Iterations | Approx. headline standard error | Approx. wall-clock on a typical GM machine |
+|------------|---------------------------------|---------------------------------------------|
+| 1,000      | ±3% on any-PC-down              | Sub-second |
+| 5,000      | ±1.4% on any-PC-down            | A few seconds (default) |
+| 10,000     | ±1% on any-PC-down              | Several seconds |
+
+Use 1k for quick what-ifs; 5k for the typical case; 10k when comparing two close options (encounter A vs encounter B, or two tactics profiles) where the gap might be within 1k's noise band. The engine refuses to run more than 10,000 iterations in a single call.
+
+### Seeding
+
+Two forms accepted in the seed input:
+
+- Blank: a fresh random seed is picked each run; results vary run-to-run within the standard-error band.
+- Filled (string or number): deterministic. Same seed + same setup + same config → byte-identical SimulationResult.
+
+The runner derives a per-iteration sub-seed from the master seed so iteration N is reproducible independently of total iteration count. Truncating from a 5k run to a 1k run yields the same first 1,000 per-iteration outcomes when the master seed matches.
+
+### Explicitly not modeled in v0.6.0
+
+The simulation is intentionally conservative; the assumptions block in the Forecast window restates these every run.
+
+- **PC actions.** PCs take a no-op turn. No attacks, no healing, no spells, no Hero Point use. Real-table PCs almost always reduce the down/TPK rate; v0.6.0's output is therefore an upper bound on real-table risk.
+- **Reactions.** Shield Block, Champion reactions, attack-of-opportunity, and other reactions are not modeled.
+- **Recovery checks.** A PC that drops stays dying; subsequent strikes increment dying, but there is no recovery roll between turns. This is the largest single deviation from real play; v0.8.0+ is scoped to add it.
+- **Persistent damage.** v0.8.0+.
+- **Spells and save-based actions.** Enemies use Strikes only. v0.7.0+ adds saves.
+- **Movement, reach, line of sight.** The simulation assumes all enemies can reach all PCs.
+- **Initiative-altering abilities.** Delay, Ready, surprise rounds, and feats that move initiative are not modeled. The runner re-uses the rolled order every round.
+
+### How to interpret the numbers
+
+The forecast is decision support, not prophecy.
+
+- A 30% TPK probability is a **model artifact**, not a 30% campaign-death chance. It's the probability under "PCs do nothing, no healing, no reactions, fixed tactics." Realistic play almost always brings the actual rate down.
+- A 1k run with TPK 5% and a second 1k run with TPK 8% are within the same noise band (±3%). If a close call matters, bump to 10k.
+- Risk pills (Low / Guarded / Dangerous / Severe / Grim) use the same v0.5.0 thresholds; per-PC risk is mapped from each PC's own down probability.
+- The biggest threat enemy is "who contributed the most absorbed damage across iterations," not necessarily "who's the dramatic villain."
+
+### Performance and the kill switch
+
+The simulation runs in a Web Worker so the Foundry main thread stays responsive even at 10k iterations. Progress events are throttled to ~10/sec to avoid postMessage flooding. Aborting a run mid-flight returns a partial result flagged `aborted: true` rather than discarding everything.
+
+A per-client setting in **Configure Settings → Module Settings → Grim Arithmetic** — **Enable Monte Carlo encounter simulation** — disables the feature entirely on machines where it's too costly. When the kill switch is off, the "Forecast encounter" button is hidden on the Danger Board and no Worker is constructed. The v0.5.0 danger board behavior is unchanged either way.
 
 ---
 
@@ -657,13 +746,26 @@ src/engine/attack-probability.ts
 src/engine/dice.ts
 src/engine/mortality.ts
 src/engine/encounter-risk.ts
+src/engine/prng.ts
+src/engine/simulation-types.ts
+src/engine/sample-strike.ts
+src/engine/sim-state.ts
+src/engine/initiative.ts
+src/engine/tactics/*.ts
+src/engine/run-iteration.ts
+src/engine/run-simulation.ts
+src/engine/simulation-guardrails.ts
+src/engine/simulation.worker.ts
+src/engine/run-simulation-in-worker.ts
 src/foundry/selection.ts
 src/foundry/encounter-participants.ts
+src/foundry/encounter-setup.ts
 src/ui/panel-data.ts
 src/ui/danger-board.ts
 src/ui/danger-board-panel.ts
 src/ui/pair-detail-panel.ts
 src/ui/pair-detail-resolver.ts
+src/ui/forecast-panel.ts
 src/systems/pf2e-adapter.ts
 ```
 
@@ -681,4 +783,18 @@ tests/encounter-risk.test.ts
 tests/danger-board.test.ts
 tests/encounter-guardrail.test.ts
 tests/pair-detail-panel.test.ts
+tests/prng.test.ts
+tests/simulation-types.test.ts
+tests/sim-state.test.ts
+tests/sample-strike.test.ts
+tests/initiative.test.ts
+tests/tactics/tactics.test.ts
+tests/run-iteration.test.ts
+tests/run-simulation.test.ts
+tests/simulation-guardrails.test.ts
+tests/encounter-setup.test.ts
+tests/run-simulation-in-worker.test.ts
+tests/forecast-panel-data.test.ts
+tests/simulation-fixtures.test.ts
+tests/settings.test.ts
 ```
