@@ -1263,7 +1263,7 @@ function mt(e, t, n) {
 function ht(e, t, n) {
 	let r = new Worker(new URL(
 		/* @vite-ignore */
-		"/assets/simulation.worker-DstVOLMJ.js",
+		"" + new URL("assets/simulation.worker-5UUtOEwp.js", import.meta.url).href,
 		"" + import.meta.url
 	), { type: "module" }), i = !1, a = !1;
 	return {
