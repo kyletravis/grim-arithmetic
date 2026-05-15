@@ -64,6 +64,7 @@ export function applyDamage(
 
   let remaining = application.damage;
   let temp = target.hp.temp;
+  const startingPool = target.hp.current + target.hp.temp;
   if (temp > 0) {
     const absorbedFromTemp = Math.min(temp, remaining);
     temp -= absorbedFromTemp;
@@ -75,11 +76,15 @@ export function applyDamage(
     ...target,
     hp: { ...target.hp, current, temp }
   };
+  // damageAbsorbed reflects actual HP + temp HP reduction. Overkill on a
+  // target already at 0 HP does not count for attribution: per-enemy damage
+  // share should not double-credit overkill strikes against a dying PC.
+  const damageAbsorbed = Math.max(0, startingPool - (current + temp));
 
   if (current > 0) {
     return {
       combatant: nextBase,
-      damageAbsorbed: application.damage,
+      damageAbsorbed,
       becameDowned: false,
       becameDead: false
     };
@@ -89,7 +94,7 @@ export function applyDamage(
   if (target.side === 'enemy') {
     return {
       combatant: { ...nextBase, downed: true, dead: true },
-      damageAbsorbed: application.damage,
+      damageAbsorbed,
       becameDowned: !wasDowned,
       becameDead: true
     };
@@ -107,7 +112,7 @@ export function applyDamage(
       downed: true,
       dead
     },
-    damageAbsorbed: application.damage,
+    damageAbsorbed,
     becameDowned: !wasDowned,
     becameDead: dead
   };
