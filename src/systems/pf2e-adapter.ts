@@ -59,6 +59,9 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
     const resources = asRecord(system.resources);
     const heroPoints = asRecord(resources.heroPoints);
     const traits = asRecord(system.traits);
+    const initiativeBonus =
+      optionalNumber(asRecord(system.perception).value) ??
+      optionalNumber(asRecord(attributes.perception).value);
 
     return {
       id: token.id ?? actor.id ?? '',
@@ -86,6 +89,7 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
         weaknesses: getAdjustmentValues(attributes.weaknesses ?? system.weaknesses),
         immunities: getImmunities(attributes.immunities ?? system.immunities)
       },
+      initiativeBonus,
       traits: toStringArray(traits.value),
       assumptions: []
     };

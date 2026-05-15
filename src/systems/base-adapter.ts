@@ -31,6 +31,12 @@ export interface CombatantSnapshot {
     heroPoints?: number;
   };
   damageAdjustments?: DamageAdjustments;
+  /**
+   * Modifier added to the d20 initiative roll. Optional because v0.5.0
+   * paths do not consume it; the v0.6.0 Monte Carlo simulation reads it
+   * via the encounter setup builder.
+   */
+  initiativeBonus?: number;
   traits: string[];
   assumptions: string[];
 }
