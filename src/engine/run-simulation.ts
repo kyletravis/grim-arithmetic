@@ -1,5 +1,6 @@
 import { createRng, deriveChildSeed } from './prng';
 import { runIteration } from './run-iteration';
+import { validateSimulationConfig } from './simulation-guardrails';
 import type {
   EncounterSetup,
   IterationResult,
@@ -37,12 +38,20 @@ export function runSimulation(
   config: SimulationConfig,
   options: RunSimulationOptions = {}
 ): SimulationResult {
+  validateSimulationConfig(config);
+
   const masterSeed = config.seed ?? Date.now();
+  const wallClockBudgetMs = config.wallClockBudgetMs ?? 0;
+  const startTime = wallClockBudgetMs > 0 ? Date.now() : 0;
   const results: IterationResult[] = [];
   let aborted = false;
 
   for (let i = 0; i < config.iterations; i += 1) {
     if (options.abortSignal?.aborted) {
+      aborted = true;
+      break;
+    }
+    if (wallClockBudgetMs > 0 && Date.now() - startTime > wallClockBudgetMs) {
       aborted = true;
       break;
     }
