@@ -2,6 +2,34 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.6.0-rc.1 - Monte Carlo encounter simulation (prerelease)
+
+First release candidate. Awaiting personal Foundry-server smoke test before promotion to v0.6.0. Per the v0.5.0 playbook this is published as a **GitHub Pre-release** and is **not** submitted to the Foundry package registry.
+
+- New **Forecast window** (~800w singleton) opened from a "Forecast encounter" button in the Encounter Danger Board header. Mirrors the existing Danger Board → Pair Detail two-window pattern; the v0.5.0 immediate-down view is unchanged.
+- New pure-TypeScript Monte Carlo simulation engine with seeded determinism:
+  - `mulberry32` PRNG + `xmur3` hash for string seeds; `deriveChildSeed()` produces stable per-iteration sub-seeds.
+  - Per-Strike sampler reuses `degreeOfSuccess()`, `damageDistribution()`, `doubleDistribution()`, and `applyDamageAdjustment()` from the existing engine; no math is duplicated.
+  - Combatant state transitions (HP, dying, wounded, doomed, downed, dead) mirror the v0.3.0 dying severity rules from `ARITHMETIC.md`.
+  - Seeded initiative roll with PCs-win-ties tiebreaker (configurable).
+  - Five tactics profiles: **random-legal**, **spread-damage**, **focus-fire**, **predator**, **boss-cinematic**.
+  - Round orchestrator (`runIteration`) and iteration runner (`runSimulation`) aggregate any-PC-down, TPK, mean/median rounds-to-first-down, per-PC down/death/HP, per-enemy damage share and top target.
+- **Web Worker** integration keeps the Foundry UI responsive during 1k / 5k / 10k iteration runs. Synchronous fallback when `Worker` is unavailable (Vitest / headless). Throttled progress events (≤10/sec) with a guaranteed final flush.
+- Per-client setting **Enable Monte Carlo encounter simulation** (defaults on) hides the Forecast button and short-circuits the worker on machines where the feature is too costly.
+- Engine guardrails: `MAX_ITERATIONS = 10000`, optional wall-clock budget, cooperative abort that returns a partial result with `aborted: true`.
+- **Always-visible assumptions block** in the Forecast window restates every run: "PCs take no actions in this model," "No healing or reactions," "No recovery checks," plus the active tactics profile description.
+- Foundry / PF2e bridge: `buildEncounterSetup()` consumes the existing `getEncounterParticipants()` flow into the SimulationCombatant shape; PF2e adapter now reads perception as the initiative bonus.
+- Vitest snapshot fixtures (13 snapshots) lock the SimulationResult across all five profiles for 4v1, 4v4, 1v1, and degenerate scenarios so future drift in any engine layer fails loudly.
+- `docs/ARITHMETIC.md` documents the Monte Carlo pipeline, tactics profiles, iterations vs standard-error guidance, seeding rules, and the deliberately-not-modeled scope (PC actions, recovery checks, persistent damage, spells, terrain).
+- Build: Vite emits the worker as a separate chunk (`dist/assets/simulation.worker-*.js`); the release script already includes it via recursive `dist/` rsync.
+
+Known scope limitations (deferred to later milestones):
+- PCs take a no-op turn — no actions, no healing, no reactions, no Hero Point spends.
+- No recovery checks between turns.
+- No persistent damage.
+- No spells / save-based threats.
+- No quick-scenario presets, A/B compare, quantile/distribution view (Tier 2–4 UI per the UX plan; v0.6.1–v0.7.0+).
+
 ## v0.5.0 - Encounter danger board (main) + Pair detail (popup)
 
 - **UI split**: the Token Controls skull button now opens an **Encounter Danger Board** as the main window. The single-PC vs single-enemy detail view lives in a separate **Pair Detail** popup (one reusable instance).

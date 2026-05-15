@@ -2,7 +2,7 @@ var e = {
 	id: "grim-arithmetic",
 	title: "Grim Arithmetic",
 	description: "GM-facing PF2e mortality and encounter-risk analysis for Foundry VTT.",
-	version: "0.5.0",
+	version: "0.6.0-rc.1",
 	authors: [{ name: "Kyle Travis" }],
 	compatibility: {
 		minimum: "13",
@@ -22,7 +22,7 @@ var e = {
 	],
 	url: "https://github.com/kyletravis/grim-arithmetic",
 	manifest: "https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json",
-	download: "https://github.com/kyletravis/grim-arithmetic/releases/download/v0.5.0/grim-arithmetic-v0.5.0.zip"
+	download: "https://github.com/kyletravis/grim-arithmetic/releases/download/v0.6.0-rc.1/grim-arithmetic-v0.6.0-rc.1.zip"
 }, t = "grim-arithmetic", n = "Grim Arithmetic", r = e.version;
 //#endregion
 //#region src/debug-capture.ts
