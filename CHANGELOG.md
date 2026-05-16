@@ -2,6 +2,28 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.6.0-rc.3 - PC action modeling (prerelease)
+
+Followup to rc.2 after the user's first real-encounter Foundry test concluded that the "PCs take no actions" baseline produced output that was directionally honest but operationally useless: a PF2e "Low Threat" encounter returned a 99% TPK because two enemies grind a stationary party. Real GMs don't think in "what if my party were stones." rc.3 pulls PC action modeling forward from v0.7.0+ into v0.6.0 so the Forecast is GM-useful before v0.6.0 promotes.
+
+- **PCs now act in the simulation.** Each PC takes 2 Strikes per turn against the most-dangerous standing enemy (selected by enemy mean damage output, ties broken by lower HP then lower id). Same MAP escalation as enemy strikes; agile traits reduce MAP from -5/-10 to -4/-8.
+- **PF2e adapter extracts PC Strikes** from `actor.system.actions` (PF2e's compiled strike list with totalModifier baked in). Falls back to walking equipped weapons in `actor.items` when actions is empty or unusable. PCs with no extractable Strike caveat in the assumptions block and skip their turns in the simulation rather than crashing.
+- **One hardcoded PC tactics profile in rc.3.** No UI dropdown. Future v0.6.1 may add tactics variants ("PCs play smart / dumb / kill the caster / etc.") if GMs want them.
+- **Forecast UI copy updated.** Assumption block no longer says "PCs take no actions"; the pessimism banner (still triggers at any-PC-down ≥ 80%) now frames extreme results as genuine structural lethality rather than a stones-of-the-PCs artifact.
+- **Encounter setup builder** populates PC attacks the same way it has populated enemy attacks since rc.1.
+- **Fixture snapshots regenerated.** All 13 KHT-76 snapshots changed because PCs now deal damage. New "PCs act" sanity assertion fails clearly if the orchestrator ever stops routing PC turns to the PC profile.
+- **ARITHMETIC.md updated** with the rc.3 PC model; the "explicitly not modeled" list shrinks (PC actions removed; healing, reactions, recovery checks, persistent damage, and spells remain deferred).
+
+Concrete impact on the rc.2-failing encounter (3 PCs vs Ghoul Stalker + Giant Rat): the 99% TPK forecast should drop dramatically. Most PCs will survive; the focused PC (Bob at 13 HP) still has elevated risk, which is correct.
+
+Still deferred to v0.7.0+ / v0.8.0+ (called out in the assumptions block):
+- Healing (Battle Medicine, Heal spell)
+- Reactions (Shield Block, Champion reactions, AoO)
+- Recovery checks between turns
+- Persistent damage
+- Spell damage / save-based actions
+- Multi-tier PC tactics in the UI (v0.6.1)
+
 ## v0.6.0-rc.2 - Tighter default round cap and pessimism banner (prerelease)
 
 Followup to rc.1 after the first Foundry-server smoke test surfaced a model-interpretation issue: a "Low Threat" PF2e encounter (per the XP budget) returned a 99% TPK forecast because the v0.6.0 conservative baseline lets two enemies grind a stationary party for 10 rounds. The math was correct; the cap and the UI did not communicate the "upper bound only" framing strongly enough.
