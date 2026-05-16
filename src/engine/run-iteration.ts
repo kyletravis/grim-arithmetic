@@ -1,3 +1,4 @@
+import { applyHeal, sampleHealAction } from './heal-actions';
 import { rollInitiative } from './initiative';
 import { getMapPenalties } from './mortality';
 import type { Rng } from './prng';
@@ -67,6 +68,7 @@ export function runIteration(
 
   let recoveryChecksFired = 0;
   let heroPointSurvivalsFired = 0;
+  let healsFired = 0;
 
   for (let round = 1; round <= config.maxRounds; round += 1) {
     roundsElapsed = round;
@@ -100,6 +102,47 @@ export function runIteration(
       const enemies = liveSideMembers(combatants, 'enemy');
       const tactics = actor.side === 'pc' ? pcTactics : enemyTactics;
       const plan = tactics.chooseTurn({ attacker: actor, pcs, enemies, round }, rng);
+
+      // Heal action (PC tactics only) runs before strikes.
+      if (plan.heal) {
+        const target = combatants.get(plan.heal.targetId);
+        if (target && !target.dead) {
+          const result = sampleHealAction(
+            {
+              kind: plan.heal.kind,
+              healerLevel: actor.healing?.healCantripLevel ?? undefined,
+              spellRank: plan.heal.spellRank,
+              medicineModifier: actor.healing?.medicineModifier,
+              medicineDC: actor.healing?.medicineDC
+            },
+            rng
+          );
+          // Heal spell on a dying target clears dying (per PF2e).
+          const clearsDying = plan.heal.kind.startsWith('heal-spell') && target.dying > 0;
+          const healed = applyHeal(target, result.healedAmount, { clearsDying });
+          // Collateral damage from crit-failed Battle Medicine.
+          let finalTarget = healed;
+          if (result.collateralDamage && result.collateralDamage > 0) {
+            const applied = applyDamage(finalTarget, {
+              damage: result.collateralDamage,
+              degree: 'success'
+            });
+            finalTarget = applied.combatant;
+          }
+          combatants.set(target.id, finalTarget);
+          healsFired += 1;
+
+          // Resource bookkeeping: decrement spell slot or mark Battle Medicine used.
+          if (plan.heal.kind.startsWith('heal-spell') && plan.heal.spellRank !== undefined) {
+            const updatedHealer = decrementSpellSlot(actor, plan.heal.spellRank);
+            combatants.set(actor.id, updatedHealer);
+          } else if (plan.heal.kind === 'battle-medicine') {
+            const updatedHealer = markBattleMedicineUsed(actor, target.id);
+            combatants.set(actor.id, updatedHealer);
+          }
+        }
+      }
+
       if (plan.strikes.length === 0) continue;
 
       for (const strike of plan.strikes) {
@@ -184,9 +227,31 @@ export function runIteration(
     perCombatant,
     damageByPair,
     events: config.captureEvents ? events : undefined,
-    healsFired: 0,
+    healsFired,
     recoveryChecksFired,
     heroPointSurvivalsFired
+  };
+}
+
+function decrementSpellSlot(healer: SimulationCombatant, rank: number): SimulationCombatant {
+  if (!healer.healing) return healer;
+  const remaining = healer.healing.healSpellSlotsRemaining[rank] ?? 0;
+  if (remaining <= 0) return healer;
+  const nextSlots = { ...healer.healing.healSpellSlotsRemaining };
+  nextSlots[rank] = remaining - 1;
+  return {
+    ...healer,
+    healing: { ...healer.healing, healSpellSlotsRemaining: nextSlots }
+  };
+}
+
+function markBattleMedicineUsed(healer: SimulationCombatant, targetId: string): SimulationCombatant {
+  if (!healer.healing) return healer;
+  const nextUsed = new Set(healer.healing.battleMedicineUsedTargets);
+  nextUsed.add(targetId);
+  return {
+    ...healer,
+    healing: { ...healer.healing, battleMedicineUsedTargets: nextUsed }
   };
 }
 
