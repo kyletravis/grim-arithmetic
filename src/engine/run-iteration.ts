@@ -1,8 +1,9 @@
 import { rollInitiative } from './initiative';
 import { getMapPenalties } from './mortality';
 import type { Rng } from './prng';
+import { sampleRecoveryCheck } from './sample-recovery';
 import { sampleStrike } from './sample-strike';
-import { applyDamage } from './sim-state';
+import { applyDamage, deathThresholdFor } from './sim-state';
 import type {
   EncounterSetup,
   IterationResult,
@@ -64,12 +65,35 @@ export function runIteration(
   let firstDownRound: number | null = null;
   let roundsElapsed = 0;
 
+  let recoveryChecksFired = 0;
+
   for (let round = 1; round <= config.maxRounds; round += 1) {
     roundsElapsed = round;
 
     for (const slot of order) {
       const actor = combatants.get(slot.combatantId);
-      if (!actor || actor.dead || actor.downed) continue;
+      if (!actor || actor.dead) continue;
+
+      // PF2e recovery check: a dying PC rolls at the start of their turn.
+      // Crit-success / success may stabilize them out of dying; crit-failure
+      // may push them to dead.
+      if (actor.side === 'pc' && actor.dying > 0) {
+        const recovery = sampleRecoveryCheck(actor, rng);
+        recoveryChecksFired += 1;
+        const threshold = deathThresholdFor(actor);
+        const recovered: SimulationCombatant = {
+          ...actor,
+          dying: recovery.newDying,
+          downed: recovery.newDying > 0 || actor.hp.current === 0,
+          dead: recovery.newDying >= threshold
+        };
+        combatants.set(actor.id, recovered);
+        // After the recovery roll, the PC's turn ends — stabilized or not,
+        // they spend the turn dying / recovering and do not act.
+        continue;
+      }
+
+      if (actor.downed) continue;
 
       const pcs = liveSideMembers(combatants, 'pc');
       const enemies = liveSideMembers(combatants, 'enemy');
@@ -156,7 +180,7 @@ export function runIteration(
     damageByPair,
     events: config.captureEvents ? events : undefined,
     healsFired: 0,
-    recoveryChecksFired: 0,
+    recoveryChecksFired,
     heroPointSurvivalsFired: 0
   };
 }
