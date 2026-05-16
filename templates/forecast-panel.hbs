@@ -57,6 +57,12 @@
     {{/if}}
 
     {{#if (eq state "done")}}
+      {{#if pessimismWarning}}
+        <section class="grim-arithmetic-forecast__pessimism-banner">
+          <strong>Upper bound only.</strong>
+          {{pessimismWarning}}
+        </section>
+      {{/if}}
       <section class="grim-arithmetic-forecast__result">
         <div class="grim-arithmetic-forecast__headline">
           <div class="grim-arithmetic-forecast__metric">

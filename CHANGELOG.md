@@ -2,6 +2,15 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.6.0-rc.2 - Tighter default round cap and pessimism banner (prerelease)
+
+Followup to rc.1 after the first Foundry-server smoke test surfaced a model-interpretation issue: a "Low Threat" PF2e encounter (per the XP budget) returned a 99% TPK forecast because the v0.6.0 conservative baseline lets two enemies grind a stationary party for 10 rounds. The math was correct; the cap and the UI did not communicate the "upper bound only" framing strongly enough.
+
+- **Lower `DEFAULT_MAX_ROUNDS` from 10 to 5.** Real PF2e encounters typically resolve in 4–6 rounds because the party ends them. Capping the no-action simulation at 5 rounds keeps the metric in the "could plausibly happen before PCs would have acted" range, instead of letting damage pile up across rounds the encounter wouldn't have lasted in real play. Halves the dogpile effect across the board.
+- **Pessimism banner.** When any-PC-down probability is >=80%, the Forecast window renders a banner above the result tables: *"Upper bound only — PCs take no actions in this model. Real outcomes are typically much lower because the party fights back, heals, uses reactions, and ends fights before they grind."* Keeps the numbers honest but stops a GM from reading them as prophecy.
+- Regenerated all KHT-76 simulation fixtures against the new 5-round default. The fixture math is the regression net; the new snapshots are the new baseline.
+- ARITHMETIC.md and MONTE-CARLO-QUESTIONS.md text already framed this correctly; no doc changes required.
+
 ## v0.6.0-rc.1 - Monte Carlo encounter simulation (prerelease)
 
 First release candidate. Awaiting personal Foundry-server smoke test before promotion to v0.6.0. Per the v0.5.0 playbook this is published as a **GitHub Pre-release** and is **not** submitted to the Foundry package registry.
