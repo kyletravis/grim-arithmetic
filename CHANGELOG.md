@@ -2,6 +2,21 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.6.0-rc.4 - Phase I-A: PC heals + recovery + Hero Point survival (prerelease)
+
+Followup to rc.3. The rc.3 build had PCs trading Strikes with enemies but no safety net — no healing, no recovery checks, no Hero Point survival. Real-table parties have all three, so rc.3 still overstated risk. rc.4 ships **Phase I-A** of the v0.6.0 PC action work: every PC survival mechanic except reactions (Shield Block, Champion — reserved for rc.5 Phase I-B).
+
+- **PF2e adapter** now extracts each PC's Medicine modifier, Battle Medicine feat, prepared Heal spell slots (per rank), and Heal cantrip caster level. Surface via a new optional `pcCapabilities` sub-object on `CombatantSnapshot`.
+- **Recovery checks**: dying PCs roll DC 10+dying at the start of their turn. PF2e degree-of-success applies: crit-success / success / failure / crit-failure step dying by −2 / −1 / 0 / +1. Most dying PCs recover within 1–2 rounds; cuts TPK rates significantly.
+- **Healing actions**: full PF2e Battle Medicine (Medicine check vs DC, proficiency-scaled heal, crit-fail collateral) + Heal spell 1/2/3-action variants + Heal cantrip with heightened scaling. Heal spell on a dying target clears dying per PF2e.
+- **Hero Point death prevention**: when a PC would die, they spend a Hero Point to drop to dying 0 at 0 HP. Capped at one HP survival per iteration per PC.
+- **PC tactics** now substitutes Strikes for heal actions when an ally is dying (emergency, full-turn heal) or below 40% HP (top-up, 1-action heal + 1 Strike). Healer-preference order: Heal spell 2-action > Heal cantrip 2-action > 1-action variants > Battle Medicine. Spell slots decrement; Battle Medicine 1/target/day enforced.
+- **Forecast assumption block** rewritten for the new model. Pessimism banner copy acknowledges PCs are now fully active.
+- **SimulationResult.safetyNet** aggregate: `meanHealsPerIteration`, `meanRecoveryChecksPerIteration`, `heroPointSurvivalRate` — surface in the UI so GMs can see the safety net firing.
+- Fixture snapshots regenerated against the new model.
+
+Still deferred to **rc.5 Phase I-B**: Shield Block reaction, Champion reactions (Liberator/Redeemer/Paladin variants). After rc.5 the "not modeled" list shrinks to spells beyond Heal, persistent damage, attacks of opportunity, movement/reach/LoS, and initiative-altering abilities.
+
 ## v0.6.0-rc.3 - PC action modeling (prerelease)
 
 Followup to rc.2 after the user's first real-encounter Foundry test concluded that the "PCs take no actions" baseline produced output that was directionally honest but operationally useless: a PF2e "Low Threat" encounter returned a 99% TPK because two enemies grind a stationary party. Real GMs don't think in "what if my party were stones." rc.3 pulls PC action modeling forward from v0.7.0+ into v0.6.0 so the Forecast is GM-useful before v0.6.0 promotes.
