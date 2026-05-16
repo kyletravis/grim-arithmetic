@@ -48,11 +48,13 @@ describe('buildForecastPanelData: idle state', () => {
     expect(data.controls.iterations.find((o) => o.selected)?.value).toBe('10000');
   });
 
-  it('always lists the v0.6.0 baseline assumptions', () => {
+  it('always lists the v0.6.0-rc.3 baseline assumptions (PCs act, no healing/reactions)', () => {
     const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
-    expect(data.assumptions).toContain('PCs take no actions in this model.');
-    expect(data.assumptions).toContain('No healing, reactions, or recovery checks.');
-    expect(data.assumptions.find((a) => a.includes('Tactics profile'))).toBeDefined();
+    expect(data.assumptions).toContain(
+      'PCs use their primary Strike twice per turn against the most-dangerous standing enemy.'
+    );
+    expect(data.assumptions).toContain('No healing, reactions, recovery checks, or spells are modeled.');
+    expect(data.assumptions.find((a) => a.includes('Enemy tactics profile'))).toBeDefined();
   });
 });
 
@@ -190,7 +192,7 @@ describe('buildForecastPanelData: done state', () => {
       })
     });
     expect(data.pessimismWarning).toBeDefined();
-    expect(data.pessimismWarning).toMatch(/Upper bound|PCs take no actions|fights back/i);
+    expect(data.pessimismWarning).toMatch(/high-risk|2 Strikes per turn|structural lethality/i);
   });
 
   it('omits the pessimism banner when any-PC-down is below the threshold', () => {
