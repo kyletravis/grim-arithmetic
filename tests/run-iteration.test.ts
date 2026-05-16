@@ -163,6 +163,45 @@ describe('runIteration termination', () => {
   });
 });
 
+describe('runIteration: side-aware tactics (PCs act, v0.6.0-rc.3)', () => {
+  it('PCs with attacks fight back and can drop enemies', () => {
+    const setup: EncounterSetup = {
+      pcs: [
+        makePc('mira', {
+          hp: { current: 24, max: 24, temp: 0 },
+          attacks: [
+            { id: 'sword', name: 'Sword', attackBonus: 14, damageFormula: '2d8+6',
+              damageType: 'slashing', traits: [], mapType: 'normal', assumptions: [] }
+          ]
+        })
+      ],
+      enemies: [makeEnemy('brittle', [makeAttack({ attackBonus: 0, damageFormula: '1d4' })], {
+        hp: { current: 6, max: 6, temp: 0 }, defenses: { ac: 14 }
+      })],
+      caveats: []
+    };
+    const config = makeConfig({ maxRounds: 5, seed: 'pc-acts' });
+    const result = runIteration(setup, config, createRng(config.seed!), 0);
+    // The PC's hit chance is ~85%+ and damage is well over the enemy's HP; the
+    // encounter ends well within maxRounds with the enemy dead.
+    expect(result.roundsElapsed).toBeLessThan(5);
+    const enemyOutcome = result.perCombatant.find((c) => c.id === 'brittle');
+    expect(enemyOutcome?.dead).toBe(true);
+    expect(result.tpk).toBe(false);
+  });
+
+  it('PCs with no attacks still skip their turn cleanly', () => {
+    const setup: EncounterSetup = {
+      pcs: [makePc('passive', { attacks: [] })],
+      enemies: [makeEnemy('boss', [makeAttack({ attackBonus: 15, damageFormula: '5d10+10' })])],
+      caveats: []
+    };
+    const result = runIteration(setup, makeConfig({ maxRounds: 5, seed: 'passive' }), createRng('passive'), 0);
+    // With no PC attacks, behavior collapses to the rc.2 baseline: enemy grinds PC.
+    expect(result.tpk).toBe(true);
+  });
+});
+
 describe('runIteration metrics', () => {
   it('damageByPair attributes damage to specific (enemy, pc) keys', () => {
     const setup = makeSetup({

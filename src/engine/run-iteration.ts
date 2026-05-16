@@ -12,6 +12,8 @@ import type {
   SimulationConfig
 } from './simulation-types';
 import { TACTICS_PROFILES } from './tactics';
+import { pcDefaultTactics } from './tactics/pc-default';
+import type { TacticsProfile } from './tactics/tactics-types';
 
 export interface RunIterationOptions {
   /** When true, initiative is taken in input order (no RNG consumed). */
@@ -55,7 +57,8 @@ export function runIteration(
     useFixedOrder: options.useFixedInitiative
   });
 
-  const tactics = TACTICS_PROFILES[config.tacticsProfile];
+  const enemyTactics = TACTICS_PROFILES[config.tacticsProfile];
+  const pcTactics: TacticsProfile = pcDefaultTactics;
   const damageByPair: Record<string, number> = {};
   const events: RoundEvent[] = [];
   let firstDownRound: number | null = null;
@@ -67,10 +70,10 @@ export function runIteration(
     for (const slot of order) {
       const actor = combatants.get(slot.combatantId);
       if (!actor || actor.dead || actor.downed) continue;
-      if (actor.side === 'pc') continue; // PCs take no actions in v0.6.0.
 
       const pcs = liveSideMembers(combatants, 'pc');
       const enemies = liveSideMembers(combatants, 'enemy');
+      const tactics = actor.side === 'pc' ? pcTactics : enemyTactics;
       const plan = tactics.chooseTurn({ attacker: actor, pcs, enemies, round }, rng);
       if (plan.strikes.length === 0) continue;
 
