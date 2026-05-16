@@ -1,4 +1,4 @@
-import { AttackSnapshot, CombatantSnapshot, DamageAdjustmentValue, SystemAdapter } from './base-adapter';
+import { AttackSnapshot, CombatantSnapshot, DamageAdjustmentValue, PcCapabilities, SystemAdapter } from './base-adapter';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -90,6 +90,7 @@ export class Pf2eAdapter implements SystemAdapter<TokenLike> {
         immunities: getImmunities(attributes.immunities ?? system.immunities)
       },
       initiativeBonus,
+      pcCapabilities: actor.type === 'character' ? extractPcCapabilities(actor) : undefined,
       traits: toStringArray(traits.value),
       assumptions: []
     };
@@ -266,6 +267,66 @@ function extractAttackFromWeaponItem(item: ItemLike): AttackSnapshot | null {
       'PC Strike fallback from weapon item: attack bonus excludes character proficiency and ability modifiers.'
     ]
   };
+}
+
+/**
+ * Phase I-A extraction: Medicine skill + Battle Medicine feat.
+ *
+ * PF2e exposes Medicine as one of `system.skills` (with `.value` or
+ * `.totalModifier`) on the actor system; the modifier already includes
+ * proficiency + ability + item bonus where applicable. Battle Medicine
+ * is a feat item; we detect it by slug.
+ *
+ * Medicine DC is derived from PF2e's proficiency-rank table: trained 15,
+ * expert 20, master 30, legendary 40 (rc.4 default; future iterations
+ * may scale by character level instead).
+ */
+function extractPcCapabilities(actor: ActorLike): PcCapabilities | undefined {
+  const system = asRecord(actor.system);
+  const skills = asRecord(system.skills);
+  const medicine = asRecord(skills.medicine);
+  const medicineModifier =
+    optionalNumberLike(medicine.totalModifier) ?? optionalNumberLike(medicine.value);
+  const medicineRank = optionalNumberLike(medicine.rank);
+  const medicineDC = medicineDcForRank(medicineRank);
+  const hasBattleMedicine = detectBattleMedicineFeat(actor);
+
+  // Only return capabilities if we have at least one positive signal; an
+  // empty PcCapabilities object would be misleading for consumers.
+  if (medicineModifier === undefined && !hasBattleMedicine) {
+    return { medicineDC };
+  }
+  return {
+    medicineModifier,
+    hasBattleMedicine,
+    medicineDC
+  };
+}
+
+function medicineDcForRank(rank: number | undefined): number {
+  switch (rank) {
+    case 4:
+      return 40;
+    case 3:
+      return 30;
+    case 2:
+      return 20;
+    case 1:
+      return 15;
+    default:
+      return 15;
+  }
+}
+
+function detectBattleMedicineFeat(actor: ActorLike): boolean {
+  const items = getActorItems(actor);
+  for (const item of items) {
+    if (item.type !== 'feat') continue;
+    const system = asRecord(item.system);
+    const slug = typeof system.slug === 'string' ? system.slug : item.name?.toLowerCase().replace(/\s+/g, '-');
+    if (slug === 'battle-medicine') return true;
+  }
+  return false;
 }
 
 function getDisposition(token: TokenLike, actor: ActorLike): CombatantSnapshot['disposition'] {
