@@ -3,10 +3,42 @@ import { Pf2eAdapter } from '../src/systems/pf2e-adapter';
 
 const adapter = new Pf2eAdapter();
 
+interface SpellItem {
+  name?: string;
+  slug?: string;
+  level?: number;
+  isCantrip?: boolean;
+  traits?: string[];
+  slotsRemaining?: number;
+}
+
 function pcToken(opts: {
   medicine?: { totalModifier?: number; value?: number; rank?: number };
   feats?: Array<{ slug?: string; name?: string }>;
+  spells?: SpellItem[];
+  casterLevel?: number;
 }): unknown {
+  const items: unknown[] = [];
+  if (opts.feats) {
+    for (const f of opts.feats) {
+      items.push({ type: 'feat', name: f.name, system: { slug: f.slug } });
+    }
+  }
+  if (opts.spells) {
+    for (const s of opts.spells) {
+      items.push({
+        type: 'spell',
+        name: s.name ?? 'Heal',
+        system: {
+          slug: s.slug,
+          level: s.level,
+          isCantrip: s.isCantrip,
+          traits: { value: s.traits ?? [] },
+          slotsRemaining: s.slotsRemaining
+        }
+      });
+    }
+  }
   return {
     id: 'pc-1',
     name: 'Mira',
@@ -18,11 +50,10 @@ function pcToken(opts: {
       system: {
         attributes: { hp: { value: 24, max: 24 }, ac: { value: 20 } },
         skills: opts.medicine ? { medicine: opts.medicine } : undefined,
+        details: opts.casterLevel ? { level: { value: opts.casterLevel } } : undefined,
         traits: { value: [] }
       },
-      items: opts.feats
-        ? { contents: opts.feats.map((f) => ({ type: 'feat', name: f.name, system: { slug: f.slug } })) }
-        : undefined
+      items: items.length > 0 ? { contents: items } : undefined
     }
   };
 }
@@ -38,7 +69,9 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
     expect(snapshot?.pcCapabilities).toEqual({
       medicineModifier: 8,
       hasBattleMedicine: true,
-      medicineDC: 15
+      medicineDC: 15,
+      healSpellSlots: undefined,
+      healCantripLevel: null
     });
   });
 
@@ -85,7 +118,48 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
 
   it('returns a minimal pcCapabilities object when PC has no Medicine and no Battle Medicine', () => {
     const snapshot = adapter.getCombatantFromToken(pcToken({}));
-    expect(snapshot?.pcCapabilities).toEqual({ medicineDC: 15 });
+    expect(snapshot?.pcCapabilities).toEqual({ medicineDC: 15, healCantripLevel: null });
+  });
+
+  it('extracts prepared Heal spell slots and Heal cantrip from a Cleric', () => {
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({
+        casterLevel: 4,
+        spells: [
+          { slug: 'heal', level: 1, slotsRemaining: 3 },
+          { slug: 'heal', level: 2, slotsRemaining: 2 },
+          { slug: 'heal', level: 0, isCantrip: true, traits: ['cantrip'] }
+        ]
+      })
+    );
+    expect(snapshot?.pcCapabilities?.healSpellSlots).toEqual({ 1: 3, 2: 2 });
+    expect(snapshot?.pcCapabilities?.healCantripLevel).toBe(4);
+  });
+
+  it('detects Heal cantrip with no prepared slots (Druid with only the cantrip)', () => {
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({
+        casterLevel: 6,
+        spells: [{ slug: 'heal', level: 0, isCantrip: true, traits: ['cantrip'] }]
+      })
+    );
+    expect(snapshot?.pcCapabilities?.healSpellSlots).toBeUndefined();
+    expect(snapshot?.pcCapabilities?.healCantripLevel).toBe(6);
+  });
+
+  it('returns no Heal capability for a martial PC with no spells', () => {
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({ medicine: { totalModifier: 5, rank: 1 } })
+    );
+    expect(snapshot?.pcCapabilities?.healSpellSlots).toBeUndefined();
+    expect(snapshot?.pcCapabilities?.healCantripLevel).toBeNull();
+  });
+
+  it('treats spells with no slotsRemaining as 1 prepared slot by default', () => {
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({ spells: [{ slug: 'heal', level: 3 }] })
+    );
+    expect(snapshot?.pcCapabilities?.healSpellSlots).toEqual({ 3: 1 });
   });
 
   it('does not surface pcCapabilities on NPC actors', () => {
