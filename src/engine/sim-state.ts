@@ -26,6 +26,8 @@ export interface AppliedDamageResult {
   damageAbsorbed: number;
   becameDowned: boolean;
   becameDead: boolean;
+  /** True when Hero Point death-prevention fired on this strike (KHT-94). */
+  heroPointSurvivalFired?: boolean;
 }
 
 /**
@@ -103,18 +105,38 @@ export function applyDamage(
   const dyingIncrement = application.degree === 'criticalSuccess' ? 2 : 1;
   const dying = wasDying ? target.dying + dyingIncrement : dyingIncrement + target.wounded;
   const deathThreshold = Math.max(1, 4 - target.doomed);
-  const dead = dying >= deathThreshold;
+  const wouldBeDead = dying >= deathThreshold;
+
+  // Hero Point survival: PCs can spend a Hero Point to avoid death,
+  // dropping dying to 0 (still unconscious at 0 HP). Capped at one
+  // HP survival per iteration per PC (v0.6.0-rc.4 simplification).
+  if (wouldBeDead && target.heroPoints > 0 && !target.heroPointSurvivalUsed) {
+    return {
+      combatant: {
+        ...nextBase,
+        dying: 0,
+        downed: true,
+        dead: false,
+        heroPoints: target.heroPoints - 1,
+        heroPointSurvivalUsed: true
+      },
+      damageAbsorbed,
+      becameDowned: !wasDowned,
+      becameDead: false,
+      heroPointSurvivalFired: true
+    };
+  }
 
   return {
     combatant: {
       ...nextBase,
       dying,
       downed: true,
-      dead
+      dead: wouldBeDead
     },
     damageAbsorbed,
     becameDowned: !wasDowned,
-    becameDead: dead
+    becameDead: wouldBeDead
   };
 }
 

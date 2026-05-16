@@ -13,6 +13,7 @@ function makePc(overrides: Partial<SimulationCombatant> = {}): SimulationCombata
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -33,6 +34,7 @@ function makeEnemy(overrides: Partial<SimulationCombatant> = {}): SimulationComb
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -146,6 +148,60 @@ describe('applyDamage', () => {
     const snapshot = JSON.stringify(pc);
     applyDamage(pc, { damage: 10, degree: 'criticalSuccess' });
     expect(JSON.stringify(pc)).toBe(snapshot);
+  });
+});
+
+describe('applyDamage: Hero Point survival (KHT-94)', () => {
+  it('spends a Hero Point to avoid death; survives at dying 0', () => {
+    const pc = makePc({
+      hp: { current: 1, max: 20, temp: 0 },
+      wounded: 3,
+      heroPoints: 1
+    });
+    // 1 damage drops HP to 0; dying = 1 + 3 wounded = 4 = death threshold.
+    const result = applyDamage(pc, { damage: 1, degree: 'success' });
+    expect(result.combatant.dead).toBe(false);
+    expect(result.combatant.dying).toBe(0);
+    expect(result.combatant.downed).toBe(true);
+    expect(result.combatant.heroPoints).toBe(0);
+    expect(result.combatant.heroPointSurvivalUsed).toBe(true);
+    expect(result.heroPointSurvivalFired).toBe(true);
+  });
+
+  it('does not survive when already used HP survival this iteration', () => {
+    const pc = makePc({
+      hp: { current: 1, max: 20, temp: 0 },
+      wounded: 3,
+      heroPoints: 1,
+      heroPointSurvivalUsed: true
+    });
+    const result = applyDamage(pc, { damage: 1, degree: 'success' });
+    expect(result.combatant.dead).toBe(true);
+    expect(result.combatant.heroPoints).toBe(1);
+  });
+
+  it('does not survive when no Hero Points remain', () => {
+    const pc = makePc({
+      hp: { current: 1, max: 20, temp: 0 },
+      wounded: 3,
+      heroPoints: 0
+    });
+    const result = applyDamage(pc, { damage: 1, degree: 'success' });
+    expect(result.combatant.dead).toBe(true);
+  });
+
+  it('does not fire for enemies', () => {
+    const enemy = makeEnemy({ hp: { current: 1, max: 30, temp: 0 }, heroPoints: 1 });
+    const result = applyDamage(enemy, { damage: 5, degree: 'success' });
+    expect(result.combatant.dead).toBe(true);
+    expect(result.heroPointSurvivalFired).toBeFalsy();
+  });
+
+  it('does not fire when damage does not threaten death (HP > 0 after)', () => {
+    const pc = makePc({ hp: { current: 20, max: 20, temp: 0 }, heroPoints: 1 });
+    const result = applyDamage(pc, { damage: 5, degree: 'success' });
+    expect(result.combatant.heroPoints).toBe(1);
+    expect(result.heroPointSurvivalFired).toBeFalsy();
   });
 });
 
