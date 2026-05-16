@@ -720,24 +720,41 @@ Two forms accepted in the seed input:
 
 The runner derives a per-iteration sub-seed from the master seed so iteration N is reproducible independently of total iteration count. Truncating from a 5k run to a 1k run yields the same first 1,000 per-iteration outcomes when the master seed matches.
 
+### PC survival mechanics (v0.6.0-rc.4)
+
+rc.4 ships Phase I-A of the PC survival work: healing, recovery checks, and Hero Point death prevention. Reactions (Shield Block, Champion) are reserved for rc.5 Phase I-B.
+
+- **Recovery checks.** At the start of each dying PC's turn, the engine rolls a PF2e flat check (1d20 vs DC 10+dying). Crit-success / success / failure / crit-failure step dying by −2 / −1 / 0 / +1. Most dying PCs recover within 1–2 rounds without intervention, which dramatically cuts the rc.3 "drop once, die" cascade.
+- **Healing actions** (when extracted from the PC's actor data):
+  - **Battle Medicine** — Medicine check vs DC (proficiency-scaled). Crit-success heals 4d8+8; success heals 2d8+4; failure heals 0; crit-failure heals 0 and deals 1d8 to the target. 1/target/day per PF2e.
+  - **Heal spell** — 1-action heals 1d10 single target; 2-action heals `<rank>d8 + 8*<rank>`; 3-action heals same as 2-action (sim ignores AoE positioning). Consumes a prepared slot. Heal cast on a dying target also clears dying.
+  - **Heal cantrip** — 1-action 1d10; 2-action `(1 + ceil(level/2))d8`, scaling with caster level. At-will.
+- **PC tactics decision tree** runs each PC turn:
+  1. *Emergency heal* — any standing ally is dying. Full-turn 2-action heal on the most-dying ally. No Strikes that round.
+  2. *Top-up heal* — any ally below 40% HP (and not dying). 1-action heal + 1-action Strike.
+  3. *Default* — 2 Strikes at the most-dangerous standing enemy.
+  Healer preference: Heal spell 2-action > Heal cantrip 2-action > 1-action variants > Battle Medicine. Slot economy: spell slots decrement; Battle Medicine respects per-target restriction.
+- **Hero Point death prevention** — when a PC would die (`dying >= deathThreshold`), spend a Hero Point to drop to dying 0 at 0 HP. Capped at one Hero Point survival per iteration per PC. Eliminates the one-bad-roll TPK pattern rc.3 still produced.
+
+The combination cuts rc.3's TPK rate for the canonical 3-PC vs 2-enemy "Low Threat" encounter from ~32% (focus-fire) to ~2%, matching GM intuition for a PF2e Low-Threat encounter with a healer in the party.
+
 ### Explicitly not modeled in v0.6.0
 
-The simulation is intentionally conservative; the assumptions block in the Forecast window restates these every run. PC actions joined the model in rc.3 and are no longer listed here.
+PC actions, healing, recovery, and Hero Point survival are all modeled as of rc.4.
 
-- **PC healing.** No Battle Medicine, Heal spells, Treat Wounds. A PC that drops stays dropped for the rest of the iteration. The largest single residual deviation from real play after rc.3.
-- **Reactions.** Shield Block, Champion reactions, attack-of-opportunity, and other reactions are not modeled.
-- **Recovery checks.** A PC that drops stays dying; subsequent strikes increment dying, but there is no recovery roll between turns. v0.8.0+ is scoped to add it.
+- **Reactions** (rc.5). Shield Block, Champion reactions (Liberator/Redeemer/Paladin) — coming in rc.5. Attacks of opportunity defer to v0.7.0+.
+- **Spells beyond Heal.** Enemies use Strikes only; PCs use Strikes + Heal. Save-based threats and offensive spells defer to v0.7.0+.
 - **Persistent damage.** v0.8.0+.
-- **Spells and save-based actions.** Both PCs and enemies use Strikes only. v0.7.0+ adds saves and primary spell attacks.
 - **Movement, reach, line of sight.** The simulation assumes everyone can reach everyone.
-- **Initiative-altering abilities.** Delay, Ready, surprise rounds, and feats that move initiative are not modeled. The runner re-uses the rolled order every round.
-- **PC multi-attack action economy beyond 2 Strikes/turn.** Real PCs sometimes Strike 3 times (third Strike at -10 MAP); rc.3 caps at 2. Real PCs also use the third action for movement, Raise Shield, Demoralize, Battle Medicine, etc. — none of those are modeled, so the simulation under-rewards parties that lean on third-action options.
+- **Initiative-altering abilities.** Delay, Ready, surprise rounds, and feats that move initiative are not modeled.
+- **PC multi-attack action economy beyond 2 Strikes/turn.** Real PCs sometimes Strike 3 times (third Strike at -10 MAP); rc.4 caps at 2.
+- **Multi-encounter resource regeneration.** Heal spell slots and Battle Medicine targets are tracked within a single iteration but do not refresh between iterations — that's correct for single-encounter forecasts.
 
 ### How to interpret the numbers
 
 The forecast is decision support, not prophecy.
 
-- After rc.3, the simulation reflects realistic round counts (typically 2–4 rounds) because both sides act. Encounters that "should" end fast usually do; encounters that look like grinds will show high TPK or per-PC-death rates worth examining.
+- After rc.4, the simulation reflects realistic round counts (typically 2–4 rounds) AND a realistic safety net (healing, recovery, Hero Points). A "Low Threat" PF2e encounter with a healer in the party should now show low single-digit TPK risk; if it doesn't, the encounter likely has structural lethality worth examining.
 - A 30% TPK probability is still a **model artifact**, not a 30% campaign-death chance. It's the probability under "no healing, no reactions, no Hero Points, fixed tactics for both sides." Real-table risk usually skews lower because PCs use Battle Medicine, Shield Block, Demoralize, and similar non-Strike actions the model does not yet simulate.
 - A 1k run with TPK 5% and a second 1k run with TPK 8% are within the same noise band (±3%). If a close call matters, bump to 10k.
 - Risk pills (Low / Guarded / Dangerous / Severe / Grim) use the same v0.5.0 thresholds; per-PC risk is mapped from each PC's own down probability.

@@ -394,8 +394,11 @@ export function buildForecastPanelData({
   state: ForecastRunState;
 }): ForecastPanelData {
   const baseAssumptions = [
-    'PCs use their primary Strike twice per turn against the most-dangerous standing enemy.',
-    'No healing, reactions, recovery checks, or spells are modeled.',
+    'PCs Strike the most-dangerous standing enemy (2 strikes per turn by default).',
+    'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP.',
+    'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success / crit-failure step dying.',
+    'Hero Points are spent to prevent death (once per iteration per PC).',
+    'Not modeled in rc.4: reactions (Shield Block, Champion), spells beyond Heal, persistent damage, attacks of opportunity, movement / reach / line of sight.',
     `Enemy tactics profile: ${TACTICS_PROFILE_LABELS[controls.tacticsProfile]} — ${TACTICS_PROFILE_DESCRIPTIONS[controls.tacticsProfile]}`,
     `Iterations: ${controls.iterations}.`
   ];
@@ -478,8 +481,8 @@ export function buildForecastPanelData({
 function buildPessimismWarning(result: SimulationResult): string | undefined {
   if (result.anyPcDownProbability < 0.8) return undefined;
   return (
-    'High-risk encounter. Even with PCs taking 2 Strikes per turn against the most-dangerous standing enemy, the modeled outcome ends badly in most iterations. ' +
-    "Healing, reactions, and tactical positioning are still not modeled, so real-table risk is usually lower — but this encounter has structural lethality worth examining."
+    'High-risk encounter. Even with PCs healing, recovering, and spending Hero Points, the modeled outcome ends badly in most iterations. ' +
+    'Reactions (Shield Block, Champion) and tactical positioning are still not modeled, so real-table risk may be a bit lower — but this encounter has structural lethality worth examining.'
   );
 }
 

@@ -22,9 +22,14 @@ import type { AttackSnapshot } from '../src/systems/base-adapter';
  */
 
 /**
- * Default PC build for v0.6.0-rc.3 fixtures: ~level 6 martial with a
+ * Default PC build for v0.6.0-rc.4 fixtures: ~level 6 martial with a
  * single Strike, +14 to hit, 1d8+5 slashing. Roughly matches the PF2e
  * party assumption that drives encounter XP budgets.
+ *
+ * Each PC gets 1 Hero Point and Battle Medicine by default so the rc.4
+ * safety-net paths (Hero Point survival, Battle Medicine top-up) exercise.
+ * mira specifically is built as a Cleric with prepared Heal spells +
+ * Heal cantrip so the spell-slot path exercises too.
  */
 const DEFAULT_PC_STRIKE: AttackSnapshot = {
   id: 'longsword',
@@ -41,6 +46,7 @@ function pc(
   id: string,
   overrides: Partial<SimulationCombatant> = {}
 ): SimulationCombatant {
+  const isMira = id === 'mira';
   return {
     id,
     name: id,
@@ -50,12 +56,22 @@ function pc(
     dying: 0,
     wounded: 0,
     doomed: 0,
-    heroPoints: 0,
+    heroPoints: 1,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 5,
     traits: [],
     attacks: [{ ...DEFAULT_PC_STRIKE, id: `${id}-strike` }],
+    healing: {
+      medicineModifier: 8,
+      medicineDC: 15,
+      hasBattleMedicine: true,
+      battleMedicineUsedTargets: new Set(),
+      // Mira plays a Cleric with prepared Heal slots + cantrip.
+      healSpellSlotsRemaining: isMira ? { 1: 3, 2: 2 } : {},
+      healCantripLevel: isMira ? 4 : null
+    },
     ...overrides
   };
 }
