@@ -106,6 +106,7 @@ function snapshotToSimulationCombatant(
       reflex: snapshot.defenses.reflex,
       will: snapshot.defenses.will
     },
+    heroPointSurvivalUsed: false,
     dying: snapshot.deathState?.dying ?? 0,
     wounded: snapshot.deathState?.wounded ?? 0,
     doomed: snapshot.deathState?.doomed ?? 0,

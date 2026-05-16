@@ -96,6 +96,11 @@ function aggregate(
         damageShare: 0,
         topTargetId: null
       })),
+      safetyNet: {
+        meanHealsPerIteration: 0,
+        meanRecoveryChecksPerIteration: 0,
+        heroPointSurvivalRate: 0
+      },
       caveats: [...setup.caveats, 'No iterations completed.']
     };
   }
@@ -189,6 +194,15 @@ function aggregate(
     };
   });
 
+  let totalHeals = 0;
+  let totalRecoveries = 0;
+  let hpSurvivalIterations = 0;
+  for (const r of results) {
+    totalHeals += r.healsFired;
+    totalRecoveries += r.recoveryChecksFired;
+    if (r.heroPointSurvivalsFired > 0) hpSurvivalIterations += 1;
+  }
+
   return {
     iterationsRequested: config.iterations,
     iterationsCompleted: completedCount,
@@ -204,6 +218,11 @@ function aggregate(
     medianFirstDownRound: firstDownRounds.length > 0 ? median(firstDownRounds) : null,
     perPc,
     perEnemy,
+    safetyNet: {
+      meanHealsPerIteration: totalHeals / completedCount,
+      meanRecoveryChecksPerIteration: totalRecoveries / completedCount,
+      heroPointSurvivalRate: hpSurvivalIterations / completedCount
+    },
     caveats: [...setup.caveats]
   };
 }
