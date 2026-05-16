@@ -1,4 +1,4 @@
-import type { EncounterSetup, SimulationCombatant } from '../engine/simulation-types';
+import type { EncounterSetup, HealingState, SimulationCombatant } from '../engine/simulation-types';
 import type { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 import {
   getEncounterParticipants,
@@ -63,7 +63,9 @@ function materialize<TokenLike extends { name?: string }>(
     if (attacks.length === 0) {
       caveats.push(`${p.snapshot.name} has no supported Strike; will skip its turns in the simulation.`);
     }
-    return snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
+    const combatant = snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
+    combatant.healing = buildHealingState(p.snapshot, caveats);
+    return combatant;
   });
 
   const enemies: SimulationCombatant[] = participants.hostiles.map((h) => {
@@ -80,6 +82,36 @@ function materialize<TokenLike extends { name?: string }>(
   });
 
   return { pcs, enemies, caveats };
+}
+
+function buildHealingState(snapshot: CombatantSnapshot, caveats: string[]): HealingState {
+  const caps = snapshot.pcCapabilities;
+  if (!caps) {
+    return {
+      medicineDC: 15,
+      hasBattleMedicine: false,
+      battleMedicineUsedTargets: new Set(),
+      healSpellSlotsRemaining: {},
+      healCantripLevel: null
+    };
+  }
+  const hasBattleMedicine = caps.hasBattleMedicine === true;
+  const slots = caps.healSpellSlots ?? {};
+  const cantrip = caps.healCantripLevel ?? null;
+  const slotCount = Object.values(slots).reduce((sum, n) => sum + n, 0);
+  if (!hasBattleMedicine && slotCount === 0 && cantrip === null) {
+    caveats.push(`${snapshot.name} has no healing options; will not heal in this simulation.`);
+  } else if (hasBattleMedicine && slotCount === 0 && cantrip === null && caps.medicineModifier === undefined) {
+    caveats.push(`${snapshot.name}: Battle Medicine detected but no Medicine modifier; using default DC 15 with +0 modifier.`);
+  }
+  return {
+    medicineModifier: caps.medicineModifier,
+    medicineDC: caps.medicineDC ?? 15,
+    hasBattleMedicine,
+    battleMedicineUsedTargets: new Set(),
+    healSpellSlotsRemaining: { ...slots },
+    healCantripLevel: cantrip
+  };
 }
 
 function snapshotToSimulationCombatant(
