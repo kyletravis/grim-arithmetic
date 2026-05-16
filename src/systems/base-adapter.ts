@@ -9,6 +9,24 @@ export interface DamageAdjustments {
   immunities: string[];
 }
 
+/**
+ * PC-specific capabilities surfaced by the system adapter for v0.6.0-rc.4+
+ * PC action modeling. Only populated for PC actors (disposition === 'pc').
+ *
+ * Each field is independently optional so the adapter can extend coverage
+ * incrementally: rc.4 Phase I-A adds Medicine + Heal spells + Hero Points;
+ * Phase I-B (rc.5) adds shield + class. Consumers must treat absent fields
+ * as "capability unknown / not present" rather than "explicitly zero".
+ */
+export interface PcCapabilities {
+  /** Medicine skill modifier (for Battle Medicine check). */
+  medicineModifier?: number;
+  /** True when the PC has the Battle Medicine feat. */
+  hasBattleMedicine?: boolean;
+  /** DC for the Battle Medicine check; derived from Medicine proficiency. */
+  medicineDC?: number;
+}
+
 export interface CombatantSnapshot {
   id: string;
   name: string;
@@ -37,6 +55,11 @@ export interface CombatantSnapshot {
    * via the encounter setup builder.
    */
   initiativeBonus?: number;
+  /**
+   * PC-specific action/reaction capabilities. Populated for PC actors only;
+   * undefined for NPCs and pre-rc.4 callers.
+   */
+  pcCapabilities?: PcCapabilities;
   traits: string[];
   assumptions: string[];
 }
