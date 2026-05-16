@@ -686,6 +686,19 @@ Five tactics profiles ship in v0.6.0. Each is a pure function of state plus the 
 
 A profile that lands on a target dropped by an earlier strike in the same turn still resolves the remaining strikes — the plan is committed when the turn begins. This is intentional and slightly more lethal than a "smart" enemy that would retarget; it is the conservative-for-the-PCs assumption.
 
+### PC tactics (v0.6.0-rc.3)
+
+rc.1 and rc.2 shipped with PCs taking no actions in the simulation. That made the output disorienting against GM intuition — a PF2e "Low Threat" encounter would report a 99% TPK because two enemies grind a stationary party for 5 rounds. rc.3 pulls PC action modeling forward from v0.7.0+ into v0.6.0 so the forecast is GM-useful before v0.6.0 promotes.
+
+In rc.3, PCs use **one hardcoded tactics profile** (no UI dropdown). Future v0.6.1 may add variants:
+
+- **Target selection.** PCs target the standing enemy whose primary attack has the highest mean damage — the actual threat to the party, not the lowest-HP minion. Tiebreakers: lower current HP wins, then lower id ascending (determinism).
+- **Strikes per turn.** Two, matching PF2e's standard two-action attack routine. MAP escalates from 0 to -5 (or 0 to -4 for agile weapons), identical to enemy strikes.
+- **Attack selection.** PC uses their first available Strike (mirrors `pickFirstAttack` for enemies). A future enhancement could pick by best expected damage against target AC.
+- **Skip cases.** PC skips its turn cleanly when no standing enemies remain or when the PC has no extractable Strike. The setup builder surfaces "<name> has no supported Strike; will skip its turns in the simulation." as a caveat.
+
+PC Strikes resolve through the exact same `sampleStrike` + `applyDamage` pipeline as enemy strikes. Enemy resistance/weakness/immunity applies to PC damage symmetrically. An enemy at 0 HP is marked dead directly (no dying spiral); the encounter ends early once all enemies are dead.
+
 ### Iterations and stability
 
 Three iteration counts are exposed in the UI:
@@ -709,24 +722,27 @@ The runner derives a per-iteration sub-seed from the master seed so iteration N 
 
 ### Explicitly not modeled in v0.6.0
 
-The simulation is intentionally conservative; the assumptions block in the Forecast window restates these every run.
+The simulation is intentionally conservative; the assumptions block in the Forecast window restates these every run. PC actions joined the model in rc.3 and are no longer listed here.
 
-- **PC actions.** PCs take a no-op turn. No attacks, no healing, no spells, no Hero Point use. Real-table PCs almost always reduce the down/TPK rate; v0.6.0's output is therefore an upper bound on real-table risk.
+- **PC healing.** No Battle Medicine, Heal spells, Treat Wounds. A PC that drops stays dropped for the rest of the iteration. The largest single residual deviation from real play after rc.3.
 - **Reactions.** Shield Block, Champion reactions, attack-of-opportunity, and other reactions are not modeled.
-- **Recovery checks.** A PC that drops stays dying; subsequent strikes increment dying, but there is no recovery roll between turns. This is the largest single deviation from real play; v0.8.0+ is scoped to add it.
+- **Recovery checks.** A PC that drops stays dying; subsequent strikes increment dying, but there is no recovery roll between turns. v0.8.0+ is scoped to add it.
 - **Persistent damage.** v0.8.0+.
-- **Spells and save-based actions.** Enemies use Strikes only. v0.7.0+ adds saves.
-- **Movement, reach, line of sight.** The simulation assumes all enemies can reach all PCs.
+- **Spells and save-based actions.** Both PCs and enemies use Strikes only. v0.7.0+ adds saves and primary spell attacks.
+- **Movement, reach, line of sight.** The simulation assumes everyone can reach everyone.
 - **Initiative-altering abilities.** Delay, Ready, surprise rounds, and feats that move initiative are not modeled. The runner re-uses the rolled order every round.
+- **PC multi-attack action economy beyond 2 Strikes/turn.** Real PCs sometimes Strike 3 times (third Strike at -10 MAP); rc.3 caps at 2. Real PCs also use the third action for movement, Raise Shield, Demoralize, Battle Medicine, etc. — none of those are modeled, so the simulation under-rewards parties that lean on third-action options.
 
 ### How to interpret the numbers
 
 The forecast is decision support, not prophecy.
 
-- A 30% TPK probability is a **model artifact**, not a 30% campaign-death chance. It's the probability under "PCs do nothing, no healing, no reactions, fixed tactics." Realistic play almost always brings the actual rate down.
+- After rc.3, the simulation reflects realistic round counts (typically 2–4 rounds) because both sides act. Encounters that "should" end fast usually do; encounters that look like grinds will show high TPK or per-PC-death rates worth examining.
+- A 30% TPK probability is still a **model artifact**, not a 30% campaign-death chance. It's the probability under "no healing, no reactions, no Hero Points, fixed tactics for both sides." Real-table risk usually skews lower because PCs use Battle Medicine, Shield Block, Demoralize, and similar non-Strike actions the model does not yet simulate.
 - A 1k run with TPK 5% and a second 1k run with TPK 8% are within the same noise band (±3%). If a close call matters, bump to 10k.
 - Risk pills (Low / Guarded / Dangerous / Severe / Grim) use the same v0.5.0 thresholds; per-PC risk is mapped from each PC's own down probability.
 - The biggest threat enemy is "who contributed the most absorbed damage across iterations," not necessarily "who's the dramatic villain."
+- The Danger Board's per-pair view is still the right tool for "what's lethal *right now in a single turn*"; the Forecast answers the multi-round encounter question.
 
 ### Performance and the kill switch
 
@@ -778,6 +794,7 @@ tests/dice.test.ts
 tests/mortality.test.ts
 tests/panel-data.test.ts
 tests/pf2e-adapter.test.ts
+tests/pf2e-adapter-pc-strikes.test.ts
 tests/encounter-participants.test.ts
 tests/encounter-risk.test.ts
 tests/danger-board.test.ts
@@ -789,6 +806,7 @@ tests/sim-state.test.ts
 tests/sample-strike.test.ts
 tests/initiative.test.ts
 tests/tactics/tactics.test.ts
+tests/tactics/pc-default.test.ts
 tests/run-iteration.test.ts
 tests/run-simulation.test.ts
 tests/simulation-guardrails.test.ts
