@@ -236,7 +236,7 @@
 
 .grim-arithmetic-forecast__controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.5rem;
   align-items: end;
   margin: 0.75rem 0;
@@ -260,8 +260,9 @@
 }
 
 .grim-arithmetic-forecast__buttons button {
-  min-height: 2rem;
-  padding: 0 0.75rem;
+  min-height: 1.75rem;
+  padding: 0 0.6rem;
+  font-size: 0.85rem;
 }
 
 .grim-arithmetic-forecast__disabled {
@@ -383,4 +384,24 @@
   font-size: 0.85rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+}
+
+.grim-arithmetic-forecast__ci {
+  font-size: 0.82rem;
+  font-weight: 400;
+  opacity: 0.6;
+  margin-left: 0.25rem;
+}
+
+.grim-arithmetic-forecast__ci-note {
+  margin: 0 0 0.5rem;
+  font-size: 0.8em;
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.grim-arithmetic-forecast__profile {
+  margin: 0 0 0.5rem;
+  font-size: 0.88rem;
+  opacity: 0.75;
 }

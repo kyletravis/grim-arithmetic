@@ -2,6 +2,28 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.6.0-rc.6 - Simplified forecast controls (prerelease)
+
+Streamlined the Forecast panel UI: removed iteration count selector (fixed at 5,000), removed seed input, set default tactics profile to **Spread damage**, and surfaced the tactics profile name + description directly above the headline metrics.
+
+- **Default tactics profile** changed from `focus-fire` to `spread-damage`. The description and name now render as a persistent line above the headline metrics (Any PC down / TPK risk / Expected first down) so the active assumption is always visible.
+- **Removed iteration dropdown.** All runs use 5,000 iterations. The 1,000 / 10,000 options were rarely used and added cognitive overhead.
+- **Removed seed input.** Seed remains random per run; the CI note explains that numbers are from sampling variance.
+- **Run forecast button text** shortened to "Forecast" and compacted (smaller padding, smaller font, reduced min-height).
+- **Assumptions block** no longer repeats the tactics profile name/description or iteration count — those are now shown above the metrics where they belong.
+- **CSS:** `.grim-arithmetic-forecast__profile` style added for the tactics profile line; button compacted; control grid reduced from 4-column to 2-column.
+
+## v0.6.0-rc.5 - Monte Carlo confidence intervals (prerelease)
+
+Hybrid Monte Carlo + exact-confidence-interval approach for encounter forecasting. Every proportion metric (down %, death %, TPK %) now displays a 95% confidence interval in brackets, computed from the sampling variance of the simulation. Continuous metrics (mean first-down round) also get CIs.
+
+- **`SimulationConfidenceIntervals`** type added to `simulation-types.ts`: `anyPcDown`, `tpk`, and `meanFirstDownRound` intervals.
+- **`buildConfidenceIntervals()`** in `run-simulation.ts`: uses normal approximation (`z = 1.96`) for proportions (`p ± 1.96 * sqrt(p*(1-p)/n)`) and means (`mean ± 1.96 * sampleStd / sqrt(n)`). Clamps proportions to [0, 1].
+- **`panel-data.ts`**: `ForecastResultView` and `ForecastPcRow` gain `downCi`, `deathCi`, `anyPcDownCi`, `tpkCi`, and `meanFirstDownCi` string fields. `proportionCI()` helper added.
+- **`forecast-panel.hbs`**: headline metrics and per-PC table rows render CI brackets inline; a "95% confidence intervals from sampling variance" note appears below run metadata.
+- **CSS**: `.grim-arithmetic-forecast__ci` (muted inline brackets) and `.grim-arithmetic-forecast__ci-note` (italic explanation).
+- No changes to simulation engine, tactics, or core metrics — purely additive uncertainty communication.
+
 ## v0.6.0-rc.4 - Phase I-A: PC heals + recovery + Hero Point survival (prerelease)
 
 Followup to rc.3. The rc.3 build had PCs trading Strikes with enemies but no safety net — no healing, no recovery checks, no Hero Point survival. Real-table parties have all three, so rc.3 still overstated risk. rc.4 ships **Phase I-A** of the v0.6.0 PC action work: every PC survival mechanic except reactions (Shield Block, Champion — reserved for rc.5 Phase I-B).

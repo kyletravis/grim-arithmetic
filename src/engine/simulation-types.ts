@@ -247,8 +247,29 @@ export interface SimulationResult {
   perEnemy: PerEnemyAggregate[];
   /** Aggregate safety-net counters (Phase I-A). */
   safetyNet: SafetyNetStats;
+  /** 95% confidence intervals for headline metrics. */
+  confidenceIntervals: SimulationConfidenceIntervals;
   /** Caveats from setup builder plus engine-level notes. */
   caveats: string[];
+}
+
+/** 95% confidence interval for a proportion (e.g., down probability). */
+export interface ProportionConfidenceInterval {
+  lower: number;
+  upper: number;
+}
+
+/** 95% confidence interval for a mean (e.g., mean first-down round). */
+export interface MeanConfidenceInterval {
+  lower: number;
+  upper: number;
+}
+
+/** Confidence intervals attached to SimulationResult metrics. */
+export interface SimulationConfidenceIntervals {
+  anyPcDown: ProportionConfidenceInterval;
+  tpk: ProportionConfidenceInterval;
+  meanFirstDownRound: MeanConfidenceInterval | null;
 }
 
 /** Helper alias for sides; useful where Foundry's disposition language differs. */

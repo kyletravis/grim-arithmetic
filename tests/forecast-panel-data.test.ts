@@ -3,6 +3,7 @@ import {
   buildForecastPanelData,
   DEFAULT_SIMULATION_CONTROLS,
   TACTICS_PROFILE_LABELS,
+  TACTICS_PROFILE_DESCRIPTIONS,
   type ForecastRunState,
   type SimulationControls
 } from '../src/ui/panel-data';
@@ -29,23 +30,25 @@ describe('buildForecastPanelData: disabled state', () => {
 });
 
 describe('buildForecastPanelData: idle state', () => {
-  it('exposes iteration, profile, and seed controls', () => {
+  it('exposes tactics profile control only', () => {
     const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
     expect(data.enabled).toBe(true);
     expect(data.state).toBe('idle');
-    expect(data.controls.iterations.map((o) => o.value)).toEqual(['1000', '5000', '10000']);
-    expect(data.controls.tacticsProfile.map((o) => o.value).sort()).toEqual(
-      ['boss-cinematic', 'focus-fire', 'predator', 'random-legal', 'spread-damage']
-    );
-    expect(data.controls.seed).toBe('');
+    expect(data.controls.tacticsProfile.map((o) => o.value)).toEqual([
+      'boss-cinematic',
+      'focus-fire',
+      'predator',
+      'random-legal',
+      'spread-damage'
+    ]);
   });
 
-  it('selects the configured iteration choice', () => {
+  it('selects the configured tactics profile', () => {
     const data = buildForecastPanelData({
       ...baseArgs({ kind: 'idle' }),
-      controls: makeControls({ iterations: 10000 })
+      controls: makeControls({ tacticsProfile: 'boss-cinematic' })
     });
-    expect(data.controls.iterations.find((o) => o.selected)?.value).toBe('10000');
+    expect(data.controls.tacticsProfile.find((o) => o.selected)?.value).toBe('boss-cinematic');
   });
 
   it('always lists the v0.6.0-rc.4 baseline assumptions (PCs heal, recover, spend HP)', () => {
@@ -54,8 +57,7 @@ describe('buildForecastPanelData: idle state', () => {
     expect(data.assumptions.find((a) => a.includes('Heal spells / Battle Medicine'))).toBeDefined();
     expect(data.assumptions.find((a) => a.includes('recovery checks'))).toBeDefined();
     expect(data.assumptions.find((a) => a.includes('Hero Points'))).toBeDefined();
-    expect(data.assumptions.find((a) => a.includes('Not modeled in rc.4'))).toBeDefined();
-    expect(data.assumptions.find((a) => a.includes('Enemy tactics profile'))).toBeDefined();
+    expect(data.assumptions.find((a) => a.includes('Not modeled:'))).toBeDefined();
   });
 });
 
@@ -156,12 +158,14 @@ describe('buildForecastPanelData: done state', () => {
     expect(data.result?.perPc[0].topContributingEnemyName).toBe('Troll Mauler');
   });
 
-  it('emits the tactics profile label and seed in the run meta', () => {
+  it('emits the tactics profile label in the run meta', () => {
     const data = buildForecastPanelData({
       ...baseArgs({ kind: 'done', result: makeResult() })
     });
     expect(data.result?.tacticsProfileLabel).toBe(TACTICS_PROFILE_LABELS['focus-fire']);
-    expect(data.result?.seed).toBe('troll-fight');
+    expect(data.result?.tacticsProfileDescription).toBe(
+      TACTICS_PROFILE_DESCRIPTIONS['focus-fire']
+    );
   });
 
   it('flags aborted results and surfaces a partial-completion message', () => {
@@ -172,7 +176,7 @@ describe('buildForecastPanelData: done state', () => {
       })
     });
     expect(data.result?.aborted).toBe(true);
-    expect(data.message).toMatch(/aborted after 1200 of 5000/);
+    expect(data.message).toBe('Forecast aborted.');
   });
 
   it('threads setup caveats into the assumptions block', () => {

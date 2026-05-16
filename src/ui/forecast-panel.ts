@@ -67,12 +67,7 @@ export class ForecastPanel extends Application {
     html.find('[data-grim-forecast-control]').on('change', (event) => {
       const target = event.currentTarget;
       const key = target.dataset?.grimForecastControl;
-      if (key === 'iterations') {
-        const value = Number(target.value);
-        if (value === 1000 || value === 5000 || value === 10000) {
-          this.controls.iterations = value;
-        }
-      } else if (key === 'tacticsProfile') {
+      if (key === 'tacticsProfile') {
         if (
           target.value === 'random-legal' ||
           target.value === 'spread-damage' ||
@@ -82,8 +77,6 @@ export class ForecastPanel extends Application {
         ) {
           this.controls.tacticsProfile = target.value;
         }
-      } else if (key === 'seed') {
-        this.controls.seed = target.value;
       }
       this.render(false);
     });
@@ -127,13 +120,12 @@ export class ForecastPanel extends Application {
     }
 
     const config: SimulationConfig = {
-      iterations: this.controls.iterations,
+      iterations: 5000,
       tacticsProfile: this.controls.tacticsProfile,
-      maxRounds: DEFAULT_MAX_ROUNDS,
-      seed: this.controls.seed.trim() === '' ? undefined : this.controls.seed.trim()
+      maxRounds: DEFAULT_MAX_ROUNDS
     };
 
-    this.runState = { kind: 'running', completed: 0, total: this.controls.iterations };
+    this.runState = { kind: 'running', completed: 0, total: 5000 };
     this.render(false);
 
     const handle = runSimulationInWorker(setup, config, {
