@@ -1,6 +1,6 @@
 {
   "name": "grim-arithmetic",
-  "version": "0.6.0-rc.2",
+  "version": "0.6.0-rc.3",
   "description": "Foundry VTT module for GM-facing PF2e mortality and encounter-risk analysis.",
   "type": "module",
   "private": true,

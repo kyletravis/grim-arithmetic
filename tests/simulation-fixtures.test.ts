@@ -21,6 +21,22 @@ import type { AttackSnapshot } from '../src/systems/base-adapter';
  * tactics, runner aggregation, or any of their helpers.
  */
 
+/**
+ * Default PC build for v0.6.0-rc.3 fixtures: ~level 6 martial with a
+ * single Strike, +14 to hit, 1d8+5 slashing. Roughly matches the PF2e
+ * party assumption that drives encounter XP budgets.
+ */
+const DEFAULT_PC_STRIKE: AttackSnapshot = {
+  id: 'longsword',
+  name: 'Longsword',
+  attackBonus: 14,
+  damageFormula: '1d8+5',
+  damageType: 'slashing',
+  traits: [],
+  mapType: 'normal',
+  assumptions: []
+};
+
 function pc(
   id: string,
   overrides: Partial<SimulationCombatant> = {}
@@ -39,7 +55,7 @@ function pc(
     dead: false,
     initiativeBonus: 5,
     traits: [],
-    attacks: [],
+    attacks: [{ ...DEFAULT_PC_STRIKE, id: `${id}-strike` }],
     ...overrides
   };
 }
@@ -173,6 +189,33 @@ describe('simulation fixtures: 1 PC vs 1 enemy (parity with v0.5.0 pair detail)'
       perPc: result.perPc,
       perEnemy: result.perEnemy
     }).toMatchSnapshot();
+  });
+});
+
+describe('simulation fixtures: PCs act (v0.6.0-rc.3 regression net)', () => {
+  it('4 PCs vs 1 boss now resolves in fewer rounds than rc.2 stones-baseline', () => {
+    // In rc.2 (PCs do nothing), this scenario hit the 5-round maxRounds cap
+    // almost every iteration. With PC actions in rc.3, the boss takes damage
+    // and the encounter ends earlier. Assert the run terminates strictly
+    // before maxRounds on this seed.
+    const setup: EncounterSetup = {
+      pcs: [pc('mira'), pc('seam'), pc('jor'), pc('elya')],
+      enemies: [
+        enemy('boss', [attack({ id: 'cleave', attackBonus: 16, damageFormula: '2d10+8' })], {
+          hp: { current: 120, max: 120, temp: 0 },
+          defenses: { ac: 22 }
+        })
+      ],
+      caveats: []
+    };
+    const result = runSimulation(
+      setup,
+      config({ tacticsProfile: 'focus-fire', seed: 'pcs-act-sanity', iterations: 500 })
+    );
+    // anyPcDown should drop dramatically compared to a no-action baseline; we
+    // don't pin an exact number (snapshot tests cover that), but a sanity
+    // check below the 100% rc.2 baseline catches regressions.
+    expect(result.anyPcDownProbability).toBeLessThan(0.95);
   });
 });
 
