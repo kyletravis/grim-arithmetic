@@ -394,9 +394,9 @@ export function buildForecastPanelData({
   state: ForecastRunState;
 }): ForecastPanelData {
   const baseAssumptions = [
-    'PCs take no actions in this model.',
-    'No healing, reactions, or recovery checks.',
-    `Tactics profile: ${TACTICS_PROFILE_LABELS[controls.tacticsProfile]} — ${TACTICS_PROFILE_DESCRIPTIONS[controls.tacticsProfile]}`,
+    'PCs use their primary Strike twice per turn against the most-dangerous standing enemy.',
+    'No healing, reactions, recovery checks, or spells are modeled.',
+    `Enemy tactics profile: ${TACTICS_PROFILE_LABELS[controls.tacticsProfile]} — ${TACTICS_PROFILE_DESCRIPTIONS[controls.tacticsProfile]}`,
     `Iterations: ${controls.iterations}.`
   ];
 
@@ -478,8 +478,8 @@ export function buildForecastPanelData({
 function buildPessimismWarning(result: SimulationResult): string | undefined {
   if (result.anyPcDownProbability < 0.8) return undefined;
   return (
-    'Upper bound only. This is what happens if PCs take no actions for the whole encounter. ' +
-    "Real outcomes are typically much lower because the party fights back, heals, uses reactions, and ends fights before they grind. Compare to the Danger Board's per-turn view for the immediate-threat perspective."
+    'High-risk encounter. Even with PCs taking 2 Strikes per turn against the most-dangerous standing enemy, the modeled outcome ends badly in most iterations. ' +
+    "Healing, reactions, and tactical positioning are still not modeled, so real-table risk is usually lower — but this encounter has structural lethality worth examining."
   );
 }
 
