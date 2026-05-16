@@ -43,6 +43,22 @@ export const DEFAULT_MAX_ROUNDS = 5;
  *   - hero point spend tracking
  *   - per-PC action plans
  */
+/**
+ * Healing runtime state for a PC (v0.6.0-rc.4 Phase I-A).
+ *
+ * Mutable during the iteration: healSpellSlotsRemaining decrements as
+ * the PC casts Heal; battleMedicineUsedTargets accumulates the per-day
+ * "1/target" Battle Medicine restriction.
+ */
+export interface HealingState {
+  medicineModifier?: number;
+  medicineDC: number;
+  hasBattleMedicine: boolean;
+  battleMedicineUsedTargets: Set<string>;
+  healSpellSlotsRemaining: Record<number, number>;
+  healCantripLevel: number | null;
+}
+
 export interface SimulationCombatant {
   id: string;
   name: string;
@@ -64,8 +80,13 @@ export interface SimulationCombatant {
   wounded: number;
   /** Doomed condition value; lowers the death threshold. */
   doomed: number;
-  /** Available hero points; informational in v0.6.0 (not used for survival). */
+  /** Available hero points; consumed by Hero Point survival (KHT-94). */
   heroPoints: number;
+  /**
+   * True once the PC has spent a Hero Point to avoid death this iteration.
+   * Capped at one HP survival per iteration in v0.6.0-rc.4.
+   */
+  heroPointSurvivalUsed: boolean;
   /** True once HP reaches 0 in this iteration. Sticky for tactics targeting. */
   downed: boolean;
   /** True once dying >= doomed-adjusted death threshold, or enemy at 0 HP. */
@@ -74,6 +95,8 @@ export interface SimulationCombatant {
   initiativeBonus: number;
   /** Resistance/weakness/immunity adjustments from the system adapter. */
   damageAdjustments?: DamageAdjustments;
+  /** PC healing capability (KHT-95 populates from adapter). PCs only. */
+  healing?: HealingState;
   traits: string[];
   /** Per-attack options the tactics profile may select from. */
   attacks: AttackSnapshot[];
@@ -166,6 +189,10 @@ export interface IterationResult {
   damageByPair: Record<string, number>;
   /** Optional event log when SimulationConfig.captureEvents is true. */
   events?: RoundEvent[];
+  /** Per-iteration safety-net counters (Phase I-A). */
+  healsFired: number;
+  recoveryChecksFired: number;
+  heroPointSurvivalsFired: number;
 }
 
 /** Per-PC aggregate across all iterations. */
@@ -192,6 +219,13 @@ export interface PerEnemyAggregate {
   topTargetId: string | null;
 }
 
+/** Aggregate safety-net statistics across all iterations (Phase I-A). */
+export interface SafetyNetStats {
+  meanHealsPerIteration: number;
+  meanRecoveryChecksPerIteration: number;
+  heroPointSurvivalRate: number;
+}
+
 /** Aggregate result returned by runSimulation. */
 export interface SimulationResult {
   iterationsRequested: number;
@@ -211,6 +245,8 @@ export interface SimulationResult {
   medianFirstDownRound: number | null;
   perPc: PerPcAggregate[];
   perEnemy: PerEnemyAggregate[];
+  /** Aggregate safety-net counters (Phase I-A). */
+  safetyNet: SafetyNetStats;
   /** Caveats from setup builder plus engine-level notes. */
   caveats: string[];
 }

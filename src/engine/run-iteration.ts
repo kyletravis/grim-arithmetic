@@ -154,7 +154,10 @@ export function runIteration(
     tpk,
     perCombatant,
     damageByPair,
-    events: config.captureEvents ? events : undefined
+    events: config.captureEvents ? events : undefined,
+    healsFired: 0,
+    recoveryChecksFired: 0,
+    heroPointSurvivalsFired: 0
   };
 }
 
