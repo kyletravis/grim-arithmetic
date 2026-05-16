@@ -18,8 +18,17 @@ export const DEFAULT_ITERATIONS: IterationCount = 5000;
 /** Hard ceiling enforced by the engine guardrails (KHT-78). */
 export const MAX_ITERATIONS: IterationCount = 10000;
 
-/** Default round cap if the encounter never terminates by other means. */
-export const DEFAULT_MAX_ROUNDS = 10;
+/**
+ * Default round cap if the encounter never terminates by other means.
+ *
+ * Set to 5 because PCs take no actions in the v0.6.0 baseline. Real PF2e
+ * encounters typically resolve in 4–6 rounds because the party ends them;
+ * letting the no-action model run for 10 rounds piles damage onto PCs who
+ * would never have stood still that long in real play, dramatically
+ * overstating risk. Five rounds is the closest match to "how bad could
+ * this realistically get before the party would have ended the fight."
+ */
+export const DEFAULT_MAX_ROUNDS = 5;
 
 /**
  * Per-combatant runtime state inside a simulation iteration.

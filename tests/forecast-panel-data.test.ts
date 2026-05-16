@@ -181,4 +181,25 @@ describe('buildForecastPanelData: done state', () => {
     });
     expect(data.assumptions.some((a) => a.includes('unsupported actor X skipped'))).toBe(true);
   });
+
+  it('shows a pessimism banner when any-PC-down >= 80%', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({ anyPcDownProbability: 0.99 })
+      })
+    });
+    expect(data.pessimismWarning).toBeDefined();
+    expect(data.pessimismWarning).toMatch(/Upper bound|PCs take no actions|fights back/i);
+  });
+
+  it('omits the pessimism banner when any-PC-down is below the threshold', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({ anyPcDownProbability: 0.4 })
+      })
+    });
+    expect(data.pessimismWarning).toBeUndefined();
+  });
 });

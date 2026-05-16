@@ -354,6 +354,12 @@ export interface ForecastPanelData {
   progress?: ForecastProgressView;
   result?: ForecastResultView;
   errorMessage?: string;
+  /**
+   * Banner shown when any-PC-down probability is extreme (>=80%). Calls out
+   * the v0.6.0 conservative-baseline interpretation so GMs do not read the
+   * number as a campaign-death prophecy.
+   */
+  pessimismWarning?: string;
   /** Always-visible assumptions block. */
   assumptions: string[];
 }
@@ -461,11 +467,20 @@ export function buildForecastPanelData({
     state: 'done',
     controls: controlsView,
     result: buildForecastResultView(result),
+    pessimismWarning: buildPessimismWarning(result),
     assumptions: [
       ...baseAssumptions,
       ...result.caveats.map((c) => `Setup: ${c}`)
     ]
   };
+}
+
+function buildPessimismWarning(result: SimulationResult): string | undefined {
+  if (result.anyPcDownProbability < 0.8) return undefined;
+  return (
+    'Upper bound only. This is what happens if PCs take no actions for the whole encounter. ' +
+    "Real outcomes are typically much lower because the party fights back, heals, uses reactions, and ends fights before they grind. Compare to the Danger Board's per-turn view for the immediate-threat perspective."
+  );
 }
 
 function buildForecastControlsView(controls: SimulationControls): ForecastControlsView {
