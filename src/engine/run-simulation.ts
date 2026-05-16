@@ -4,9 +4,12 @@ import { validateSimulationConfig } from './simulation-guardrails';
 import type {
   EncounterSetup,
   IterationResult,
+  MeanConfidenceInterval,
   PerEnemyAggregate,
   PerPcAggregate,
+  ProportionConfidenceInterval,
   SimulationConfig,
+  SimulationConfidenceIntervals,
   SimulationResult
 } from './simulation-types';
 
@@ -203,18 +206,30 @@ function aggregate(
     if (r.heroPointSurvivalsFired > 0) hpSurvivalIterations += 1;
   }
 
+  const anyPcDownProb = anyDownCount / completedCount;
+  const tpkProb = tpkCount / completedCount;
+  const meanFdr =
+    firstDownRounds.length > 0
+      ? firstDownRounds.reduce((a, b) => a + b, 0) / firstDownRounds.length
+      : null;
+
+  const confidenceIntervals = buildConfidenceIntervals(
+    anyDownCount,
+    completedCount,
+    tpkCount,
+    firstDownRounds,
+    completedCount
+  );
+
   return {
     iterationsRequested: config.iterations,
     iterationsCompleted: completedCount,
     seed,
     tacticsProfile: config.tacticsProfile,
     aborted,
-    anyPcDownProbability: anyDownCount / completedCount,
-    tpkProbability: tpkCount / completedCount,
-    meanFirstDownRound:
-      firstDownRounds.length > 0
-        ? firstDownRounds.reduce((a, b) => a + b, 0) / firstDownRounds.length
-        : null,
+    anyPcDownProbability: anyPcDownProb,
+    tpkProbability: tpkProb,
+    meanFirstDownRound: meanFdr,
     medianFirstDownRound: firstDownRounds.length > 0 ? median(firstDownRounds) : null,
     perPc,
     perEnemy,
@@ -223,6 +238,7 @@ function aggregate(
       meanRecoveryChecksPerIteration: totalRecoveries / completedCount,
       heroPointSurvivalRate: hpSurvivalIterations / completedCount
     },
+    confidenceIntervals,
     caveats: [...setup.caveats]
   };
 }
@@ -231,4 +247,52 @@ function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+const Z95 = 1.959963984540054;
+
+function buildConfidenceIntervals(
+  anyPcDownCount: number,
+  total: number,
+  tpkCount: number,
+  firstDownRounds: number[],
+  totalIterations: number
+): SimulationConfidenceIntervals {
+  const anyPcDown = proportionCI(anyPcDownCount, total);
+  const tpk = proportionCI(tpkCount, total);
+
+  let meanFdr: MeanConfidenceInterval | null = null;
+  if (firstDownRounds.length > 0) {
+    meanFdr = meanCI(firstDownRounds);
+  }
+
+  return { anyPcDown, tpk, meanFirstDownRound: meanFdr };
+}
+
+function proportionCI(successes: number, total: number): ProportionConfidenceInterval {
+  if (total === 0) return { lower: 0, upper: 0 };
+  const p = successes / total;
+  const se = Math.sqrt(p * (1 - p) / total);
+  const margin = Z95 * se;
+  return {
+    lower: clamp01(p - margin),
+    upper: clamp01(p + margin)
+  };
+}
+
+function meanCI(values: number[]): MeanConfidenceInterval {
+  const n = values.length;
+  if (n === 0) return { lower: 0, upper: 0 };
+  const mean = values.reduce((a, b) => a + b, 0) / n;
+  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n;
+  const se = Math.sqrt(variance / n);
+  const margin = Z95 * se;
+  return {
+    lower: mean - margin,
+    upper: mean + margin
+  };
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, v));
 }

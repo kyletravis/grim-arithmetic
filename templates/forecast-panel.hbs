@@ -11,15 +11,6 @@
 
     <form class="grim-arithmetic-forecast__controls">
       <label>
-        Iterations
-        <select data-grim-forecast-control="iterations" {{#if (eq state "running")}}disabled{{/if}}>
-          {{#each controls.iterations}}
-            <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
-          {{/each}}
-        </select>
-      </label>
-
-      <label>
         Tactics profile
         <select data-grim-forecast-control="tacticsProfile" {{#if (eq state "running")}}disabled{{/if}}>
           {{#each controls.tacticsProfile}}
@@ -28,17 +19,8 @@
         </select>
       </label>
 
-      <label class="grim-arithmetic-forecast__seed">
-        Seed (optional)
-        <input type="text"
-               data-grim-forecast-control="seed"
-               value="{{controls.seed}}"
-               placeholder="random"
-               {{#if (eq state "running")}}disabled{{/if}}>
-      </label>
-
       <div class="grim-arithmetic-forecast__buttons">
-        <button type="button" data-grim-forecast-run {{#if (eq state "running")}}disabled{{/if}}>Run forecast</button>
+        <button type="button" data-grim-forecast-run {{#if (eq state "running")}}disabled{{/if}}>Forecast</button>
         <button type="button" data-grim-forecast-cancel {{#unless (eq state "running")}}disabled{{/unless}}>Cancel</button>
       </div>
     </form>
@@ -64,25 +46,34 @@
         </section>
       {{/if}}
       <section class="grim-arithmetic-forecast__result">
+        <p class="grim-arithmetic-forecast__profile">
+          <strong>{{result.tacticsProfileLabel}}</strong> — {{result.tacticsProfileDescription}}
+        </p>
         <div class="grim-arithmetic-forecast__headline">
           <div class="grim-arithmetic-forecast__metric">
             <span class="grim-arithmetic-forecast__metric-label">Any PC down</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.anyPcDownPercent}}%</span>
+            {{#if result.anyPcDownCi}}<span class="grim-arithmetic-forecast__ci">[{{result.anyPcDownCi}}]</span>{{/if}}
           </div>
           <div class="grim-arithmetic-forecast__metric">
             <span class="grim-arithmetic-forecast__metric-label">TPK risk</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.tpkPercent}}%</span>
+            {{#if result.tpkCi}}<span class="grim-arithmetic-forecast__ci">[{{result.tpkCi}}]</span>{{/if}}
           </div>
           <div class="grim-arithmetic-forecast__metric">
             <span class="grim-arithmetic-forecast__metric-label">Expected first down</span>
             <span class="grim-arithmetic-forecast__metric-value">round {{result.meanFirstDownRound}}</span>
+            {{#if result.meanFirstDownCi}}<span class="grim-arithmetic-forecast__ci">[{{result.meanFirstDownCi}}]</span>{{/if}}
           </div>
         </div>
 
         <p class="grim-arithmetic-forecast__run-meta">
-          {{result.iterationsCompleted}}/{{result.iterationsRequested}} iterations · {{result.tacticsProfileLabel}} · seed {{result.seed}}
-          {{#if result.aborted}}· <strong>aborted</strong>{{/if}}
+          {{result.tacticsProfileLabel}}
+          {{#if result.aborted}} · <strong>aborted</strong>{{/if}}
         </p>
+        {{#if result.anyPcDownCi}}
+          <p class="grim-arithmetic-forecast__ci-note">Bracketed values are 95% confidence intervals from sampling variance.</p>
+        {{/if}}
 
         <h3>Most likely to drop</h3>
         <table class="grim-arithmetic-forecast__table">
@@ -100,8 +91,8 @@
             {{#each result.perPc}}
               <tr>
                 <td>{{name}}</td>
-                <td>{{downPercent}}%</td>
-                <td>{{deathPercent}}%</td>
+                <td>{{downPercent}}%{{#if downCi}} <span class="grim-arithmetic-forecast__ci">[{{downCi}}]</span>{{/if}}</td>
+                <td>{{deathPercent}}%{{#if deathCi}} <span class="grim-arithmetic-forecast__ci">[{{deathCi}}]</span>{{/if}}</td>
                 <td>{{meanEndingHp}}</td>
                 <td>{{topContributingEnemyName}}</td>
                 <td><span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}">{{riskLabel}}</span></td>

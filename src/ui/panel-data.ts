@@ -281,16 +281,11 @@ function toPercent(probability: number): number {
 // --- Forecast (Monte Carlo) panel ---
 
 export interface SimulationControls {
-  iterations: IterationCount;
   tacticsProfile: TacticsProfileId;
-  /** Free-form seed; blank means "random each run". */
-  seed: string;
 }
 
 export const DEFAULT_SIMULATION_CONTROLS: SimulationControls = {
-  iterations: 5000,
-  tacticsProfile: 'focus-fire',
-  seed: ''
+  tacticsProfile: 'spread-damage'
 };
 
 export type ForecastRunState =
@@ -300,9 +295,7 @@ export type ForecastRunState =
   | { kind: 'error'; message: string };
 
 export interface ForecastControlsView {
-  iterations: SelectOption[];
   tacticsProfile: SelectOption[];
-  seed: string;
 }
 
 export interface ForecastProgressView {
@@ -314,12 +307,15 @@ export interface ForecastProgressView {
 export interface ForecastResultView {
   iterationsCompleted: number;
   iterationsRequested: number;
-  seed: string;
   tacticsProfileLabel: string;
+  tacticsProfileDescription: string;
   aborted: boolean;
   anyPcDownPercent: number;
+  anyPcDownCi: string | null;
   tpkPercent: number;
+  tpkCi: string | null;
   meanFirstDownRound: string;
+  meanFirstDownCi: string | null;
   medianFirstDownRound: string;
   perPc: ForecastPcRow[];
   perEnemy: ForecastEnemyRow[];
@@ -330,7 +326,9 @@ export interface ForecastPcRow {
   id: string;
   name: string;
   downPercent: number;
+  downCi: string | null;
   deathPercent: number;
+  deathCi: string | null;
   meanEndingHp: string;
   topContributingEnemyName: string;
   riskClass: string;
@@ -398,9 +396,7 @@ export function buildForecastPanelData({
     'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP.',
     'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success / crit-failure step dying.',
     'Hero Points are spent to prevent death (once per iteration per PC).',
-    'Not modeled in rc.4: reactions (Shield Block, Champion), spells beyond Heal, persistent damage, attacks of opportunity, movement / reach / line of sight.',
-    `Enemy tactics profile: ${TACTICS_PROFILE_LABELS[controls.tacticsProfile]} — ${TACTICS_PROFILE_DESCRIPTIONS[controls.tacticsProfile]}`,
-    `Iterations: ${controls.iterations}.`
+    'Not modeled: reactions (Shield Block, Champion), spells beyond Heal, persistent damage, attacks of opportunity, movement / reach / line of sight.'
   ];
 
   if (!enabled) {
@@ -424,7 +420,7 @@ export function buildForecastPanelData({
       enabled: true,
       disabledMessage: '',
       message:
-        'Configure the run and click Run forecast to simulate the active encounter under the selected tactics profile.',
+        'Select a tactics profile and click Forecast to simulate the active encounter.',
       state: 'idle',
       controls: controlsView,
       assumptions: baseAssumptions
@@ -465,8 +461,8 @@ export function buildForecastPanelData({
     enabled: true,
     disabledMessage: '',
     message: result.aborted
-      ? `Forecast aborted after ${result.iterationsCompleted} of ${result.iterationsRequested} iterations.`
-      : `Forecast complete (${result.iterationsCompleted} iterations).`,
+      ? 'Forecast aborted.'
+      : 'Forecast complete.',
     state: 'done',
     controls: controlsView,
     result: buildForecastResultView(result),
@@ -488,48 +484,71 @@ function buildPessimismWarning(result: SimulationResult): string | undefined {
 
 function buildForecastControlsView(controls: SimulationControls): ForecastControlsView {
   return {
-    iterations: ITERATION_CHOICES.map((value) => ({
-      value: String(value),
-      label: `${value.toLocaleString()} iterations`,
-      selected: controls.iterations === value
-    })),
-    tacticsProfile: (Object.keys(TACTICS_PROFILE_LABELS) as TacticsProfileId[]).map((id) => ({
-      value: id,
-      label: TACTICS_PROFILE_LABELS[id],
-      selected: controls.tacticsProfile === id
-    })),
-    seed: controls.seed
+    tacticsProfile: (Object.keys(TACTICS_PROFILE_LABELS) as TacticsProfileId[])
+      .sort()
+      .map((id) => ({
+        value: id,
+        label: TACTICS_PROFILE_LABELS[id],
+        selected: controls.tacticsProfile === id
+      }))
   };
 }
 
 function buildForecastResultView(result: SimulationResult): ForecastResultView {
   const pcNamesById = new Map(result.perPc.map((pc) => [pc.id, pc.name]));
   const enemyNamesById = new Map(result.perEnemy.map((enemy) => [enemy.id, enemy.name]));
+  const ci = result.confidenceIntervals;
+
+  const anyPcDownPercent = Math.round(result.anyPcDownProbability * 100);
+  const tpkPercent = Math.round(result.tpkProbability * 100);
+
+  const anyPcDownCi = ci?.anyPcDown
+    ? `${Math.round(ci.anyPcDown.lower * 100)}%–${Math.round(ci.anyPcDown.upper * 100)}%`
+    : null;
+  const tpkCi = ci?.tpk
+    ? `${Math.round(ci.tpk.lower * 100)}%–${Math.round(ci.tpk.upper * 100)}%`
+    : null;
+  const meanFirstDownCi = ci?.meanFirstDownRound
+    ? `${ci.meanFirstDownRound.lower.toFixed(1)}–${ci.meanFirstDownRound.upper.toFixed(1)}`
+    : null;
 
   return {
     iterationsCompleted: result.iterationsCompleted,
     iterationsRequested: result.iterationsRequested,
-    seed: String(result.seed),
     tacticsProfileLabel: TACTICS_PROFILE_LABELS[result.tacticsProfile],
+    tacticsProfileDescription: TACTICS_PROFILE_DESCRIPTIONS[result.tacticsProfile],
     aborted: result.aborted,
-    anyPcDownPercent: Math.round(result.anyPcDownProbability * 100),
-    tpkPercent: Math.round(result.tpkProbability * 100),
+    anyPcDownPercent,
+    anyPcDownCi,
+    tpkPercent,
+    tpkCi,
     meanFirstDownRound:
       result.meanFirstDownRound === null ? 'n/a' : result.meanFirstDownRound.toFixed(1),
+    meanFirstDownCi,
     medianFirstDownRound:
       result.medianFirstDownRound === null ? 'n/a' : String(result.medianFirstDownRound),
-    perPc: result.perPc.map((pc) => ({
-      id: pc.id,
-      name: pc.name,
-      downPercent: Math.round(pc.downProbability * 100),
-      deathPercent: Math.round(pc.deathProbability * 100),
-      meanEndingHp: pc.meanEndingHp.toFixed(1),
-      topContributingEnemyName: pc.topContributingEnemyId
-        ? enemyNamesById.get(pc.topContributingEnemyId) ?? pc.topContributingEnemyId
-        : '—',
-      riskClass: forecastRiskClass(pc.downProbability),
-      riskLabel: forecastRiskLabel(pc.downProbability)
-    })),
+    perPc: result.perPc.map((pc) => {
+      const downCi = proportionCI(pc.downProbability, result.iterationsCompleted);
+      const deathCi = proportionCI(pc.deathProbability, result.iterationsCompleted);
+      return {
+        id: pc.id,
+        name: pc.name,
+        downPercent: Math.round(pc.downProbability * 100),
+        downCi: downCi
+          ? `${Math.round(downCi.lower * 100)}%–${Math.round(downCi.upper * 100)}%`
+          : null,
+        deathPercent: Math.round(pc.deathProbability * 100),
+        deathCi: deathCi
+          ? `${Math.round(deathCi.lower * 100)}%–${Math.round(deathCi.upper * 100)}%`
+          : null,
+        meanEndingHp: pc.meanEndingHp.toFixed(1),
+        topContributingEnemyName: pc.topContributingEnemyId
+          ? enemyNamesById.get(pc.topContributingEnemyId) ?? pc.topContributingEnemyId
+          : '—',
+        riskClass: forecastRiskClass(pc.downProbability),
+        riskLabel: forecastRiskLabel(pc.downProbability)
+      };
+    }),
     perEnemy: result.perEnemy.map((enemy) => ({
       id: enemy.id,
       name: enemy.name,
@@ -539,6 +558,17 @@ function buildForecastResultView(result: SimulationResult): ForecastResultView {
         : '—'
     })),
     caveats: result.caveats
+  };
+}
+
+function proportionCI(probability: number, total: number): { lower: number; upper: number } | null {
+  if (total === 0) return null;
+  const p = probability;
+  const se = Math.sqrt(p * (1 - p) / total);
+  const margin = 1.959963984540054 * se;
+  return {
+    lower: Math.max(0, p - margin),
+    upper: Math.min(1, p + margin)
   };
 }
 
