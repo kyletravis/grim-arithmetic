@@ -66,6 +66,7 @@ export function runIteration(
   let roundsElapsed = 0;
 
   let recoveryChecksFired = 0;
+  let heroPointSurvivalsFired = 0;
 
   for (let round = 1; round <= config.maxRounds; round += 1) {
     roundsElapsed = round;
@@ -138,6 +139,10 @@ export function runIteration(
           firstDownRound = round;
         }
 
+        if (applied.heroPointSurvivalFired) {
+          heroPointSurvivalsFired += 1;
+        }
+
         if (config.captureEvents) {
           events.push({
             round,
@@ -181,7 +186,7 @@ export function runIteration(
     events: config.captureEvents ? events : undefined,
     healsFired: 0,
     recoveryChecksFired,
-    heroPointSurvivalsFired: 0
+    heroPointSurvivalsFired
   };
 }
 
