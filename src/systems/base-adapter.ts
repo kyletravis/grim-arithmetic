@@ -25,6 +25,16 @@ export interface PcCapabilities {
   hasBattleMedicine?: boolean;
   /** DC for the Battle Medicine check; derived from Medicine proficiency. */
   medicineDC?: number;
+  /**
+   * Prepared/spontaneous Heal spell slots remaining, keyed by spell rank.
+   * Example: { 1: 3, 2: 2 } = 3 first-rank, 2 second-rank slots.
+   */
+  healSpellSlots?: Record<number, number>;
+  /**
+   * Caster level used to scale the Heal cantrip. Null when no Heal cantrip
+   * is prepared / known.
+   */
+  healCantripLevel?: number | null;
 }
 
 export interface CombatantSnapshot {

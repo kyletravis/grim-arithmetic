@@ -290,17 +290,72 @@ function extractPcCapabilities(actor: ActorLike): PcCapabilities | undefined {
   const medicineRank = optionalNumberLike(medicine.rank);
   const medicineDC = medicineDcForRank(medicineRank);
   const hasBattleMedicine = detectBattleMedicineFeat(actor);
+  const { healSpellSlots, healCantripLevel } = extractHealCapability(actor);
 
-  // Only return capabilities if we have at least one positive signal; an
-  // empty PcCapabilities object would be misleading for consumers.
-  if (medicineModifier === undefined && !hasBattleMedicine) {
-    return { medicineDC };
+  const hasAnySignal =
+    medicineModifier !== undefined ||
+    hasBattleMedicine ||
+    Object.keys(healSpellSlots).length > 0 ||
+    healCantripLevel !== null;
+
+  if (!hasAnySignal) {
+    return { medicineDC, healCantripLevel: null };
   }
   return {
     medicineModifier,
     hasBattleMedicine,
-    medicineDC
+    medicineDC,
+    healSpellSlots: Object.keys(healSpellSlots).length > 0 ? healSpellSlots : undefined,
+    healCantripLevel
   };
+}
+
+function extractHealCapability(actor: ActorLike): {
+  healSpellSlots: Record<number, number>;
+  healCantripLevel: number | null;
+} {
+  const items = getActorItems(actor);
+  const slots: Record<number, number> = {};
+  let cantripLevel: number | null = null;
+
+  for (const item of items) {
+    if (item.type !== 'spell') continue;
+    const system = asRecord(item.system);
+    const slug = typeof system.slug === 'string'
+      ? system.slug
+      : item.name?.toLowerCase().replace(/\s+/g, '-');
+    if (slug !== 'heal') continue;
+
+    if (isCantripSpell(system)) {
+      const level = optionalNumberLike(system.casterLevel) ?? extractCasterLevelFromActor(actor);
+      cantripLevel = level ?? cantripLevel ?? 1;
+      continue;
+    }
+
+    const rank = optionalNumberLike(system.level) ?? optionalNumberLike(asRecord(system.location).heightenedLevel);
+    const count = optionalNumberLike(system.slotsRemaining) ?? optionalNumberLike(system.uses) ?? 1;
+    if (typeof rank === 'number' && rank >= 1 && count > 0) {
+      slots[rank] = (slots[rank] ?? 0) + count;
+    }
+  }
+
+  return { healSpellSlots: slots, healCantripLevel: cantripLevel };
+}
+
+function isCantripSpell(system: UnknownRecord): boolean {
+  const traits = asRecord(system.traits);
+  const traitValues = toStringArray(traits.value);
+  if (traitValues.includes('cantrip')) return true;
+  if (system.isCantrip === true) return true;
+  const level = optionalNumberLike(system.level);
+  return level === 0;
+}
+
+function extractCasterLevelFromActor(actor: ActorLike): number | undefined {
+  const system = asRecord(actor.system);
+  const details = asRecord(system.details);
+  const level = asRecord(details.level);
+  return optionalNumberLike(level.value) ?? optionalNumberLike(details.level);
 }
 
 function medicineDcForRank(rank: number | undefined): number {
