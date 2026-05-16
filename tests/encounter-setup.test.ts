@@ -68,7 +68,7 @@ describe('buildEncounterSetupFromSource', () => {
             id: 'mira',
             name: 'Mira',
             snapshot: makeSnapshot('mira', 'pc'),
-            attacks: []
+            attacks: [makeAttack({ id: 'longsword', name: 'Longsword' })]
           }
         },
         {
@@ -86,6 +86,64 @@ describe('buildEncounterSetupFromSource', () => {
     expect(setup.enemies).toHaveLength(1);
     expect(setup.pcs[0].id).toBe('mira');
     expect(setup.enemies[0].id).toBe('troll');
+  });
+
+  it('populates PC attacks from the adapter (v0.6.0-rc.3 PC action modeling)', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc'),
+            attacks: [
+              makeAttack({ id: 'longsword', name: 'Longsword' }),
+              makeAttack({ id: 'dagger', name: 'Dagger', damageFormula: '1d4+2' })
+            ]
+          }
+        }
+      ]
+    };
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.pcs[0].attacks).toHaveLength(2);
+    expect(setup.pcs[0].attacks.map((a) => a.id)).toEqual(['longsword', 'dagger']);
+  });
+
+  it('caveats a PC with no usable Strike', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc'),
+            attacks: []
+          }
+        }
+      ]
+    };
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.pcs[0].attacks).toHaveLength(0);
+    expect(setup.caveats.some((c) => c.includes('has no supported Strike'))).toBe(true);
+  });
+
+  it('catches PC adapter throws as a caveat without crashing', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc'),
+            attacks: [],
+            throwOnAttacks: true
+          }
+        }
+      ]
+    };
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.pcs[0].attacks).toHaveLength(0);
+    expect(setup.caveats.some((c) => c.includes('PC attack extraction failed'))).toBe(true);
   });
 
   it('threads multiple attacks through to the enemy combatant', () => {

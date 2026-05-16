@@ -53,9 +53,18 @@ function materialize<TokenLike extends { name?: string }>(
     caveats.push(`Unsupported actor skipped: ${name}`);
   }
 
-  const pcs: SimulationCombatant[] = participants.pcs.map((p) =>
-    snapshotToSimulationCombatant(p.snapshot, 'pc', [], caveats)
-  );
+  const pcs: SimulationCombatant[] = participants.pcs.map((p) => {
+    let attacks: AttackSnapshot[] = [];
+    try {
+      attacks = adapter.getAttacksFromToken(p.token);
+    } catch {
+      caveats.push(`${p.snapshot.name}: PC attack extraction failed; treated as no supported Strike.`);
+    }
+    if (attacks.length === 0) {
+      caveats.push(`${p.snapshot.name} has no supported Strike; will skip its turns in the simulation.`);
+    }
+    return snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
+  });
 
   const enemies: SimulationCombatant[] = participants.hostiles.map((h) => {
     let attacks: AttackSnapshot[] = [];
