@@ -15,7 +15,7 @@ export default defineConfig({
     },
     outDir: 'dist',
     emptyOutDir: true,
-    sourcemap: true,
+    sourcemap: process.env.NODE_ENV !== 'production',
     rollupOptions: {
       output: {
         entryFileNames: 'grim-arithmetic.js',
