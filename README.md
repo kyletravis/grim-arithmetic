@@ -4,9 +4,11 @@
 
 A GM-only Foundry VTT module for **Pathfinder 2e** that surfaces real, immediate down-risk for every PC vs every enemy in the current scene — using exact dice distributions, not vibes.
 
-![Grim Arithmetic — Danger Board and Pair Detail panels](resources/ga01.png)
+![Grim Arithmetic — Danger Board](resources/ga03.png)
 
-![Grim Arithmetic — Forecast panel](resources/ga02.png)
+![Grim Arithmetic — Pair Detail](resources/ga04.png)
+
+![Grim Arithmetic — Forecast Panel](resources/ga05.png)
 
 ## What it does
 
