@@ -79,6 +79,10 @@ Grim Arithmetic is an independent module and is not affiliated with, endorsed by
 - [Product Requirements](./PRD.md) and [Backlog](./BACKLOG.md)
 - [Release Workflow](./docs/RELEASE.md)
 
+## Known Bugs
+
+- **Healing not applied correctly** — PC healing actions (Battle Medicine, Heal spell, Heal cantrip) are not being applied to simulation results as expected. Targeting a fix in **v0.6.1**.
+
 ## Development
 
 ```bash
