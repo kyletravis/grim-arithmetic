@@ -43,24 +43,19 @@ The board and detail panel are GM-only and never broadcast to players.
 
 ## RC6 Changelog
 
-v0.6.0-rc.6 through v0.5.0 introduced the Monte Carlo Forecast engine and the Danger Board / Pair Detail split:
+v0.6.0 introduces the Monte Carlo Forecast engine and PC action modeling:
 
-- **rc.6** — Simplified Forecast UI: removed iteration count and seed inputs, set default tactics to Spread damage.
-- **rc.5** — Added 95% confidence intervals to all Forecast proportion metrics.
-- **rc.4** — Phase I-A PC survival: healing (Battle Medicine, Heal spell/cantrip), recovery checks, Hero Point death prevention.
-- **rc.3** — PC action modeling: PCs now Strike back in the simulation.
-- **rc.2** — Lowered default round cap (10 → 5), added pessimism banner for high-lethality warnings.
-- **rc.1** — Monte Carlo encounter simulation engine, Forecast panel, Web Worker integration, 5 tactics profiles.
+- **Monte Carlo engine** — Seeded PRNG (mulberry32), 5 tactics profiles, round orchestrator, Web Worker integration, engine guardrails (MAX_ITERATIONS=10000, round cap 5).
+- **Forecast panel** — Headline metrics (Any PC down / TPK / Expected first down), per-PC breakdown, 95% confidence intervals, pessimism banner at ≥80% risk.
+- **PC survival (Phase I-A)** — PC Strikes, healing (Battle Medicine, Heal spell/cantrip), recovery checks, Hero Point death prevention.
 - **v0.5.0** — Encounter Danger Board (main window) + Pair Detail popup, pairwise down-risk, `MAX_PAIRS` guardrail.
 
-## RC7 Changelog
+## Security fixes (v0.6.0)
 
-v0.6.0-rc.7 addresses findings from an independent security review:
-
-- **H-1:** Added strict dice formula budgets (max 500 total dice, 100 per term, 50000 outcomes) to prevent CPU exhaustion from malformed actor data.
-- **M-1:** Gated debug capture API behind the `debugLogging` setting and GM check to prevent stat-block data leakage in console logs.
-- **M-2:** Pinned all dev dependency versions to exact lockfile values for reproducible builds.
-- **Low:** Removed source maps from production builds.
+- **H-1:** Dice formula budget limits (max 500 dice, 100 per term, 50000 outcomes) prevent CPU exhaustion from malformed actor data.
+- **M-1:** Debug capture gated behind `debugLogging` + GM check to prevent stat-block leakage.
+- **M-2:** Dev dependencies pinned to exact lockfile versions.
+- **Low:** No source maps in production builds.
 
 ## Compatibility
 
