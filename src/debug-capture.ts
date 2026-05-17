@@ -51,7 +51,18 @@ export function buildDebugCapture(token: DebugTokenLike): unknown {
   };
 }
 
-export function logDebugCapture(token: DebugTokenLike): unknown {
+export function logDebugCapture(token?: DebugTokenLike): unknown | null {
+  if (!token) return null;
+
+  const isGM = typeof game !== 'undefined' && game.user?.isGM === true;
+  if (!isGM) return null;
+
+  const debugLogging = typeof game !== 'undefined'
+    ? (game.settings?.get?.('grim-arithmetic', 'debugLogging') as boolean | undefined) ?? false
+    : false;
+
+  if (!debugLogging) return null;
+
   const capture = buildDebugCapture(token);
   console.log('Grim Arithmetic | Debug capture', capture);
   return capture;

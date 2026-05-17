@@ -69,4 +69,26 @@ describe('damageDistribution', () => {
     expect(() => damageDistribution('2d8[persistent,fire]+4')).toThrow('Unsupported damage formula');
     expect(() => damageDistribution('1d8+1d6 precision')).toThrow('Unsupported damage formula');
   });
+
+  it('throws when formula length exceeds budget', () => {
+    const long = '1d6'.repeat(300);
+    expect(() => damageDistribution(long)).toThrow('formula length');
+  });
+
+  it('throws when number of terms exceeds budget', () => {
+    const manyTerms = Array.from({ length: 25 }, () => '1d6').join('+');
+    expect(() => damageDistribution(manyTerms)).toThrow('too many terms');
+  });
+
+  it('throws when dice per term exceeds budget', () => {
+    expect(() => damageDistribution('200d6')).toThrow('dice');
+  });
+
+  it('throws when die faces exceed budget', () => {
+    expect(() => damageDistribution('1d2000')).toThrow('faces');
+  });
+
+  it('throws when total dice exceeds budget', () => {
+    expect(() => damageDistribution('100d6+100d6+100d6+100d6+100d6+100d6+100d6+100d7')).toThrow('too many total dice');
+  });
 });

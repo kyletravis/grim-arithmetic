@@ -9,3 +9,4 @@ screenshots/
 .env
 .env.*
 !.env.example
+SECURITY_REVIEW.md

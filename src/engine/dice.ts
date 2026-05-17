@@ -10,6 +10,19 @@ export interface DamageDistribution {
   outcomes: DamageOutcome[];
 }
 
+const BUDGET = {
+  maxFormulaLength: 256,
+  maxTerms: 20,
+  maxDicePerTerm: 100,
+  maxDieFaces: 1000,
+  maxTotalDice: 500,
+  maxOutcomes: 50000
+} as const;
+
+function budgetExceeded(reason: string): Error {
+  return new Error(`Dice formula rejected: ${reason}`);
+}
+
 export function averageDamage(formula: string): number {
   return damageDistribution(formula).mean;
 }
@@ -17,16 +30,48 @@ export function averageDamage(formula: string): number {
 export function damageDistribution(formula: string): DamageDistribution {
   const normalized = normalizeFormula(formula);
   const terms = normalized.match(/[+-]?[^+-]+/g) ?? [];
+
+  if (terms.length > BUDGET.maxTerms) {
+    throw budgetExceeded(`too many terms (${terms.length} exceeds ${BUDGET.maxTerms})`);
+  }
+
+  let totalDice = 0;
+  for (const term of terms) {
+    const diceMatch = term.replace(/^[+-]/, '').match(/^(\d+)d(\d+)$/);
+    if (diceMatch) {
+      const count = Number(diceMatch[1]);
+      if (count > BUDGET.maxDicePerTerm) {
+        throw budgetExceeded(`term ${term} has ${count} dice (max ${BUDGET.maxDicePerTerm})`);
+      }
+      totalDice += count;
+    }
+  }
+
+  if (totalDice > BUDGET.maxTotalDice) {
+    throw budgetExceeded(`too many total dice (${totalDice} exceeds ${BUDGET.maxTotalDice})`);
+  }
+
   let states = new Map<number, number>([[0, 1]]);
 
   for (const term of terms) {
-    states = convolve(states, termDistribution(term));
+    const termStates = termDistribution(term);
+    if (termStates.size > BUDGET.maxOutcomes) {
+      throw budgetExceeded(`term ${term} produced ${termStates.size} outcomes (max ${BUDGET.maxOutcomes})`);
+    }
+    states = convolve(states, termStates);
+    if (states.size > BUDGET.maxOutcomes) {
+      throw budgetExceeded(`convolution produced ${states.size} outcomes (max ${BUDGET.maxOutcomes})`);
+    }
   }
 
   return summarizeDistribution(states, formula);
 }
 
 function normalizeFormula(formula: string): string {
+  if (formula.length > BUDGET.maxFormulaLength) {
+    throw budgetExceeded(`formula length ${formula.length} exceeds ${BUDGET.maxFormulaLength}`);
+  }
+
   const normalized = formula.replace(/\s+/g, '');
 
   if (!/^[+-]?(\d+d\d+|\d+)([+-](\d+d\d+|\d+))*$/.test(normalized)) {
@@ -49,6 +94,10 @@ function termDistribution(term: string): Map<number, number> {
   const faces = Number(diceMatch[2]);
   if (!Number.isInteger(count) || !Number.isInteger(faces) || count < 1 || faces < 1) {
     throw new Error(`Unsupported damage term: ${term}`);
+  }
+
+  if (faces > BUDGET.maxDieFaces) {
+    throw budgetExceeded(`term ${term} has ${faces} faces (max ${BUDGET.maxDieFaces})`);
   }
 
   let states = new Map<number, number>([[0, 1]]);

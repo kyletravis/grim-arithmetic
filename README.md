@@ -6,6 +6,8 @@ A GM-only Foundry VTT module for **Pathfinder 2e** that surfaces real, immediate
 
 ![Grim Arithmetic — Danger Board and Pair Detail panels](resources/ga01.png)
 
+![Grim Arithmetic — Forecast panel](resources/ga02.png)
+
 ## What it does
 
 - **Encounter Danger Board** — a sortable table of the most endangered PCs and the most dangerous enemies, with per-pair down chance and a one-click drilldown.
@@ -38,6 +40,27 @@ After installing, enable **Grim Arithmetic** inside your PF2e world via **Game S
 5. In Pair Detail, you can switch the enemy Strike, change MAP, toggle Hero Point assumptions, and pick which wounded value drives the math.
 
 The board and detail panel are GM-only and never broadcast to players.
+
+## RC6 Changelog
+
+v0.6.0-rc.6 through v0.5.0 introduced the Monte Carlo Forecast engine and the Danger Board / Pair Detail split:
+
+- **rc.6** — Simplified Forecast UI: removed iteration count and seed inputs, set default tactics to Spread damage.
+- **rc.5** — Added 95% confidence intervals to all Forecast proportion metrics.
+- **rc.4** — Phase I-A PC survival: healing (Battle Medicine, Heal spell/cantrip), recovery checks, Hero Point death prevention.
+- **rc.3** — PC action modeling: PCs now Strike back in the simulation.
+- **rc.2** — Lowered default round cap (10 → 5), added pessimism banner for high-lethality warnings.
+- **rc.1** — Monte Carlo encounter simulation engine, Forecast panel, Web Worker integration, 5 tactics profiles.
+- **v0.5.0** — Encounter Danger Board (main window) + Pair Detail popup, pairwise down-risk, `MAX_PAIRS` guardrail.
+
+## RC7 Changelog
+
+v0.6.0-rc.7 addresses findings from an independent security review:
+
+- **H-1:** Added strict dice formula budgets (max 500 total dice, 100 per term, 50000 outcomes) to prevent CPU exhaustion from malformed actor data.
+- **M-1:** Gated debug capture API behind the `debugLogging` setting and GM check to prevent stat-block data leakage in console logs.
+- **M-2:** Pinned all dev dependency versions to exact lockfile values for reproducible builds.
+- **Low:** Removed source maps from production builds.
 
 ## Compatibility
 
