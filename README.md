@@ -92,9 +92,9 @@ Grim Arithmetic is an independent module and is not affiliated with, endorsed by
 - [Product Requirements](./PRD.md) and [Backlog](./BACKLOG.md)
 - [Release Workflow](./docs/RELEASE.md)
 
-## Known Bugs
-
-- **Healing not applied correctly** — PC healing actions (Battle Medicine, Heal spell, Heal cantrip) are not being applied to simulation results as expected. Targeting a fix in **v0.6.1**.
+## Known issues (deferred to v0.7.0)
+- Foundry v13+ logs a console deprecation warning for the V1 Application framework. The warning is non-fatal until Foundry v16; the three panels (Encounter Danger Board, Pair Detail, Forecast) will be migrated to ApplicationV2 in v0.7.0 (KHT-106).
+- A "message channel closed before a response was received" console error reported in some sessions traces to a browser extension's chrome.runtime.onMessage listener, not Grim Arithmetic. The module uses zero Chrome extension APIs (KHT-107 — closed as external).
 
 ## Development
 
