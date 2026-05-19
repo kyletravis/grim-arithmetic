@@ -67,6 +67,21 @@
           </div>
         </div>
 
+        <div class="grim-arithmetic-forecast__headline grim-arithmetic-forecast__safety-net">
+          <div class="grim-arithmetic-forecast__metric">
+            <span class="grim-arithmetic-forecast__metric-label">Heals per run</span>
+            <span class="grim-arithmetic-forecast__metric-value">{{result.meanHealsPerIteration}}</span>
+          </div>
+          <div class="grim-arithmetic-forecast__metric">
+            <span class="grim-arithmetic-forecast__metric-label">Recovery checks per run</span>
+            <span class="grim-arithmetic-forecast__metric-value">{{result.meanRecoveryChecksPerIteration}}</span>
+          </div>
+          <div class="grim-arithmetic-forecast__metric">
+            <span class="grim-arithmetic-forecast__metric-label">Hero Point saves</span>
+            <span class="grim-arithmetic-forecast__metric-value">{{result.heroPointSurvivalPercent}}%</span>
+          </div>
+        </div>
+
         <p class="grim-arithmetic-forecast__run-meta">
           {{result.tacticsProfileLabel}}
           {{#if result.aborted}} · <strong>aborted</strong>{{/if}}

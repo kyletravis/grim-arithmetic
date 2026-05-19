@@ -1,5 +1,5 @@
 import { DyingSeverity, immediateDownRisk, MapType } from '../engine/mortality';
-import type { IterationCount, SimulationResult, TacticsProfileId } from '../engine/simulation-types';
+import type { SimulationResult, TacticsProfileId } from '../engine/simulation-types';
 import { TokenSelectionResult } from '../foundry/selection';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 
@@ -317,6 +317,10 @@ export interface ForecastResultView {
   meanFirstDownRound: string;
   meanFirstDownCi: string | null;
   medianFirstDownRound: string;
+  /** Phase I-A safety-net stats so GMs can see heals/recoveries/HP-survivals firing. */
+  meanHealsPerIteration: string;
+  meanRecoveryChecksPerIteration: string;
+  heroPointSurvivalPercent: number;
   perPc: ForecastPcRow[];
   perEnemy: ForecastEnemyRow[];
   caveats: string[];
@@ -377,8 +381,6 @@ export const TACTICS_PROFILE_DESCRIPTIONS: Record<TacticsProfileId, string> = {
   predator: 'Enemies prioritize wounded > low-HP > full-HP PCs; attack downed only as a last resort.',
   'boss-cinematic': 'Enemy uses the highest-damage attack on the toughest standing PC, all strikes on the same target.'
 };
-
-const ITERATION_CHOICES: IterationCount[] = [1000, 5000, 10000];
 
 export function buildForecastPanelData({
   moduleVersion,
@@ -527,6 +529,9 @@ function buildForecastResultView(result: SimulationResult): ForecastResultView {
     meanFirstDownCi,
     medianFirstDownRound:
       result.medianFirstDownRound === null ? 'n/a' : String(result.medianFirstDownRound),
+    meanHealsPerIteration: result.safetyNet.meanHealsPerIteration.toFixed(1),
+    meanRecoveryChecksPerIteration: result.safetyNet.meanRecoveryChecksPerIteration.toFixed(1),
+    heroPointSurvivalPercent: Math.round(result.safetyNet.heroPointSurvivalRate * 100),
     perPc: result.perPc.map((pc) => {
       const downCi = proportionCI(pc.downProbability, result.iterationsCompleted);
       const deathCi = proportionCI(pc.deathProbability, result.iterationsCompleted);

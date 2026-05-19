@@ -4,6 +4,7 @@ import { Pf2eAdapter } from '../src/systems/pf2e-adapter';
 const adapter = new Pf2eAdapter();
 
 interface SpellItem {
+  id?: string;
   name?: string;
   slug?: string;
   level?: number;
@@ -12,10 +13,24 @@ interface SpellItem {
   slotsRemaining?: number;
 }
 
+interface SpellcastingEntryFixture {
+  preparationKind?: 'prepared' | 'spontaneous';
+  /** Map of slot rank (0=cantrip, 1+=spell rank) to a list of preparations. */
+  slots?: Record<
+    number,
+    {
+      max?: number;
+      value?: number;
+      prepared?: Array<{ id: string; expended?: boolean }>;
+    }
+  >;
+}
+
 function pcToken(opts: {
   medicine?: { totalModifier?: number; value?: number; rank?: number };
   feats?: Array<{ slug?: string; name?: string }>;
   spells?: SpellItem[];
+  spellcastingEntries?: SpellcastingEntryFixture[];
   casterLevel?: number;
 }): unknown {
   const items: unknown[] = [];
@@ -27,6 +42,7 @@ function pcToken(opts: {
   if (opts.spells) {
     for (const s of opts.spells) {
       items.push({
+        id: s.id,
         type: 'spell',
         name: s.name ?? 'Heal',
         system: {
@@ -35,6 +51,30 @@ function pcToken(opts: {
           isCantrip: s.isCantrip,
           traits: { value: s.traits ?? [] },
           slotsRemaining: s.slotsRemaining
+        }
+      });
+    }
+  }
+  if (opts.spellcastingEntries) {
+    for (const entry of opts.spellcastingEntries) {
+      const slotMap: Record<string, unknown> = {};
+      for (const [rank, slot] of Object.entries(entry.slots ?? {})) {
+        const preparedMap: Record<string, unknown> = {};
+        (slot.prepared ?? []).forEach((prep, idx) => {
+          preparedMap[String(idx)] = { id: prep.id, expended: prep.expended ?? false };
+        });
+        slotMap[`slot${rank}`] = {
+          max: slot.max ?? (slot.prepared?.length ?? 0),
+          value: slot.value,
+          prepared: preparedMap
+        };
+      }
+      items.push({
+        type: 'spellcastingEntry',
+        name: 'Cleric Spellcasting',
+        system: {
+          prepared: { value: entry.preparationKind ?? 'prepared' },
+          slots: slotMap
         }
       });
     }
@@ -160,6 +200,79 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
       pcToken({ spells: [{ slug: 'heal', level: 3 }] })
     );
     expect(snapshot?.pcCapabilities?.healSpellSlots).toEqual({ 3: 1 });
+  });
+
+  it('counts prepared Heal slots from a real PF2e v14 cleric spellcasting entry', () => {
+    // Mira: human cleric with Heal prepared via the spellcastingEntry slot map,
+    // NOT via item-level slotsRemaining. This mirrors how PF2e v6+ stores
+    // prepared spell slot data on the spellcasting entry, not the spell item.
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({
+        casterLevel: 5,
+        medicine: { totalModifier: 1, rank: 1 },
+        spells: [{ id: 'heal-spell-id', slug: 'heal', level: 1 }],
+        spellcastingEntries: [
+          {
+            preparationKind: 'prepared',
+            slots: {
+              1: {
+                max: 4,
+                prepared: [
+                  { id: 'heal-spell-id' },
+                  { id: 'heal-spell-id' },
+                  { id: 'shield-spell-id' },
+                  { id: 'heal-spell-id', expended: true }
+                ]
+              },
+              2: {
+                max: 3,
+                prepared: [
+                  { id: 'heal-spell-id' },
+                  { id: 'bless-spell-id' }
+                ]
+              }
+            }
+          }
+        ]
+      })
+    );
+    expect(snapshot?.pcCapabilities?.healSpellSlots).toEqual({ 1: 2, 2: 1 });
+  });
+
+  it('counts spontaneous Heal slots from the entry slot value when Heal is known', () => {
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({
+        casterLevel: 8,
+        spells: [{ id: 'heal-spell-id', slug: 'heal', level: 1 }],
+        spellcastingEntries: [
+          {
+            preparationKind: 'spontaneous',
+            slots: {
+              1: { max: 4, value: 3 },
+              2: { max: 3, value: 2 }
+            }
+          }
+        ]
+      })
+    );
+    expect(snapshot?.pcCapabilities?.healSpellSlots).toEqual({ 1: 3, 2: 2 });
+  });
+
+  it('ignores entries with no Heal preparation and no Heal in the known spell list', () => {
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({
+        casterLevel: 5,
+        spellcastingEntries: [
+          {
+            preparationKind: 'prepared',
+            slots: {
+              1: { max: 4, prepared: [{ id: 'shield-spell-id' }] }
+            }
+          }
+        ]
+      })
+    );
+    expect(snapshot?.pcCapabilities?.healSpellSlots).toBeUndefined();
   });
 
   it('does not surface pcCapabilities on NPC actors', () => {

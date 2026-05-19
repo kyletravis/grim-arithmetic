@@ -1,3 +1,4 @@
+import { MODULE_ID } from '../constants';
 import type { EncounterSetup, HealingState, SimulationCombatant } from '../engine/simulation-types';
 import type { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 import {
@@ -53,6 +54,7 @@ function materialize<TokenLike extends { name?: string }>(
     caveats.push(`Unsupported actor skipped: ${name}`);
   }
 
+  const debugLogging = isDebugLoggingEnabled();
   const pcs: SimulationCombatant[] = participants.pcs.map((p) => {
     let attacks: AttackSnapshot[] = [];
     try {
@@ -65,6 +67,9 @@ function materialize<TokenLike extends { name?: string }>(
     }
     const combatant = snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
     combatant.healing = buildHealingState(p.snapshot, caveats);
+    if (debugLogging) {
+      logHealingCapability(p.snapshot, combatant.healing);
+    }
     return combatant;
   });
 
@@ -112,6 +117,33 @@ function buildHealingState(snapshot: CombatantSnapshot, caveats: string[]): Heal
     healSpellSlotsRemaining: { ...slots },
     healCantripLevel: cantrip
   };
+}
+
+function isDebugLoggingEnabled(): boolean {
+  if (typeof game === 'undefined') return false;
+  try {
+    return Boolean(
+      (game as { settings?: { get?: (module: string, key: string) => unknown } })
+        .settings
+        ?.get?.(MODULE_ID, 'debugLogging') ?? false
+    );
+  } catch {
+    return false;
+  }
+}
+
+function logHealingCapability(snapshot: CombatantSnapshot, healing: HealingState): void {
+  const slotSummary = Object.entries(healing.healSpellSlotsRemaining)
+    .map(([rank, count]) => `rank ${rank}: ${count}`)
+    .join(', ');
+  console.log('Grim Arithmetic | PC healing capability', {
+    name: snapshot.name,
+    hasBattleMedicine: healing.hasBattleMedicine,
+    medicineModifier: healing.medicineModifier,
+    medicineDC: healing.medicineDC,
+    healCantripLevel: healing.healCantripLevel,
+    healSpellSlots: slotSummary || '(none)'
+  });
 }
 
 function snapshotToSimulationCombatant(

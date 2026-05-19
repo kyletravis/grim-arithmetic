@@ -2,6 +2,30 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.6.1 - Forecast panel safety-net visibility (bugfix)
+
+Bugfix release surfacing the Phase I-A safety-net stats that v0.6.0 was already computing but never displaying, plus a more robust PF2e Heal-spell extractor for real-world prepared-caster actors.
+
+### Forecast panel
+- Added a "Heals per run / Recovery checks per run / Hero Point saves" row under the headline metrics so GMs can see whether PC healing, recovery checks, and Hero Point death prevention actually fired during the simulation (KHT-105).
+
+### PF2e adapter — heal-capability extraction
+- Prepared casters: `extractHealCapability` now walks `spellcastingEntry.system.slots.slotN.prepared` (the canonical PF2e v6+ shape) and counts un-expended preparations whose `id` references a Heal spell item, instead of only reading a `slotsRemaining` field that real PF2e prepared casters do not populate. This is the root-cause fix for "Mira's heals never fire."
+- Spontaneous casters: when an entry's `prepared.value === 'spontaneous'` and Heal is in its spell list, the entry's per-rank `value` (remaining slots) is counted as Heal-castable.
+- Item access now prefers `actor.itemTypes.<type>` (PF2e's pre-filtered arrays) over walking `actor.items`, with the latter as a fallback. Removes one class of "items collection looked empty" failure modes.
+- Legacy item-level `slotsRemaining` fallback retained for completeness so existing synthetic fixtures still pass.
+
+### Debug logging
+- When the **Debug logging** module setting is enabled, the encounter setup builder logs each PC's extracted healing capability (Battle Medicine, Heal cantrip, Heal spell slots, Medicine modifier, Medicine DC).
+- The PF2e adapter additionally emits a verbose `extraction probe` log per PC dumping item-type counts, every Heal spell found, and the raw slot/prepared structure for each spellcasting entry — so future shape mismatches between Grim Arithmetic and the PF2e system can be diagnosed from a console paste without source access.
+
+### Cleanup
+- Removed two dead identifiers (`ITERATION_CHOICES`, an unused `totalIterations` parameter) that were tripping `npm run lint`.
+
+### Known issues (deferred to v0.7.0)
+- Foundry v13+ logs a console deprecation warning for the V1 Application framework. The warning is non-fatal until Foundry v16; the three panels (Encounter Danger Board, Pair Detail, Forecast) will be migrated to `ApplicationV2` in v0.7.0 (KHT-106).
+- A `"message channel closed before a response was received"` console error reported in some sessions traces to a browser extension's `chrome.runtime.onMessage` listener, not Grim Arithmetic. The module uses zero Chrome extension APIs (KHT-107 — closed as external).
+
 ## v0.6.0 - Monte Carlo encounter simulation + PC action modeling (prerelease)
 
 v0.6.0 introduces a Monte Carlo encounter simulation engine, a Forecast panel, and Phase I-A PC survival mechanics. The following summarizes the main changes across all rc releases.
