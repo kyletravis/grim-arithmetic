@@ -217,8 +217,7 @@ function aggregate(
     anyDownCount,
     completedCount,
     tpkCount,
-    firstDownRounds,
-    completedCount
+    firstDownRounds
   );
 
   return {
@@ -255,8 +254,7 @@ function buildConfidenceIntervals(
   anyPcDownCount: number,
   total: number,
   tpkCount: number,
-  firstDownRounds: number[],
-  totalIterations: number
+  firstDownRounds: number[]
 ): SimulationConfidenceIntervals {
   const anyPcDown = proportionCI(anyPcDownCount, total);
   const tpk = proportionCI(tpkCount, total);

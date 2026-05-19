@@ -123,6 +123,16 @@ function makeResult(overrides: Partial<SimulationResult> = {}): SimulationResult
     perEnemy: [
       { id: 'troll', name: 'Troll Mauler', damageShare: 1, topTargetId: 'mira' }
     ],
+    safetyNet: {
+      meanHealsPerIteration: 0,
+      meanRecoveryChecksPerIteration: 0,
+      heroPointSurvivalRate: 0
+    },
+    confidenceIntervals: {
+      anyPcDown: { lower: 0.6, upper: 0.64 },
+      tpk: { lower: 0.1, upper: 0.14 },
+      meanFirstDownRound: { lower: 2.0, upper: 2.2 }
+    },
     caveats: [],
     ...overrides
   };
@@ -208,5 +218,41 @@ describe('buildForecastPanelData: done state', () => {
       })
     });
     expect(data.pessimismWarning).toBeUndefined();
+  });
+
+  it('surfaces Phase I-A safety-net stats so GMs see heals, recoveries, and Hero Point survivals firing', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          safetyNet: {
+            meanHealsPerIteration: 1.42,
+            meanRecoveryChecksPerIteration: 0.73,
+            heroPointSurvivalRate: 0.18
+          }
+        })
+      })
+    });
+    expect(data.result?.meanHealsPerIteration).toBe('1.4');
+    expect(data.result?.meanRecoveryChecksPerIteration).toBe('0.7');
+    expect(data.result?.heroPointSurvivalPercent).toBe(18);
+  });
+
+  it('formats zero safety-net values without NaN or undefined', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          safetyNet: {
+            meanHealsPerIteration: 0,
+            meanRecoveryChecksPerIteration: 0,
+            heroPointSurvivalRate: 0
+          }
+        })
+      })
+    });
+    expect(data.result?.meanHealsPerIteration).toBe('0.0');
+    expect(data.result?.meanRecoveryChecksPerIteration).toBe('0.0');
+    expect(data.result?.heroPointSurvivalPercent).toBe(0);
   });
 });

@@ -321,6 +321,15 @@
   margin-bottom: 0.5rem;
 }
 
+.grim-arithmetic-forecast__safety-net {
+  margin-top: 0.25rem;
+}
+
+.grim-arithmetic-forecast__safety-net .grim-arithmetic-forecast__metric {
+  background: rgba(60, 120, 60, 0.08);
+  border-color: rgba(60, 120, 60, 0.25);
+}
+
 .grim-arithmetic-forecast__metric {
   display: flex;
   flex-direction: column;
