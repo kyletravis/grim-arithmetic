@@ -13,46 +13,65 @@ import {
   type SimulationControls
 } from './panel-data';
 
-type HtmlLike = {
-  find: (selector: string) => {
-    on: (
-      eventName: string,
-      handler: (event: { currentTarget: { value: string; dataset?: DOMStringMap } }) => void
-    ) => void;
-  };
-};
+interface ApplicationV2Like {
+  render(force?: boolean | Record<string, unknown>): Promise<unknown>;
+  element: HTMLElement;
+}
 
-export class ForecastPanel extends Application {
-  private static instance?: ForecastPanel;
+const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
+  options?: unknown
+) => ApplicationV2Like;
+
+const FORECAST_ID = `${MODULE_ID}-forecast`;
+
+export class ForecastPanel extends Base {
+  private static singleton?: ForecastPanel;
 
   private controls: SimulationControls = { ...DEFAULT_SIMULATION_CONTROLS };
   private runState: ForecastRunState = { kind: 'idle' };
   private currentHandle?: RunSimulationHandle;
 
-  static override get defaultOptions(): ApplicationOptions {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: `${MODULE_ID}-forecast`,
+  static DEFAULT_OPTIONS = {
+    id: FORECAST_ID,
+    classes: ['grim-arithmetic-window'],
+    tag: 'section',
+    window: {
       title: `${MODULE_TITLE} — Encounter Forecast`,
-      template: `modules/${MODULE_ID}/templates/forecast-panel.hbs`,
+      resizable: true
+    },
+    position: {
       width: 800,
-      height: 'auto',
-      resizable: true,
-      classes: ['grim-arithmetic-window']
-    });
-  }
+      height: 720
+    },
+    actions: {
+      run: function (this: ForecastPanel): void {
+        this.startRun();
+      },
+      cancel: function (this: ForecastPanel): void {
+        this.currentHandle?.cancel();
+      }
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: `modules/${MODULE_ID}/templates/forecast-panel.hbs`
+    }
+  };
 
   static getInstance(): ForecastPanel {
-    if (!ForecastPanel.instance) {
-      ForecastPanel.instance = new ForecastPanel();
+    if (!ForecastPanel.singleton) {
+      ForecastPanel.singleton = new ForecastPanel();
     }
-    return ForecastPanel.instance;
+    return ForecastPanel.singleton;
   }
 
   static open(): void {
-    ForecastPanel.getInstance().render(true);
+    ForecastPanel.getInstance().render({ force: true });
   }
 
-  override async getData(): Promise<ForecastPanelData> {
+  async _prepareContext(): Promise<ForecastPanelData> {
     return buildForecastPanelData({
       moduleVersion: MODULE_VERSION,
       enabled: isMonteCarloEnabled(),
@@ -61,38 +80,31 @@ export class ForecastPanel extends Application {
     });
   }
 
-  override activateListeners(html: HtmlLike): void {
-    super.activateListeners(html);
-
-    html.find('[data-grim-forecast-control]').on('change', (event) => {
-      const target = event.currentTarget;
-      const key = target.dataset?.grimForecastControl;
-      if (key === 'tacticsProfile') {
-        if (
-          target.value === 'random-legal' ||
-          target.value === 'spread-damage' ||
-          target.value === 'focus-fire' ||
-          target.value === 'predator' ||
-          target.value === 'boss-cinematic'
-        ) {
-          this.controls.tacticsProfile = target.value;
+  async _onRender(): Promise<void> {
+    const root = this.element;
+    if (!root) return;
+    root.querySelectorAll<HTMLSelectElement>('[data-grim-forecast-control]').forEach((el) => {
+      el.addEventListener('change', () => {
+        const key = el.dataset.grimForecastControl;
+        if (key === 'tacticsProfile') {
+          const value = el.value;
+          if (
+            value === 'random-legal' ||
+            value === 'spread-damage' ||
+            value === 'focus-fire' ||
+            value === 'predator' ||
+            value === 'boss-cinematic'
+          ) {
+            this.controls.tacticsProfile = value;
+          }
         }
-      }
-      this.render(false);
-    });
-
-    html.find('[data-grim-forecast-run]').on('click', () => {
-      this.startRun();
-    });
-
-    html.find('[data-grim-forecast-cancel]').on('click', () => {
-      this.currentHandle?.cancel();
+        this.render();
+      });
     });
   }
 
-  override async close(options?: { force?: boolean }): Promise<void> {
+  async _preClose(): Promise<void> {
     this.currentHandle?.cancel();
-    return super.close(options);
   }
 
   private startRun(): void {
@@ -105,7 +117,7 @@ export class ForecastPanel extends Application {
         kind: 'error',
         message: err instanceof Error ? err.message : String(err)
       };
-      this.render(false);
+      this.render();
       return;
     }
 
@@ -115,7 +127,7 @@ export class ForecastPanel extends Application {
         message:
           'No active combat with both PCs and enemies. Start a combat encounter, then run the forecast.'
       };
-      this.render(false);
+      this.render();
       return;
     }
 
@@ -126,13 +138,13 @@ export class ForecastPanel extends Application {
     };
 
     this.runState = { kind: 'running', completed: 0, total: 5000 };
-    this.render(false);
+    this.render();
 
     const handle = runSimulationInWorker(setup, config, {
       onProgress: (completed, total) => {
         if (this.runState.kind === 'running') {
           this.runState = { kind: 'running', completed, total };
-          this.render(false);
+          this.render();
         }
       }
     });
@@ -142,7 +154,7 @@ export class ForecastPanel extends Application {
       (result: SimulationResult) => {
         this.runState = { kind: 'done', result };
         this.currentHandle = undefined;
-        this.render(false);
+        this.render();
       },
       (err) => {
         this.runState = {
@@ -150,7 +162,7 @@ export class ForecastPanel extends Application {
           message: err instanceof Error ? err.message : String(err)
         };
         this.currentHandle = undefined;
-        this.render(false);
+        this.render();
       }
     );
   }

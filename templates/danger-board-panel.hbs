@@ -7,11 +7,11 @@
   <p class="grim-arithmetic-panel__hint">{{message}}</p>
 
   <div class="grim-arithmetic-panel__board-actions">
-    <button type="button" data-grim-open-detail-selection>Detail from selection + target</button>
     {{#if forecastEnabled}}
-      <button type="button" data-grim-open-forecast>Forecast encounter</button>
+      <button type="button" data-action="openForecast">Encounter Forecast</button>
     {{/if}}
-    <button type="button" data-grim-refresh>Refresh</button>
+    <button type="button" data-action="openDetailSelection">Detail Selection + Target</button>
+    <button type="button" data-action="refresh">Refresh</button>
   </div>
 
   <section class="grim-arithmetic-panel__danger-board">
@@ -38,7 +38,7 @@
             <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}">{{riskLabel}}</span>
             <button type="button"
                     class="grim-arithmetic-panel__danger-row-action"
-                    data-grim-open-detail-pair
+                    data-action="openDetailPair"
                     data-grim-pc-id="{{pcId}}"
                     data-grim-enemy-id="{{enemyId}}"
                     data-grim-attack-id="{{attackId}}">Detail</button>
@@ -60,7 +60,7 @@
             <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}">{{riskLabel}}</span>
             <button type="button"
                     class="grim-arithmetic-panel__danger-row-action"
-                    data-grim-open-detail-pair
+                    data-action="openDetailPair"
                     data-grim-pc-id="{{pcId}}"
                     data-grim-enemy-id="{{enemyId}}"
                     data-grim-attack-id="{{attackId}}">Detail</button>

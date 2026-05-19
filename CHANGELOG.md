@@ -2,6 +2,27 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.0 - ApplicationV2 migration + readability tweaks
+
+v0.7.0 migrates Grim Arithmetic's three windows off the deprecated V1 `Application` framework so Foundry v13+ no longer logs a console deprecation warning, plus a small set of UX fixes against the V2 dark window theme.
+
+### UI tweaks
+- Pair Detail and Encounter Forecast windows are bounded (640 / 720) and resizable, with `.window-content` set to `overflow-y: auto` so long content scrolls inside the window instead of being clipped below the viewport.
+- In-content headers simplified: Pair Detail shows `Pair Detail`, Encounter Forecast shows `Encounter Forecast` (the full `Grim Arithmetic — <panel>` label stays in the window chrome title bar).
+- Pair Detail labels (form `<label>`, summary `<dt>`) inherit the V2 window's primary text color instead of the hard-coded dark brown that read as muddy orange on the dark window background.
+- Encounter Danger Board: `Encounter Forecast` button moved before `Detail Selection + Target`, both buttons re-cased to title-case.
+
+### Foundry framework migration (KHT-106)
+- **Encounter Danger Board**, **Pair Detail**, and **Encounter Forecast** now extend `foundry.applications.api.HandlebarsApplicationMixin(ApplicationV2)`.
+- V1 `defaultOptions` getter → V2 `static DEFAULT_OPTIONS` (window/position/classes/actions sub-objects).
+- V1 `getData()` → V2 `_prepareContext()`. Return shapes (`DangerBoardPanelData`, `MortalityPanelData`, `ForecastPanelData`) are unchanged, so all 322 unit tests pass without modification.
+- V1 `activateListeners(html)` jQuery bindings replaced by:
+  - V2 declarative `static actions` map for all buttons (`data-action="openDetailPair"`, `"openDetailSelection"`, `"openForecast"`, `"refresh"`, `"run"`, `"cancel"`).
+  - Native `addEventListener('change', …)` inside `_onRender` for the `<select>` controls in Pair Detail (six selects) and Forecast (tactics profile), since the V2 actions map is click-only.
+- Forecast: V1 `close()` override replaced by V2 `_preClose()` so the in-flight Monte Carlo worker handle is still cancelled when the window is dismissed mid-run.
+- Static `instance` singletons preserved for `PairDetailPanel` and `ForecastPanel`; cross-panel openers (`openForPair`, `openForSelection`, `open`) keep the same signatures so `src/main.ts` API and the toolbar entrypoint in `src/ui/token-controls.ts` did not need changes.
+- Templates updated: button `data-grim-*` attributes swapped to `data-action="…"`; `<select>` `data-grim-control` / `data-grim-forecast-control` attributes preserved.
+
 ## v0.6.1 - Forecast panel safety-net visibility (bugfix)
 
 Bugfix release surfacing the Phase I-A safety-net stats that v0.6.0 was already computing but never displaying, plus a more robust PF2e Heal-spell extractor for real-world prepared-caster actors.

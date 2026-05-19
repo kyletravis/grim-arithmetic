@@ -11,38 +11,54 @@ import { resolvePairSelection } from './pair-detail-resolver';
 
 export { resolvePairSelection };
 
-type HtmlLike = {
-  find: (selector: string) => {
-    on: (
-      eventName: string,
-      handler: (event: { currentTarget: { value: string; dataset?: { grimControl?: string } } }) => void
-    ) => void;
-  };
-};
+interface ApplicationV2Like {
+  render(force?: boolean | Record<string, unknown>): Promise<unknown>;
+  element: HTMLElement;
+}
 
-export class PairDetailPanel extends Application {
-  private static instance?: PairDetailPanel;
+const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
+  options?: unknown
+) => ApplicationV2Like;
+
+const PAIR_DETAIL_ID = `${MODULE_ID}-pair-detail`;
+
+export class PairDetailPanel extends Base {
+  private static singleton?: PairDetailPanel;
 
   private controls: PanelControls = { ...DEFAULT_PANEL_CONTROLS };
   private explicitSelection?: TokenSelectionResult<unknown>;
 
-  static override get defaultOptions(): ApplicationOptions {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: `${MODULE_ID}-pair-detail`,
-      title: `${MODULE_TITLE} — Pair Detail`,
-      template: `modules/${MODULE_ID}/templates/pair-detail-panel.hbs`,
+  static DEFAULT_OPTIONS = {
+    id: PAIR_DETAIL_ID,
+    classes: ['grim-arithmetic-window'],
+    tag: 'section',
+    window: {
+      title: `${MODULE_TITLE} - Pair Detail`,
+      resizable: true
+    },
+    position: {
       width: 500,
-      height: 'auto',
-      resizable: true,
-      classes: ['grim-arithmetic-window']
-    });
-  }
+      height: 640
+    },
+    actions: {
+      refresh: function (this: PairDetailPanel): void {
+        this.render();
+      }
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: `modules/${MODULE_ID}/templates/pair-detail-panel.hbs`
+    }
+  };
 
   static getInstance(): PairDetailPanel {
-    if (!PairDetailPanel.instance) {
-      PairDetailPanel.instance = new PairDetailPanel();
+    if (!PairDetailPanel.singleton) {
+      PairDetailPanel.singleton = new PairDetailPanel();
     }
-    return PairDetailPanel.instance;
+    return PairDetailPanel.singleton;
   }
 
   static openForPair(pcId: string, enemyId: string, attackId?: string): void {
@@ -53,16 +69,16 @@ export class PairDetailPanel extends Application {
     if (attackId !== undefined) {
       instance.controls.attackId = attackId;
     }
-    instance.render(true);
+    instance.render({ force: true });
   }
 
   static openForSelection(): void {
     const instance = PairDetailPanel.getInstance();
     instance.explicitSelection = undefined;
-    instance.render(true);
+    instance.render({ force: true });
   }
 
-  override async getData(): Promise<MortalityPanelData> {
+  async _prepareContext(): Promise<MortalityPanelData> {
     const selection = this.explicitSelection ?? getCurrentTokenSelection();
     return buildMortalityPanelData({
       selection,
@@ -72,20 +88,16 @@ export class PairDetailPanel extends Application {
     });
   }
 
-  override activateListeners(html: HtmlLike): void {
-    super.activateListeners(html);
-
-    html.find('[data-grim-control]').on('change', (event) => {
-      const target = event.currentTarget;
-      const key = targetKey(target);
-      if (!key) return;
-
-      this.updateControl(key, target.value);
-      this.render(false);
-    });
-
-    html.find('[data-grim-refresh]').on('click', () => {
-      this.render(false);
+  async _onRender(): Promise<void> {
+    const root = this.element;
+    if (!root) return;
+    root.querySelectorAll<HTMLSelectElement>('[data-grim-control]').forEach((el) => {
+      el.addEventListener('change', () => {
+        const key = targetKey(el);
+        if (!key) return;
+        this.updateControl(key, el.value);
+        this.render();
+      });
     });
   }
 
@@ -125,8 +137,8 @@ function parseHeroPointMode(value: string): PanelControls['heroPointMode'] {
   return 'actor';
 }
 
-function targetKey(target: { value: string; dataset?: { grimControl?: string } }): keyof PanelControls | null {
-  const key = target.dataset?.grimControl;
+function targetKey(target: HTMLSelectElement): keyof PanelControls | null {
+  const key = target.dataset.grimControl;
   if (
     key === 'strikes' ||
     key === 'mapMode' ||
