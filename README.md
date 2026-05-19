@@ -54,14 +54,12 @@ After installing, enable **Grim Arithmetic** inside your PF2e world via **Game S
 
 The board and detail panel are GM-only and never broadcast to players.
 
-## RC6 Changelog
+## What's new in v0.7.0
 
-v0.6.0 introduces the Monte Carlo Forecast engine and PC action modeling:
+- **ApplicationV2 migration** — all three windows (Encounter Danger Board, Pair Detail, Encounter Forecast) now extend `foundry.applications.api.ApplicationV2` + `HandlebarsApplicationMixin`, so Foundry v13+ no longer logs a V1 Application deprecation warning.
+- **Window UX fixes** — Pair Detail and Encounter Forecast windows have bounded heights with proper scrolling, label colors inherit the V2 theme (readable on dark windows), and the Encounter Danger Board buttons were re-ordered and re-cased.
 
-- **Monte Carlo engine** — Seeded PRNG (mulberry32), 5 tactics profiles, round orchestrator, Web Worker integration, engine guardrails (MAX_ITERATIONS=10000, round cap 5).
-- **Forecast panel** — Headline metrics (Any PC down / TPK / Expected first down), per-PC breakdown, 95% confidence intervals, pessimism banner at ≥80% risk.
-- **PC survival (Phase I-A)** — PC Strikes, healing (Battle Medicine, Heal spell/cantrip), recovery checks, Hero Point death prevention.
-- **v0.5.0** — Encounter Danger Board (main window) + Pair Detail popup, pairwise down-risk, `MAX_PAIRS` guardrail.
+See [`CHANGELOG.md`](./CHANGELOG.md) for the full v0.6.x history.
 
 ## Security fixes (v0.6.0)
 
@@ -92,9 +90,8 @@ Grim Arithmetic is an independent module and is not affiliated with, endorsed by
 - [Product Requirements](./PRD.md) and [Backlog](./BACKLOG.md)
 - [Release Workflow](./docs/RELEASE.md)
 
-## Known issues (deferred to v0.7.0)
-- Foundry v13+ logs a console deprecation warning for the V1 Application framework. The warning is non-fatal until Foundry v16; the three panels (Encounter Danger Board, Pair Detail, Forecast) will be migrated to ApplicationV2 in v0.7.0 (KHT-106).
-- A "message channel closed before a response was received" console error reported in some sessions traces to a browser extension's chrome.runtime.onMessage listener, not Grim Arithmetic. The module uses zero Chrome extension APIs (KHT-107 — closed as external).
+## Known issues
+- A "message channel closed before a response was received" console error reported in some sessions traces to a browser extension's `chrome.runtime.onMessage` listener, not Grim Arithmetic. The module uses zero Chrome extension APIs (KHT-107 — closed as external).
 
 ## Development
 

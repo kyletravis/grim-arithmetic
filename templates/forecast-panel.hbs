@@ -1,6 +1,6 @@
 <section class="grim-arithmetic-panel grim-arithmetic-forecast">
   <header class="grim-arithmetic-panel__header">
-    <h2>Grim Arithmetic v{{moduleVersion}} — Encounter Forecast</h2>
+    <h2>Encounter Forecast</h2>
     <p class="grim-arithmetic-panel__tagline">Monte Carlo simulation of the active encounter under explicit assumptions.</p>
   </header>
 
@@ -20,8 +20,8 @@
       </label>
 
       <div class="grim-arithmetic-forecast__buttons">
-        <button type="button" data-grim-forecast-run {{#if (eq state "running")}}disabled{{/if}}>Forecast</button>
-        <button type="button" data-grim-forecast-cancel {{#unless (eq state "running")}}disabled{{/unless}}>Cancel</button>
+        <button type="button" data-action="run" {{#if (eq state "running")}}disabled{{/if}}>Forecast</button>
+        <button type="button" data-action="cancel" {{#unless (eq state "running")}}disabled{{/unless}}>Cancel</button>
       </div>
     </form>
 

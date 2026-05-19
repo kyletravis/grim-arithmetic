@@ -8,15 +8,6 @@ import { ForecastPanel } from './forecast-panel';
 import { DEFAULT_PANEL_CONTROLS } from './panel-data';
 import { PairDetailPanel } from './pair-detail-panel';
 
-type HtmlLike = {
-  find: (selector: string) => {
-    on: (
-      eventName: string,
-      handler: (event: { currentTarget: { dataset?: DOMStringMap } }) => void
-    ) => void;
-  };
-};
-
 export interface DangerBoardPanelData {
   moduleVersion: string;
   message: string;
@@ -27,20 +18,56 @@ export interface DangerBoardPanelData {
 const HEADER_MESSAGE =
   'Encounter-wide immediate risk. Click a row to see the detail math, or use the selection-target button to model an arbitrary pair.';
 
-export class DangerBoardPanel extends Application {
-  static override get defaultOptions(): ApplicationOptions {
-    return foundry.utils.mergeObject(super.defaultOptions, {
-      id: `${MODULE_ID}-danger-board`,
-      title: `${MODULE_TITLE} — Encounter Danger Board`,
-      template: `modules/${MODULE_ID}/templates/danger-board-panel.hbs`,
-      width: 640,
-      height: 'auto',
-      resizable: true,
-      classes: ['grim-arithmetic-window']
-    });
-  }
+interface ApplicationV2Like {
+  render(force?: boolean | Record<string, unknown>): Promise<unknown>;
+}
 
-  override async getData(): Promise<DangerBoardPanelData> {
+const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
+  options?: unknown
+) => ApplicationV2Like;
+
+export class DangerBoardPanel extends Base {
+  static DEFAULT_OPTIONS = {
+    id: `${MODULE_ID}-danger-board`,
+    classes: ['grim-arithmetic-window'],
+    tag: 'section',
+    window: {
+      title: `${MODULE_TITLE} — Encounter Danger Board`,
+      resizable: true
+    },
+    position: {
+      width: 640,
+      height: 'auto'
+    },
+    actions: {
+      openDetailPair: function (this: DangerBoardPanel, _event: Event, target: HTMLElement): void {
+        const dataset = target.dataset;
+        const pcId = dataset.grimPcId;
+        const enemyId = dataset.grimEnemyId;
+        const attackId = dataset.grimAttackId;
+        if (!pcId || !enemyId) return;
+        PairDetailPanel.openForPair(pcId, enemyId, attackId);
+      },
+      openDetailSelection: function (this: DangerBoardPanel): void {
+        PairDetailPanel.openForSelection();
+      },
+      openForecast: function (this: DangerBoardPanel): void {
+        ForecastPanel.open();
+      },
+      refresh: function (this: DangerBoardPanel): void {
+        this.render();
+      }
+    }
+  };
+
+  static PARTS = {
+    main: {
+      template: `modules/${MODULE_ID}/templates/danger-board-panel.hbs`
+    }
+  };
+
+  async _prepareContext(): Promise<DangerBoardPanelData> {
     const adapter = new Pf2eAdapter();
     const participants = getEncounterParticipants(adapter);
     const matrix = computeEncounterRiskMatrix(participants, {
@@ -55,30 +82,5 @@ export class DangerBoardPanel extends Application {
       dangerBoard,
       forecastEnabled: isMonteCarloEnabled()
     };
-  }
-
-  override activateListeners(html: HtmlLike): void {
-    super.activateListeners(html);
-
-    html.find('[data-grim-open-detail-pair]').on('click', (event) => {
-      const dataset = event.currentTarget.dataset;
-      const pcId = dataset?.grimPcId;
-      const enemyId = dataset?.grimEnemyId;
-      const attackId = dataset?.grimAttackId;
-      if (!pcId || !enemyId) return;
-      PairDetailPanel.openForPair(pcId, enemyId, attackId);
-    });
-
-    html.find('[data-grim-open-detail-selection]').on('click', () => {
-      PairDetailPanel.openForSelection();
-    });
-
-    html.find('[data-grim-open-forecast]').on('click', () => {
-      ForecastPanel.open();
-    });
-
-    html.find('[data-grim-refresh]').on('click', () => {
-      this.render(false);
-    });
   }
 }

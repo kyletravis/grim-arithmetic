@@ -2,7 +2,7 @@ var e = {
 	id: "grim-arithmetic",
 	title: "Grim Arithmetic",
 	description: "GM-facing PF2e mortality and encounter-risk analysis for Foundry VTT.",
-	version: "0.6.1",
+	version: "0.7.0",
 	authors: [{ name: "Kyle Travis" }],
 	compatibility: {
 		minimum: "13",
@@ -22,7 +22,7 @@ var e = {
 	],
 	url: "https://github.com/kyletravis/grim-arithmetic",
 	manifest: "https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json",
-	download: "https://github.com/kyletravis/grim-arithmetic/releases/download/v0.6.1/grim-arithmetic-v0.6.1.zip"
+	download: "https://github.com/kyletravis/grim-arithmetic/releases/download/v0.7.0/grim-arithmetic-v0.7.0.zip"
 }, t = "grim-arithmetic", n = "Grim Arithmetic", r = e.version;
 //#endregion
 //#region src/debug-capture.ts
@@ -214,9 +214,9 @@ function x(e) {
 	for (let e of t) {
 		let t = ne(e);
 		if (t.size > y.maxOutcomes) throw b(`term ${e} produced ${t.size} outcomes (max ${y.maxOutcomes})`);
-		if (r = re(r, t), r.size > y.maxOutcomes) throw b(`convolution produced ${r.size} outcomes (max ${y.maxOutcomes})`);
+		if (r = S(r, t), r.size > y.maxOutcomes) throw b(`convolution produced ${r.size} outcomes (max ${y.maxOutcomes})`);
 	}
-	return ie(r, e);
+	return re(r, e);
 }
 function te(e) {
 	if (e.length > y.maxFormulaLength) throw b(`formula length ${e.length} exceeds ${y.maxFormulaLength}`);
@@ -232,10 +232,10 @@ function ne(e) {
 	if (a > y.maxDieFaces) throw b(`term ${e} has ${a} faces (max ${y.maxDieFaces})`);
 	let o = new Map([[0, 1]]), s = /* @__PURE__ */ new Map();
 	for (let e = 1; e <= a; e += 1) s.set(t * e, 1 / a);
-	for (let e = 0; e < i; e += 1) o = re(o, s);
+	for (let e = 0; e < i; e += 1) o = S(o, s);
 	return o;
 }
-function re(e, t) {
+function S(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	for (let [r, i] of e) for (let [e, a] of t) {
 		let t = r + e;
@@ -243,7 +243,7 @@ function re(e, t) {
 	}
 	return n;
 }
-function ie(e, t) {
+function re(e, t) {
 	let n = Array.from(e.entries()).map(([e, t]) => ({
 		damage: e,
 		probability: t
@@ -259,8 +259,8 @@ function ie(e, t) {
 }
 //#endregion
 //#region src/engine/mortality.ts
-function ae(e) {
-	let t = x(e.damageFormula), n = E(t), r = oe(e.damageType, e.targetAdjustments), i = S(t, r), a = S(n, r), o = de(e.mapType).slice(0, e.strikes), s = [], c = [], l = 0, u = 0, d = 0, f = new Map([[0, 1]]);
+function C(e) {
+	let t = x(e.damageFormula), n = pe(t), r = w(e.damageType, e.targetAdjustments), i = T(t, r), a = T(n, r), o = ue(e.mapType).slice(0, e.strikes), s = [], c = [], l = 0, u = 0, d = 0, f = new Map([[0, 1]]);
 	for (let t of o) {
 		let n = ee({
 			attackBonus: e.attackBonus + t,
@@ -268,16 +268,16 @@ function ae(e) {
 		});
 		s.push(n.success), c.push(n.criticalSuccess);
 		let r = n.failure + n.criticalFailure;
-		l += n.success * i.mean + n.criticalSuccess * a.mean, u += n.success * me(i.outcomes, e.hp), d += n.criticalSuccess * me(a.outcomes, e.hp), f = fe(f, [
+		l += n.success * i.mean + n.criticalSuccess * a.mean, u += n.success * me(i.outcomes, e.hp), d += n.criticalSuccess * me(a.outcomes, e.hp), f = de(f, [
 			{
 				damage: 0,
 				probability: r
 			},
-			...pe(i.outcomes, n.success),
-			...pe(a.outcomes, n.criticalSuccess)
+			...fe(i.outcomes, n.success),
+			...fe(a.outcomes, n.criticalSuccess)
 		]);
 	}
-	let p = ge(he(f, e.hp)), m = Math.max(0, e.hp - l), h = le({
+	let p = ge(he(f, e.hp)), m = Math.max(0, e.hp - l), h = ce({
 		wounded: e.wounded ?? 0,
 		doomed: e.doomed ?? 0,
 		assumeHeroPointAvailable: e.assumeHeroPointAvailable ?? !1
@@ -312,8 +312,8 @@ function ae(e) {
 		damageAdjustment: r
 	};
 }
-function oe(e, t) {
-	let n = T(e), r = {
+function w(e, t) {
+	let n = E(e), r = {
 		damageType: n ?? "unknown",
 		resistance: 0,
 		weakness: 0,
@@ -321,8 +321,8 @@ function oe(e, t) {
 		note: "Damage type unknown; no resistance, weakness, or immunity applied."
 	};
 	if (!n) return r;
-	let i = C(t?.resistances ?? [], n), a = C(t?.weaknesses ?? [], n);
-	if ((t?.immunities ?? []).some((e) => w(e, n))) return {
+	let i = oe(t?.resistances ?? [], n), a = oe(t?.weaknesses ?? [], n);
+	if ((t?.immunities ?? []).some((e) => se(e, n))) return {
 		damageType: n,
 		resistance: 0,
 		weakness: 0,
@@ -335,16 +335,16 @@ function oe(e, t) {
 		resistance: i,
 		weakness: a,
 		immune: !1,
-		note: o.length > 0 ? `Applied ${se(o)}.` : `No ${n} resistance, weakness, or immunity matched.`
+		note: o.length > 0 ? `Applied ${ie(o)}.` : `No ${n} resistance, weakness, or immunity matched.`
 	};
 }
-function se(e) {
+function ie(e) {
 	return e.length <= 1 ? e[0] ?? "" : `${e.slice(0, -1).join(", ")} and ${e.at(-1)}`;
 }
-function S(e, t) {
+function T(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	for (let r of e.outcomes) {
-		let e = ce(r.damage, t);
+		let e = ae(r.damage, t);
 		n.set(e, (n.get(e) ?? 0) + r.probability);
 	}
 	let r = Array.from(n.entries()).sort(([e], [t]) => e - t).map(([e, t]) => ({
@@ -358,20 +358,20 @@ function S(e, t) {
 		outcomes: r
 	};
 }
-function ce(e, t) {
+function ae(e, t) {
 	return t.immune ? 0 : Math.max(0, e - t.resistance) + t.weakness;
 }
-function C(e, t) {
-	return e.reduce((e, n) => w(n.type, t) ? Math.max(e, n.value) : e, 0);
+function oe(e, t) {
+	return e.reduce((e, n) => se(n.type, t) ? Math.max(e, n.value) : e, 0);
 }
-function w(e, t) {
-	let n = T(e), r = T(t);
+function se(e, t) {
+	let n = E(e), r = E(t);
 	return !n || !r ? !1 : n === r || n === "all" ? !0 : n === "physical" ? r === "bludgeoning" || r === "piercing" || r === "slashing" : !1;
 }
-function T(e) {
+function E(e) {
 	if (e) return e.trim().toLowerCase().replace(/\s+/g, "-");
 }
-function le({ wounded: e, doomed: t, assumeHeroPointAvailable: n }) {
+function ce({ wounded: e, doomed: t, assumeHeroPointAvailable: n }) {
 	let r = Math.max(0, Math.floor(e)), i = Math.max(0, Math.floor(t)), a = Math.max(1, 4 - i), o = 1 + r, s = 2 + r;
 	return {
 		wounded: r,
@@ -379,7 +379,7 @@ function le({ wounded: e, doomed: t, assumeHeroPointAvailable: n }) {
 		deathThreshold: a,
 		normalDownDying: o,
 		critDownDying: s,
-		immediateDeathFlag: ue({
+		immediateDeathFlag: le({
 			normalDownDying: o,
 			critDownDying: s,
 			deathThreshold: a
@@ -387,10 +387,10 @@ function le({ wounded: e, doomed: t, assumeHeroPointAvailable: n }) {
 		heroPointNote: n ? "Hero Point prevention is assumed available; this can prevent death but is not modeled as a survival probability." : "No Hero Point death-prevention assumption is applied."
 	};
 }
-function ue({ normalDownDying: e, critDownDying: t, deathThreshold: n }) {
+function le({ normalDownDying: e, critDownDying: t, deathThreshold: n }) {
 	return e >= n ? `Normal down would reach Dying ${e}, meeting or exceeding the doomed-adjusted death threshold (Dying ${n}).` : t >= n ? `Crit-down would reach Dying ${t}, meeting or exceeding the doomed-adjusted death threshold (Dying ${n}).` : t === n - 1 ? `Crit-down would put this PC at Dying ${t}, one step below the doomed-adjusted death threshold (Dying ${n}).` : `If downed, severity would be Dying ${e} on a normal hit or Dying ${t} on a critical hit.`;
 }
-function de(e) {
+function ue(e) {
 	return e === "agile" ? [
 		0,
 		-4,
@@ -405,7 +405,7 @@ function de(e) {
 		-10
 	];
 }
-function fe(e, t) {
+function de(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	for (let [r, i] of e) for (let e of t) {
 		if (e.probability === 0) continue;
@@ -414,13 +414,13 @@ function fe(e, t) {
 	}
 	return n;
 }
-function pe(e, t) {
+function fe(e, t) {
 	return t === 0 ? [] : e.map((e) => ({
 		damage: e.damage,
 		probability: e.probability * t
 	}));
 }
-function E(e) {
+function pe(e) {
 	return {
 		min: e.min * 2,
 		max: e.max * 2,
@@ -493,7 +493,7 @@ function Ce(e, t) {
 function we(e, t, n, r) {
 	let i = [];
 	try {
-		let a = ae({
+		let a = C({
 			hp: e.hp.current + (e.hp.temp ?? 0),
 			ac: e.defenses.ac + r.shieldBonus,
 			attackBonus: n.attackBonus,
@@ -552,14 +552,14 @@ function Oe(e, t) {
 var D = "Unknown actor", ke = "No active combat encounter — using scene tokens as a best-effort fallback.", Ae = "No active combat encounter.";
 function je(e, t, n = {}) {
 	let r = e.combatants ? Array.from(e.combatants) : [];
-	return r.length > 0 ? Me(r.map((e) => e.token), t, []) : n.allowSceneFallback && e.sceneTokens ? Me(Array.from(e.sceneTokens), t, [ke]) : {
+	return r.length > 0 ? O(r.map((e) => e.token), t, []) : n.allowSceneFallback && e.sceneTokens ? O(Array.from(e.sceneTokens), t, [ke]) : {
 		pcs: [],
 		hostiles: [],
 		unsupported: [],
 		caveats: [Ae]
 	};
 }
-function Me(e, t, n) {
+function O(e, t, n) {
 	let r = [], i = [], a = [], o = [...n];
 	for (let n of e) {
 		if (!n) {
@@ -592,72 +592,72 @@ function Me(e, t, n) {
 		caveats: o
 	};
 }
-function Ne(e, t = {}) {
-	let n = game.combat, r = n?.combatants ? Array.from(n.combatants).map((e) => ({ token: Pe(e) })) : void 0, i = canvas.tokens?.placeables;
+function k(e, t = {}) {
+	let n = game.combat, r = n?.combatants ? Array.from(n.combatants).map((e) => ({ token: Me(e) })) : void 0, i = canvas.tokens?.placeables;
 	return je({
 		combatants: r,
 		sceneTokens: i
 	}, e, t);
 }
-function Pe(e) {
+function Me(e) {
 	let t = e.token;
 	if (t) return t.object ?? t;
 }
 //#endregion
 //#region src/systems/pf2e-adapter.ts
-var Fe = -1, O = class {
+var Ne = -1, A = class {
 	id = "pf2e";
 	label = "Pathfinder Second Edition";
 	getCombatantFromToken(e) {
 		let t = e.actor;
 		if (!t) return null;
-		let n = L(t.system), r = L(n.attributes), i = L(r.hp), a = L(r.ac), o = i.value, s = i.max, c = a.value;
-		if (!z(o) || !z(s) || !z(c)) return null;
-		let l = L(n.saves), u = L(L(n.resources).heroPoints), d = L(n.traits), f = B(L(n.perception).value) ?? B(L(r.perception).value);
+		let n = R(t.system), r = R(n.attributes), i = R(r.hp), a = R(r.ac), o = i.value, s = i.max, c = a.value;
+		if (!B(o) || !B(s) || !B(c)) return null;
+		let l = R(n.saves), u = R(R(n.resources).heroPoints), d = R(n.traits), f = V(R(n.perception).value) ?? V(R(r.perception).value);
 		return {
 			id: e.id ?? t.id ?? "",
 			name: e.name ?? t.name ?? "Unknown Combatant",
-			disposition: Xe(e, t),
+			disposition: Ye(e, t),
 			hp: {
 				current: o,
 				max: s,
-				temp: B(i.temp)
+				temp: V(i.temp)
 			},
 			defenses: {
 				ac: c,
-				fort: B(L(l.fortitude).value),
-				reflex: B(L(l.reflex).value),
-				will: B(L(l.will).value)
+				fort: V(R(l.fortitude).value),
+				reflex: V(R(l.reflex).value),
+				will: V(R(l.will).value)
 			},
 			deathState: {
-				dying: P(t, "dying"),
-				wounded: P(t, "wounded"),
-				doomed: P(t, "doomed"),
-				heroPoints: B(u.value)
+				dying: F(t, "dying"),
+				wounded: F(t, "wounded"),
+				doomed: F(t, "doomed"),
+				heroPoints: V(u.value)
 			},
 			damageAdjustments: {
-				resistances: tt(r.resistances ?? n.resistances),
-				weaknesses: tt(r.weaknesses ?? n.weaknesses),
-				immunities: nt(r.immunities ?? n.immunities)
+				resistances: et(r.resistances ?? n.resistances),
+				weaknesses: et(r.weaknesses ?? n.weaknesses),
+				immunities: tt(r.immunities ?? n.immunities)
 			},
 			initiativeBonus: f,
-			pcCapabilities: t.type === "character" ? He(t) : void 0,
-			traits: H(d.value),
+			pcCapabilities: t.type === "character" ? Be(t) : void 0,
+			traits: U(d.value),
 			assumptions: []
 		};
 	}
 	getAttacksFromToken(e) {
 		let t = e.actor;
-		return t ? t.type === "character" ? Ie(t) : F(t).filter((e) => e.type === "melee").map((e) => {
-			let t = L(e.system), n = Ze(t), r = Qe(t), i = $e(r);
-			if (!z(n) || typeof i != "string") return null;
-			let a = H(L(t.traits).value);
+		return t ? t.type === "character" ? Pe(t) : I(t).filter((e) => e.type === "melee").map((e) => {
+			let t = R(e.system), n = Xe(t), r = Ze(t), i = Qe(r);
+			if (!B(n) || typeof i != "string") return null;
+			let a = U(R(t.traits).value);
 			return {
 				id: e.id ?? "",
 				name: e.name ?? "Unknown Strike",
 				attackBonus: n,
 				damageFormula: i,
-				damageType: et(r),
+				damageType: $e(r),
 				traits: a,
 				mapType: a.includes("agile") ? "agile" : "normal",
 				assumptions: ["PF2e Strike extraction is first-pass and may miss conditional modifiers."]
@@ -665,17 +665,17 @@ var Fe = -1, O = class {
 		}).filter((e) => e !== null) : [];
 	}
 };
-function Ie(e) {
-	let t = L(e.system).actions, n = (Array.isArray(t) ? t : []).map((e) => Le(e)).filter((e) => e !== null);
-	return n.length > 0 ? n : F(e).filter((e) => e.type === "weapon").filter(Be).map((e) => Ve(e)).filter((e) => e !== null);
+function Pe(e) {
+	let t = R(e.system).actions, n = (Array.isArray(t) ? t : []).map((e) => Fe(e)).filter((e) => e !== null);
+	return n.length > 0 ? n : I(e).filter((e) => e.type === "weapon").filter(Re).map((e) => ze(e)).filter((e) => e !== null);
 }
-function Le(e) {
-	if (!R(e)) return null;
-	let t = V(e.totalModifier) ?? V(e.attackBonus) ?? V(e.mod) ?? V(L(e.attack).totalModifier);
+function Fe(e) {
+	if (!z(e)) return null;
+	let t = H(e.totalModifier) ?? H(e.attackBonus) ?? H(e.mod) ?? H(R(e.attack).totalModifier);
 	if (t === void 0) return null;
-	let n = Re(e);
+	let n = Ie(e);
 	if (!n) return null;
-	let r = ze(e), i = H(e.traits), a = L(e.item);
+	let r = Le(e), i = U(e.traits), a = R(e.item);
 	return {
 		id: typeof e.slug == "string" && e.slug || typeof e.id == "string" && e.id || typeof a.id == "string" && a.id || "",
 		name: typeof e.label == "string" && e.label || typeof e.name == "string" && e.name || typeof a.name == "string" && a.name || "Unknown Strike",
@@ -687,33 +687,33 @@ function Le(e) {
 		assumptions: ["PC Strike extracted from actor.system.actions; conditional modifiers (status, MAP-adjacent feats) may be missing."]
 	};
 }
-function Re(e) {
+function Ie(e) {
 	if (typeof e.damageFormula == "string") return e.damageFormula;
 	if (typeof e.damage == "string") return e.damage;
-	if (R(e.damage)) {
+	if (z(e.damage)) {
 		let t = e.damage;
 		if (typeof t.formula == "string") return t.formula;
 		if (typeof t.damage == "string") return t.damage;
 	}
 }
-function ze(e) {
+function Le(e) {
 	if (typeof e.damageType == "string") return e.damageType;
-	if (R(e.damage)) {
+	if (z(e.damage)) {
 		let t = e.damage;
 		if (typeof t.damageType == "string") return t.damageType;
 		if (typeof t.type == "string") return t.type;
 	}
 }
-function Be(e) {
-	let t = L(L(e.system).equipped);
+function Re(e) {
+	let t = R(R(e.system).equipped);
 	if (t.carryType === "held") return !0;
-	let n = V(t.handsHeld);
+	let n = H(t.handsHeld);
 	return n !== void 0 && n > 0;
 }
-function Ve(e) {
-	let t = L(e.system), n = L(t.damage), r = V(n.dice) ?? 1, i = V(n.die) ?? 6, a = V(n.modifier) ?? 0;
+function ze(e) {
+	let t = R(e.system), n = R(t.damage), r = H(n.dice) ?? 1, i = H(n.die) ?? 6, a = H(n.modifier) ?? 0;
 	if (r < 1 || i < 2) return null;
-	let o = a > 0 ? `${r}d${i}+${a}` : a < 0 ? `${r}d${i}${a}` : `${r}d${i}`, s = typeof n.damageType == "string" ? n.damageType : typeof n.type == "string" ? n.type : void 0, c = V(L(t.bonus).value) ?? 0, l = H(L(t.traits).value);
+	let o = a > 0 ? `${r}d${i}+${a}` : a < 0 ? `${r}d${i}${a}` : `${r}d${i}`, s = typeof n.damageType == "string" ? n.damageType : typeof n.type == "string" ? n.type : void 0, c = H(R(t.bonus).value) ?? 0, l = U(R(t.traits).value);
 	return {
 		id: e.id ?? "",
 		name: e.name ?? "Unknown Weapon",
@@ -725,9 +725,9 @@ function Ve(e) {
 		assumptions: ["PC Strike fallback from weapon item: attack bonus excludes character proficiency and ability modifiers."]
 	};
 }
-function He(e) {
-	let t = L(L(L(e.system).skills).medicine), n = V(t.totalModifier) ?? V(t.value), r = Ke(V(t.rank)), i = qe(e), { healSpellSlots: a, healCantripLevel: o } = Ue(e);
-	return Je() && Ye(e, a, o), n !== void 0 || i || Object.keys(a).length > 0 || o !== null ? {
+function Be(e) {
+	let t = R(R(R(e.system).skills).medicine), n = H(t.totalModifier) ?? H(t.value), r = Ge(H(t.rank)), i = Ke(e), { healSpellSlots: a, healCantripLevel: o } = Ve(e);
+	return qe() && Je(e, a, o), n !== void 0 || i || Object.keys(a).length > 0 || o !== null ? {
 		medicineModifier: n,
 		hasBattleMedicine: i,
 		medicineDC: r,
@@ -738,40 +738,40 @@ function He(e) {
 		healCantripLevel: null
 	};
 }
-function Ue(e) {
-	let t = A(e, "spell"), n = A(e, "spellcastingEntry"), r = {}, i = null, a = /* @__PURE__ */ new Set(), o = !1;
+function Ve(e) {
+	let t = N(e, "spell"), n = N(e, "spellcastingEntry"), r = {}, i = null, a = /* @__PURE__ */ new Set(), o = !1;
 	for (let n of t) {
-		let t = L(n.system);
-		if (j(n, t) !== "heal") continue;
+		let t = R(n.system);
+		if (P(n, t) !== "heal") continue;
 		o = !0;
-		let r = k(n);
-		r && a.add(r), M(t) && (i = V(t.casterLevel) ?? N(e) ?? i ?? 1);
+		let r = M(n);
+		r && a.add(r), Ue(t) && (i = H(t.casterLevel) ?? We(e) ?? i ?? 1);
 	}
 	let s = !1;
 	for (let t of n) {
-		let n = L(t.system), c = L(n.prepared), l = typeof c.value == "string" ? c.value : void 0, u = L(n.slots);
+		let n = R(t.system), c = R(n.prepared), l = typeof c.value == "string" ? c.value : void 0, u = R(n.slots);
 		for (let [t, n] of Object.entries(u)) {
-			let c = Ge(t);
+			let c = He(t);
 			if (c === void 0) continue;
-			let u = L(n), d = We(u.prepared), f = 0;
+			let u = R(n), d = j(u.prepared), f = 0;
 			for (let e of d) {
-				let t = L(e), n = t.id;
+				let t = R(e), n = t.id;
 				typeof n == "string" && a.has(n) && t.expended !== !0 && (f += 1);
 			}
 			if (f > 0) {
-				s = !0, c === 0 ? i === null && (i = N(e) ?? 1) : r[c] = (r[c] ?? 0) + f;
+				s = !0, c === 0 ? i === null && (i = We(e) ?? 1) : r[c] = (r[c] ?? 0) + f;
 				continue;
 			}
 			if (l === "spontaneous" && o && c >= 1) {
-				let e = V(u.value);
+				let e = H(u.value);
 				e !== void 0 && e > 0 && (r[c] = (r[c] ?? 0) + e, s = !0);
 			}
 		}
 	}
 	if (!s) for (let e of t) {
-		let t = L(e.system);
-		if (j(e, t) !== "heal" || M(t)) continue;
-		let n = V(t.level) ?? V(L(t.location).heightenedLevel), i = V(t.slotsRemaining) ?? V(t.uses) ?? 1;
+		let t = R(e.system);
+		if (P(e, t) !== "heal" || Ue(t)) continue;
+		let n = H(t.level) ?? H(R(t.location).heightenedLevel), i = H(t.slotsRemaining) ?? H(t.uses) ?? 1;
 		typeof n == "number" && n >= 1 && i > 0 && (r[n] = (r[n] ?? 0) + i);
 	}
 	return {
@@ -779,34 +779,34 @@ function Ue(e) {
 		healCantripLevel: i
 	};
 }
-function We(e) {
+function j(e) {
 	return Array.isArray(e) ? e : typeof e != "object" || !e ? [] : Object.values(e);
 }
-function k(e) {
+function M(e) {
 	if (typeof e.id == "string" && e.id.length > 0) return e.id;
 	let t = e;
 	if (typeof t._id == "string" && t._id.length > 0) return t._id;
 }
-function A(e, t) {
+function N(e, t) {
 	if (!e) return [];
-	let n = L(e.itemTypes)[t];
-	return Array.isArray(n) && n.length > 0 ? n.filter(I) : F(e).filter((e) => e.type === t);
+	let n = R(e.itemTypes)[t];
+	return Array.isArray(n) && n.length > 0 ? n.filter(L) : I(e).filter((e) => e.type === t);
 }
-function j(e, t) {
+function P(e, t) {
 	return typeof t.slug == "string" ? t.slug : e.name?.toLowerCase().replace(/\s+/g, "-");
 }
-function Ge(e) {
+function He(e) {
 	let t = e.match(/^slot(\d+)$/);
 	if (t) return Number(t[1]);
 }
-function M(e) {
-	return H(L(e.traits).value).includes("cantrip") || e.isCantrip === !0 ? !0 : V(e.level) === 0;
+function Ue(e) {
+	return U(R(e.traits).value).includes("cantrip") || e.isCantrip === !0 ? !0 : H(e.level) === 0;
 }
-function N(e) {
-	let t = L(L(e.system).details);
-	return V(L(t.level).value) ?? V(t.level);
+function We(e) {
+	let t = R(R(e.system).details);
+	return H(R(t.level).value) ?? H(t.level);
 }
-function Ke(e) {
+function Ge(e) {
 	switch (e) {
 		case 4: return 40;
 		case 3: return 30;
@@ -815,15 +815,15 @@ function Ke(e) {
 		default: return 15;
 	}
 }
-function qe(e) {
-	let t = A(e, "feat");
+function Ke(e) {
+	let t = N(e, "feat");
 	for (let e of t) {
-		let t = L(e.system);
+		let t = R(e.system);
 		if ((typeof t.slug == "string" ? t.slug : e.name?.toLowerCase().replace(/\s+/g, "-")) === "battle-medicine") return !0;
 	}
 	return !1;
 }
-function Je() {
+function qe() {
 	if (typeof game > "u") return !1;
 	try {
 		return !!(game.settings?.get?.("grim-arithmetic", "debugLogging") ?? !1);
@@ -831,8 +831,8 @@ function Je() {
 		return !1;
 	}
 }
-function Ye(e, t, n) {
-	let r = F(e), i = L(e.itemTypes), a = {};
+function Je(e, t, n) {
+	let r = I(e), i = R(e.itemTypes), a = {};
 	for (let e of r) {
 		let t = typeof e.type == "string" ? e.type : "(no-type)";
 		a[t] = (a[t] ?? 0) + 1;
@@ -842,31 +842,31 @@ function Ye(e, t, n) {
 		let t = i[e];
 		Array.isArray(t) && (s[e] = t.length);
 	}
-	let c = A(e, "spell"), l = A(e, "spellcastingEntry"), u = c.filter((e) => j(e, L(e.system)) === "heal").map((e) => ({
-		id: k(e),
+	let c = N(e, "spell"), l = N(e, "spellcastingEntry"), u = c.filter((e) => P(e, R(e.system)) === "heal").map((e) => ({
+		id: M(e),
 		name: e.name,
-		slug: L(e.system).slug,
-		level: L(e.system).level,
-		isCantrip: L(e.system).isCantrip,
-		traits: L(L(e.system).traits).value,
-		slotsRemaining: L(e.system).slotsRemaining,
-		location: L(e.system).location
+		slug: R(e.system).slug,
+		level: R(e.system).level,
+		isCantrip: R(e.system).isCantrip,
+		traits: R(R(e.system).traits).value,
+		slotsRemaining: R(e.system).slotsRemaining,
+		location: R(e.system).location
 	})), d = l.map((e) => {
-		let t = L(e.system), n = L(t.slots), r = {};
+		let t = R(e.system), n = R(t.slots), r = {};
 		for (let [e, t] of Object.entries(n)) {
-			let n = L(t), i = We(n.prepared);
+			let n = R(t), i = j(n.prepared);
 			r[e] = {
 				max: n.max,
 				value: n.value,
 				preparedCount: i.length,
-				preparedSample: i.slice(0, 5).map((e) => L(e))
+				preparedSample: i.slice(0, 5).map((e) => R(e))
 			};
 		}
 		return {
-			id: k(e),
+			id: M(e),
 			name: e.name,
-			preparedKind: L(t.prepared).value,
-			tradition: L(t.tradition).value,
+			preparedKind: R(t.prepared).value,
+			tradition: R(t.tradition).value,
 			slotKeys: Object.keys(n),
 			slotSummaries: r
 		};
@@ -883,100 +883,100 @@ function Ye(e, t, n) {
 		extractedCantripLevel: n
 	});
 }
-function Xe(e, t) {
-	return t.type === "character" ? "pc" : e.document?.disposition === Fe ? "enemy" : "neutral";
+function Ye(e, t) {
+	return t.type === "character" ? "pc" : e.document?.disposition === Ne ? "enemy" : "neutral";
 }
-function P(e, t) {
+function F(e, t) {
 	let n = e.itemTypes?.condition?.find((e) => e.slug === t);
-	return n ? B(n.value) ?? B(L(L(n.system).value).value) ?? 0 : 0;
+	return n ? V(n.value) ?? V(R(R(n.system).value).value) ?? 0 : 0;
 }
-function F(e) {
+function I(e) {
 	let t = e?.items;
-	if (Array.isArray(t)) return t.filter(I);
-	let n = L(t).contents;
-	if (Array.isArray(n)) return n.filter(I);
-	if (R(t) && typeof t.filter == "function") {
-		let e = t.filter(I);
+	if (Array.isArray(t)) return t.filter(L);
+	let n = R(t).contents;
+	if (Array.isArray(n)) return n.filter(L);
+	if (z(t) && typeof t.filter == "function") {
+		let e = t.filter(L);
 		return Array.isArray(e) ? e : [];
 	}
 	return [];
 }
-function I(e) {
-	return R(e);
+function L(e) {
+	return z(e);
+}
+function Xe(e) {
+	return H(R(e.bonus).value) ?? H(R(e.attack).value);
 }
 function Ze(e) {
-	return V(L(e.bonus).value) ?? V(L(e.attack).value);
+	let t = R(e.damageRolls);
+	return Object.values(t).find(z);
 }
 function Qe(e) {
-	let t = L(e.damageRolls);
-	return Object.values(t).find(R);
-}
-function $e(e) {
 	if (!e) return;
 	let t = e.damage, n = e.formula;
 	if (typeof t == "string") return t;
 	if (typeof n == "string") return n;
 }
-function et(e) {
+function $e(e) {
 	if (!e) return;
 	let t = e.damageType ?? e.type ?? e.category;
 	return typeof t == "string" ? t : void 0;
 }
-function tt(e) {
-	return (Array.isArray(e) ? e : Object.values(L(e))).filter(R).map((e) => {
-		let t = e.type ?? e.slug ?? e.label, n = V(e.value) ?? V(e.amount);
+function et(e) {
+	return (Array.isArray(e) ? e : Object.values(R(e))).filter(z).map((e) => {
+		let t = e.type ?? e.slug ?? e.label, n = H(e.value) ?? H(e.amount);
 		return typeof t != "string" || n === void 0 ? null : {
 			type: t,
 			value: n
 		};
 	}).filter((e) => e !== null);
 }
-function nt(e) {
-	return (Array.isArray(e) ? e : Object.values(L(e))).map((e) => {
+function tt(e) {
+	return (Array.isArray(e) ? e : Object.values(R(e))).map((e) => {
 		if (typeof e == "string") return e;
-		let t = L(e), n = t.type ?? t.slug ?? t.label;
+		let t = R(e), n = t.type ?? t.slug ?? t.label;
 		return typeof n == "string" ? n : null;
 	}).filter((e) => typeof e == "string");
 }
-function L(e) {
-	return R(e) ? e : {};
-}
 function R(e) {
-	return typeof e == "object" && !!e;
+	return z(e) ? e : {};
 }
 function z(e) {
-	return typeof e == "number" && Number.isFinite(e);
+	return typeof e == "object" && !!e;
 }
 function B(e) {
-	return z(e) ? e : void 0;
+	return typeof e == "number" && Number.isFinite(e);
 }
 function V(e) {
-	if (z(e)) return e;
-	if (typeof e != "string") return;
-	let t = Number(e.trim().replace(/^\+/, ""));
-	return z(t) ? t : void 0;
+	return B(e) ? e : void 0;
 }
 function H(e) {
+	if (B(e)) return e;
+	if (typeof e != "string") return;
+	let t = Number(e.trim().replace(/^\+/, ""));
+	return B(t) ? t : void 0;
+}
+function U(e) {
 	return Array.isArray(e) ? e.map((e) => {
 		if (typeof e == "string") return e;
-		let t = L(e).slug;
+		let t = R(e).slug;
 		return typeof t == "string" ? t : null;
 	}).filter((e) => typeof e == "string") : [];
 }
 //#endregion
 //#region src/ui/danger-board.ts
-var rt = 5;
-function it(e, t = {}) {
-	let n = t.topN ?? rt;
+var nt = 5;
+function rt(e, t = {}) {
+	let n = t.topN ?? nt;
 	return {
-		topEndangeredPcs: U(e.pairs, (e) => e.pcId).sort((e, t) => t.downProbability - e.downProbability).slice(0, n).map(W),
-		topDangerousEnemies: U(e.pairs, (e) => e.enemyId).sort((e, t) => t.downProbability - e.downProbability).slice(0, n).map(W),
+		topEndangeredPcs: it(e.pairs, (e) => e.pcId).sort((e, t) => t.downProbability - e.downProbability).slice(0, n).map(at),
+		topDangerousEnemies: it(e.pairs, (e) => e.enemyId).sort((e, t) => t.downProbability - e.downProbability).slice(0, n).map(at),
 		caveats: e.caveats,
 		empty: e.pairs.length === 0,
 		skipped: e.skipped
 	};
 }
-function U(e, t) {
+function it(e, t) {
 	let n = /* @__PURE__ */ new Map();
 	for (let r of e) {
 		let e = t(r), i = n.get(e);
@@ -984,7 +984,7 @@ function U(e, t) {
 	}
 	return Array.from(n.values());
 }
-function W(e) {
+function at(e) {
 	let t = Math.round(e.downProbability * 100);
 	return {
 		pcId: e.pcId,
@@ -1001,8 +1001,8 @@ function W(e) {
 }
 //#endregion
 //#region src/engine/prng.ts
-function at(e) {
-	let t = typeof e == "string" ? G(e) : K(e), n = () => {
+function ot(e) {
+	let t = typeof e == "string" ? W(e) : G(e), n = () => {
 		t = t + 1831565813 >>> 0;
 		let e = t;
 		return e = Math.imul(e ^ e >>> 15, e | 1), e ^= e + Math.imul(e ^ e >>> 7, e | 61), ((e ^ e >>> 14) >>> 0) / 4294967296;
@@ -1017,25 +1017,25 @@ function at(e) {
 		}
 	};
 }
-function ot(e, t) {
-	return st(typeof e == "string" ? G(e) : K(e), typeof t == "string" ? G(t) : K(t));
+function st(e, t) {
+	return ct(typeof e == "string" ? W(e) : G(e), typeof t == "string" ? W(t) : G(t));
 }
-function G(e) {
+function W(e) {
 	let t = 1779033703 ^ e.length;
 	for (let n = 0; n < e.length; n += 1) t = Math.imul(t ^ e.charCodeAt(n), 3432918353), t = t << 13 | t >>> 19;
 	return t = Math.imul(t ^ t >>> 16, 2246822507), t = Math.imul(t ^ t >>> 13, 3266489909), t ^= t >>> 16, t >>> 0;
 }
-function K(e) {
+function G(e) {
 	if (!Number.isFinite(e)) throw Error(`Numeric seed must be finite: got ${e}`);
 	return Math.floor(Math.abs(e)) >>> 0;
 }
-function st(e, t) {
+function ct(e, t) {
 	let n = (e ^ Math.imul(t, 2654435761)) >>> 0;
 	return n = Math.imul(n ^ n >>> 16, 2246822507), n = Math.imul(n ^ n >>> 13, 3266489909), n ^= n >>> 16, n >>> 0;
 }
 //#endregion
 //#region src/engine/heal-actions.ts
-function ct(e, t) {
+function lt(e, t) {
 	switch (e.kind) {
 		case "battle-medicine": {
 			let n = e.medicineDC ?? 15, r = e.medicineModifier ?? 0, i = t.nextInt(1, 20), a = _({
@@ -1045,11 +1045,11 @@ function ct(e, t) {
 			});
 			switch (a) {
 				case "criticalSuccess": return {
-					healedAmount: q("4d8+8", t),
+					healedAmount: K("4d8+8", t),
 					degree: a
 				};
 				case "success": return {
-					healedAmount: q("2d8+4", t),
+					healedAmount: K("2d8+4", t),
 					degree: a
 				};
 				case "failure": return {
@@ -1059,7 +1059,7 @@ function ct(e, t) {
 				case "criticalFailure": return {
 					healedAmount: 0,
 					degree: a,
-					collateralDamage: q("1d8", t)
+					collateralDamage: K("1d8", t)
 				};
 			}
 			return {
@@ -1067,23 +1067,23 @@ function ct(e, t) {
 				degree: a
 			};
 		}
-		case "heal-spell-1action": return { healedAmount: q("1d10", t) };
+		case "heal-spell-1action": return { healedAmount: K("1d10", t) };
 		case "heal-spell-2action": {
 			let n = Math.max(1, e.spellRank ?? 1);
-			return { healedAmount: q(`${n}d8+${n * 8}`, t) };
+			return { healedAmount: K(`${n}d8+${n * 8}`, t) };
 		}
 		case "heal-spell-3action": {
 			let n = Math.max(1, e.spellRank ?? 1);
-			return { healedAmount: q(`${n}d8+${n * 8}`, t) };
+			return { healedAmount: K(`${n}d8+${n * 8}`, t) };
 		}
-		case "heal-cantrip-1action": return { healedAmount: q("1d10", t) };
+		case "heal-cantrip-1action": return { healedAmount: K("1d10", t) };
 		case "heal-cantrip-2action": {
 			let n = Math.max(1, e.healerLevel ?? 1);
-			return { healedAmount: q(`${1 + Math.ceil(n / 2)}d8`, t) };
+			return { healedAmount: K(`${1 + Math.ceil(n / 2)}d8`, t) };
 		}
 	}
 }
-function lt(e, t, n = {}) {
+function ut(e, t, n = {}) {
 	if (t <= 0 && !n.clearsDying) return e;
 	let r = Math.min(e.hp.max, e.hp.current + Math.max(0, t)), i = {
 		...e,
@@ -1094,14 +1094,14 @@ function lt(e, t, n = {}) {
 	};
 	return n.clearsDying && i.dying > 0 && (i.dying = 0, r > 0 && (i.downed = !1)), i;
 }
-function q(e, t) {
+function K(e, t) {
 	let n = x(e), r = t.next(), i = 0;
 	for (let e of n.outcomes) if (i += e.probability, r < i) return e.damage;
 	return n.outcomes[n.outcomes.length - 1].damage;
 }
 //#endregion
 //#region src/engine/initiative.ts
-function ut(e, t, n = {}) {
+function dt(e, t, n = {}) {
 	if (n.useFixedOrder) return e.map((e) => ({
 		combatantId: e.id,
 		side: e.side,
@@ -1123,7 +1123,7 @@ function ut(e, t, n = {}) {
 }
 //#endregion
 //#region src/engine/sample-recovery.ts
-function dt(e, t) {
+function ft(e, t) {
 	if (e.dying <= 0) return {
 		roll: 0,
 		degree: "success",
@@ -1159,15 +1159,15 @@ function dt(e, t) {
 }
 //#endregion
 //#region src/engine/sample-strike.ts
-function ft(e, t) {
+function pt(e, t) {
 	let n = t.nextInt(1, 20), r = _({
 		die: n,
 		total: n + e.attackBonus + e.mapPenalty,
 		dc: e.defenderAc
 	}), i = 0;
 	if (r === "success" || r === "criticalSuccess") {
-		let n = x(e.damageFormula), a = oe(e.damageType, e.defenderAdjustments);
-		i = pt(S(r === "criticalSuccess" ? E(n) : n, a), t);
+		let n = x(e.damageFormula), a = w(e.damageType, e.defenderAdjustments);
+		i = mt(T(r === "criticalSuccess" ? pe(n) : n, a), t);
 	}
 	return {
 		attackerId: e.attackerId,
@@ -1179,14 +1179,14 @@ function ft(e, t) {
 		damage: i
 	};
 }
-function pt(e, t) {
+function mt(e, t) {
 	let n = t.next(), r = 0;
 	for (let t of e.outcomes) if (r += t.probability, n < r) return t.damage;
 	return e.outcomes[e.outcomes.length - 1].damage;
 }
 //#endregion
 //#region src/engine/sim-state.ts
-function mt(e, t) {
+function ht(e, t) {
 	if (e.dead || t.damage <= 0) return {
 		combatant: e,
 		damageAbsorbed: 0,
@@ -1248,33 +1248,33 @@ function mt(e, t) {
 		becameDead: f
 	};
 }
-function ht(e) {
+function gt(e) {
 	return Math.max(1, 4 - e.doomed);
 }
 //#endregion
 //#region src/engine/tactics/shared.ts
-function gt(e) {
+function _t(e) {
 	return !e.downed && !e.dead;
 }
-function J(e) {
-	return e.filter(gt);
-}
-function _t(e) {
-	return e.filter((e) => !e.dead);
+function q(e) {
+	return e.filter(_t);
 }
 function vt(e) {
+	return e.filter((e) => !e.dead);
+}
+function yt(e) {
 	if (e.attacks.length === 0) return;
-	let t = e.attacks[0], n = yt(t.damageFormula);
+	let t = e.attacks[0], n = bt(t.damageFormula);
 	for (let r = 1; r < e.attacks.length; r += 1) {
-		let i = e.attacks[r], a = yt(i.damageFormula);
+		let i = e.attacks[r], a = bt(i.damageFormula);
 		a > n && (n = a, t = i);
 	}
 	return t;
 }
-function Y(e) {
+function J(e) {
 	return e.attacks[0];
 }
-function yt(e) {
+function bt(e) {
 	try {
 		return x(e).mean;
 	} catch {
@@ -1283,13 +1283,13 @@ function yt(e) {
 }
 //#endregion
 //#region src/engine/tactics/boss-cinematic.ts
-var bt = {
+var xt = {
 	id: "boss-cinematic",
 	description: "Use the highest-damage attack on the toughest standing PC, all strikes on the same target.",
 	chooseTurn(e) {
-		let t = J(e.pcs);
+		let t = q(e.pcs);
 		if (t.length === 0) return { strikes: [] };
-		let n = [...t].sort((e, t) => t.hp.current === e.hp.current ? e.id < t.id ? -1 : 1 : t.hp.current - e.hp.current)[0], r = vt(e.attacker) ?? Y(e.attacker);
+		let n = [...t].sort((e, t) => t.hp.current === e.hp.current ? e.id < t.id ? -1 : 1 : t.hp.current - e.hp.current)[0], r = yt(e.attacker) ?? J(e.attacker);
 		if (!r) return { strikes: [] };
 		let i = [];
 		for (let e = 0; e < 2; e += 1) i.push({
@@ -1299,13 +1299,13 @@ var bt = {
 		});
 		return { strikes: i };
 	}
-}, xt = {
+}, St = {
 	id: "focus-fire",
 	description: "Concentrate every strike on the standing PC with the lowest current HP.",
 	chooseTurn(e) {
-		let t = J(e.pcs);
+		let t = q(e.pcs);
 		if (t.length === 0) return { strikes: [] };
-		let n = Y(e.attacker);
+		let n = J(e.attacker);
 		if (!n) return { strikes: [] };
 		let r = [...t].sort((e, t) => e.hp.current === t.hp.current ? e.id < t.id ? -1 : 1 : e.hp.current - t.hp.current)[0], i = [];
 		for (let e = 0; e < 2; e += 1) i.push({
@@ -1315,13 +1315,13 @@ var bt = {
 		});
 		return { strikes: i };
 	}
-}, St = {
+}, Ct = {
 	id: "predator",
 	description: "Prioritize wounded > low-HP > full-HP PCs; attack downed only if no standing PCs remain.",
 	chooseTurn(e) {
-		let t = J(e.pcs), n;
-		if (n = t.length > 0 ? [...t].sort(Ct) : _t(e.pcs), n.length === 0) return { strikes: [] };
-		let r = Y(e.attacker);
+		let t = q(e.pcs), n;
+		if (n = t.length > 0 ? [...t].sort(wt) : vt(e.pcs), n.length === 0) return { strikes: [] };
+		let r = J(e.attacker);
 		if (!r) return { strikes: [] };
 		let i = n[0], a = [];
 		for (let e = 0; e < 2; e += 1) a.push({
@@ -1332,17 +1332,17 @@ var bt = {
 		return { strikes: a };
 	}
 };
-function Ct(e, t) {
+function wt(e, t) {
 	return t.wounded === e.wounded ? e.hp.current === t.hp.current ? e.id < t.id ? -1 : 1 : e.hp.current - t.hp.current : t.wounded - e.wounded;
 }
 //#endregion
 //#region src/engine/tactics/index.ts
-var wt = {
+var Tt = {
 	"random-legal": {
 		id: "random-legal",
 		description: "Pick any legal PC target and any attack, independently per strike.",
 		chooseTurn(e, t) {
-			let n = J(e.pcs);
+			let n = q(e.pcs);
 			if (n.length === 0 || e.attacker.attacks.length === 0) return { strikes: [] };
 			let r = [];
 			for (let i = 0; i < 2; i += 1) {
@@ -1360,9 +1360,9 @@ var wt = {
 		id: "spread-damage",
 		description: "Distribute strikes across higher-HP standing PCs; never target downed.",
 		chooseTurn(e) {
-			let t = J(e.pcs);
+			let t = q(e.pcs);
 			if (t.length === 0) return { strikes: [] };
-			let n = Y(e.attacker);
+			let n = J(e.attacker);
 			if (!n) return { strikes: [] };
 			let r = [...t].sort((e, t) => t.hp.current === e.hp.current ? e.id < t.id ? -1 : 1 : t.hp.current - e.hp.current), i = [];
 			for (let e = 0; e < 2; e += 1) {
@@ -1376,28 +1376,28 @@ var wt = {
 			return { strikes: i };
 		}
 	},
-	"focus-fire": xt,
-	predator: St,
-	"boss-cinematic": bt
-}, Tt = {
+	"focus-fire": St,
+	predator: Ct,
+	"boss-cinematic": xt
+}, Et = {
 	id: "random-legal",
 	description: "PCs heal dying or low-HP allies when capable; otherwise 2 Strikes against the most-dangerous standing enemy.",
 	chooseTurn(e) {
-		let t = e.enemies.filter((e) => !e.downed && !e.dead), n = e.attacker, r = Dt(e.pcs);
-		if (r && Et(n.healing)) {
-			let e = kt(n, r, "emergency");
+		let t = e.enemies.filter((e) => !e.downed && !e.dead), n = e.attacker, r = Ot(e.pcs);
+		if (r && Dt(n.healing)) {
+			let e = At(n, r, "emergency");
 			if (e) return {
 				strikes: [],
 				heal: e
 			};
 		}
-		let i = Ot(e.pcs, n);
-		if (i && Et(n.healing)) {
-			let e = kt(n, i, "topup");
+		let i = kt(e.pcs, n);
+		if (i && Dt(n.healing)) {
+			let e = At(n, i, "topup");
 			if (e) {
-				let r = Y(n);
+				let r = J(n);
 				if (r && t.length > 0) {
-					let n = [...t].sort(jt)[0];
+					let n = [...t].sort(Mt)[0];
 					return {
 						strikes: [{
 							attackId: r.id,
@@ -1414,9 +1414,9 @@ var wt = {
 			}
 		}
 		if (t.length === 0) return { strikes: [] };
-		let a = Y(n);
+		let a = J(n);
 		if (!a) return { strikes: [] };
-		let o = [...t].sort(jt)[0], s = [];
+		let o = [...t].sort(Mt)[0], s = [];
 		for (let e = 0; e < 2; e += 1) s.push({
 			attackId: a.id,
 			targetId: o.id,
@@ -1425,14 +1425,14 @@ var wt = {
 		return { strikes: s };
 	}
 };
-function Et(e) {
+function Dt(e) {
 	return e ? Object.values(e.healSpellSlotsRemaining).some((e) => e > 0) || e.healCantripLevel !== null || e.hasBattleMedicine : !1;
 }
-function Dt(e) {
+function Ot(e) {
 	let t = e.filter((e) => e.dying > 0 && !e.dead);
 	if (t.length !== 0) return [...t].sort((e, t) => t.dying === e.dying ? e.id < t.id ? -1 : 1 : t.dying - e.dying)[0];
 }
-function Ot(e, t) {
+function kt(e, t) {
 	let n = e.filter((e) => !e.downed && !e.dead && e.dying === 0 && e.hp.current < e.hp.max * .4);
 	if (n.length !== 0) return [...n].sort((e, n) => {
 		let r = +(e.id === t.id), i = +(n.id === t.id);
@@ -1441,7 +1441,7 @@ function Ot(e, t) {
 		return a === o ? e.id < n.id ? -1 : 1 : a - o;
 	})[0];
 }
-function kt(e, t, n) {
+function At(e, t, n) {
 	let r = e.healing;
 	if (!r) return;
 	let i = n === "emergency" ? [
@@ -1459,7 +1459,7 @@ function kt(e, t, n) {
 	];
 	for (let n of i) {
 		if (n === "heal-spell-2action" || n === "heal-spell-1action" || n === "heal-spell-3action") {
-			let i = At(r.healSpellSlotsRemaining);
+			let i = jt(r.healSpellSlotsRemaining);
 			if (i !== void 0) return {
 				kind: n,
 				healerId: e.id,
@@ -1486,14 +1486,14 @@ function kt(e, t, n) {
 		}
 	}
 }
-function At(e) {
+function jt(e) {
 	return Object.keys(e).map((e) => Number(e)).filter((t) => e[t] > 0).sort((e, t) => e - t)[0];
 }
-function jt(e, t) {
-	let n = Mt(e), r = Mt(t);
+function Mt(e, t) {
+	let n = Nt(e), r = Nt(t);
 	return n === r ? e.hp.current === t.hp.current ? e.id < t.id ? -1 : 1 : e.hp.current - t.hp.current : r - n;
 }
-function Mt(e) {
+function Nt(e) {
 	let t = 0;
 	for (let n of e.attacks) try {
 		let e = x(n.damageFormula).mean;
@@ -1503,20 +1503,20 @@ function Mt(e) {
 }
 //#endregion
 //#region src/engine/run-iteration.ts
-function Nt(e, t, n, r = 0, i = {}) {
+function Pt(e, t, n, r = 0, i = {}) {
 	let a = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
-	for (let t of e.pcs) a.set(t.id, It(t)), o.set(t.id, t.hp.current + t.hp.temp);
-	for (let t of e.enemies) a.set(t.id, It(t)), o.set(t.id, t.hp.current + t.hp.temp);
-	let s = ut(Array.from(a.values()), n, { useFixedOrder: i.useFixedInitiative }), c = wt[t.tacticsProfile], l = Tt, u = {}, d = [], f = null, p = 0, m = 0, h = 0, g = 0;
+	for (let t of e.pcs) a.set(t.id, Lt(t)), o.set(t.id, t.hp.current + t.hp.temp);
+	for (let t of e.enemies) a.set(t.id, Lt(t)), o.set(t.id, t.hp.current + t.hp.temp);
+	let s = dt(Array.from(a.values()), n, { useFixedOrder: i.useFixedInitiative }), c = Tt[t.tacticsProfile], l = Et, u = {}, d = [], f = null, p = 0, m = 0, h = 0, g = 0;
 	for (let e = 1; e <= t.maxRounds; e += 1) {
 		p = e;
 		for (let r of s) {
 			let i = a.get(r.combatantId);
 			if (!i || i.dead) continue;
 			if (i.side === "pc" && i.dying > 0) {
-				let e = dt(i, n);
+				let e = ft(i, n);
 				m += 1;
-				let t = ht(i), r = {
+				let t = gt(i), r = {
 					...i,
 					dying: e.newDying,
 					downed: e.newDying > 0 || i.hp.current === 0,
@@ -1526,7 +1526,7 @@ function Nt(e, t, n, r = 0, i = {}) {
 				continue;
 			}
 			if (i.downed) continue;
-			let o = Lt(a, "pc"), s = Lt(a, "enemy"), p = (i.side === "pc" ? l : c).chooseTurn({
+			let o = Rt(a, "pc"), s = Rt(a, "enemy"), p = (i.side === "pc" ? l : c).chooseTurn({
 				attacker: i,
 				pcs: o,
 				enemies: s,
@@ -1535,21 +1535,21 @@ function Nt(e, t, n, r = 0, i = {}) {
 			if (p.heal) {
 				let e = a.get(p.heal.targetId);
 				if (e && !e.dead) {
-					let t = ct({
+					let t = lt({
 						kind: p.heal.kind,
 						healerLevel: i.healing?.healCantripLevel ?? void 0,
 						spellRank: p.heal.spellRank,
 						medicineModifier: i.healing?.medicineModifier,
 						medicineDC: i.healing?.medicineDC
-					}, n), r = p.heal.kind.startsWith("heal-spell") && e.dying > 0, o = lt(e, t.healedAmount, { clearsDying: r });
-					if (t.collateralDamage && t.collateralDamage > 0 && (o = mt(o, {
+					}, n), r = p.heal.kind.startsWith("heal-spell") && e.dying > 0, o = ut(e, t.healedAmount, { clearsDying: r });
+					if (t.collateralDamage && t.collateralDamage > 0 && (o = ht(o, {
 						damage: t.collateralDamage,
 						degree: "success"
 					}).combatant), a.set(e.id, o), g += 1, p.heal.kind.startsWith("heal-spell") && p.heal.spellRank !== void 0) {
-						let e = Pt(i, p.heal.spellRank);
+						let e = Ft(i, p.heal.spellRank);
 						a.set(i.id, e);
 					} else if (p.heal.kind === "battle-medicine") {
-						let t = Ft(i, e.id);
+						let t = It(i, e.id);
 						a.set(i.id, t);
 					}
 				}
@@ -1557,7 +1557,7 @@ function Nt(e, t, n, r = 0, i = {}) {
 			if (p.strikes.length !== 0) for (let r of p.strikes) {
 				let o = a.get(r.targetId), s = i.attacks.find((e) => e.id === r.attackId);
 				if (!o || o.dead || !s) continue;
-				let c = de(s.mapType === "unknown" ? "normal" : s.mapType)[r.mapIndex] ?? 0, l = ft({
+				let c = ue(s.mapType === "unknown" ? "normal" : s.mapType)[r.mapIndex] ?? 0, l = pt({
 					attackerId: i.id,
 					defenderId: o.id,
 					attackId: s.id,
@@ -1568,7 +1568,7 @@ function Nt(e, t, n, r = 0, i = {}) {
 					damageFormula: s.damageFormula,
 					damageType: s.damageType,
 					defenderAdjustments: o.damageAdjustments
-				}, n), p = mt(o, {
+				}, n), p = ht(o, {
 					damage: l.damage,
 					degree: l.degree
 				});
@@ -1588,7 +1588,7 @@ function Nt(e, t, n, r = 0, i = {}) {
 				});
 			}
 		}
-		if (Rt(a) || zt(a)) break;
+		if (zt(a) || Bt(a)) break;
 	}
 	let _ = Array.from(a.values()).map((e) => ({
 		id: e.id,
@@ -1600,7 +1600,7 @@ function Nt(e, t, n, r = 0, i = {}) {
 		downed: e.downed,
 		dead: e.dead,
 		damageTaken: Math.max(0, (o.get(e.id) ?? 0) - (e.hp.current + e.hp.temp))
-	})), v = Bt(a);
+	})), v = Vt(a);
 	return {
 		iterationIndex: r,
 		roundsElapsed: p,
@@ -1614,7 +1614,7 @@ function Nt(e, t, n, r = 0, i = {}) {
 		heroPointSurvivalsFired: h
 	};
 }
-function Pt(e, t) {
+function Ft(e, t) {
 	if (!e.healing) return e;
 	let n = e.healing.healSpellSlotsRemaining[t] ?? 0;
 	if (n <= 0) return e;
@@ -1627,7 +1627,7 @@ function Pt(e, t) {
 		}
 	};
 }
-function Ft(e, t) {
+function It(e, t) {
 	if (!e.healing) return e;
 	let n = new Set(e.healing.battleMedicineUsedTargets);
 	return n.add(t), {
@@ -1638,50 +1638,50 @@ function Ft(e, t) {
 		}
 	};
 }
-function It(e) {
+function Lt(e) {
 	return {
 		...e,
 		hp: { ...e.hp },
 		defenses: { ...e.defenses }
 	};
 }
-function Lt(e, t) {
+function Rt(e, t) {
 	let n = [];
 	for (let r of e.values()) r.side === t && n.push(r);
 	return n;
 }
-function Rt(e) {
+function zt(e) {
 	let t = 0;
 	for (let n of e.values()) if (n.side === "pc" && (t += 1, !n.downed && !n.dead)) return !1;
 	return t > 0;
 }
-function zt(e) {
+function Bt(e) {
 	let t = 0;
 	for (let n of e.values()) if (n.side === "enemy" && (t += 1, !n.dead)) return !1;
 	return t > 0;
 }
-function Bt(e) {
-	return Rt(e);
+function Vt(e) {
+	return zt(e);
 }
 //#endregion
 //#region src/engine/simulation-types.ts
-var Vt = 1e4, Ht = class extends Error {
+var Ht = 1e4, Ut = class extends Error {
 	requested;
 	cap;
 	constructor(e) {
-		super(`Iterations ${e} exceeds engine cap ${Vt}`), this.name = "MaxIterationsExceededError", this.requested = e, this.cap = Vt;
+		super(`Iterations ${e} exceeds engine cap ${Ht}`), this.name = "MaxIterationsExceededError", this.requested = e, this.cap = Ht;
 	}
 };
-function Ut(e) {
+function Wt(e) {
 	if (!Number.isInteger(e.iterations) || e.iterations < 1) throw Error(`iterations must be a positive integer, got ${e.iterations}`);
-	if (e.iterations > 1e4) throw new Ht(e.iterations);
+	if (e.iterations > 1e4) throw new Ut(e.iterations);
 	if (!Number.isInteger(e.maxRounds) || e.maxRounds < 1) throw Error(`maxRounds must be a positive integer, got ${e.maxRounds}`);
 	if (e.wallClockBudgetMs !== void 0 && (!Number.isFinite(e.wallClockBudgetMs) || e.wallClockBudgetMs < 0)) throw Error(`wallClockBudgetMs must be a non-negative finite number, got ${e.wallClockBudgetMs}`);
 }
 //#endregion
 //#region src/engine/run-simulation.ts
-function Wt(e, t, n = {}) {
-	Ut(t);
+function Gt(e, t, n = {}) {
+	Wt(t);
 	let r = t.seed ?? Date.now(), i = t.wallClockBudgetMs ?? 0, a = i > 0 ? Date.now() : 0, o = [], s = !1;
 	for (let c = 0; c < t.iterations; c += 1) {
 		if (n.abortSignal?.aborted) {
@@ -1692,12 +1692,12 @@ function Wt(e, t, n = {}) {
 			s = !0;
 			break;
 		}
-		let l = ot(r, c);
-		o.push(Nt(e, t, at(l), c)), n.onProgress?.(c + 1, t.iterations);
+		let l = st(r, c);
+		o.push(Pt(e, t, ot(l), c)), n.onProgress?.(c + 1, t.iterations);
 	}
-	return Gt(e, t, r, o, s);
+	return Kt(e, t, r, o, s);
 }
-function Gt(e, t, n, r, i) {
+function Kt(e, t, n, r, i) {
 	let a = r.length;
 	if (a === 0) return {
 		iterationsRequested: t.iterations,
@@ -1772,7 +1772,7 @@ function Gt(e, t, n, r, i) {
 		};
 	}), g = 0, _ = 0, v = 0;
 	for (let e of r) g += e.healsFired, _ += e.recoveryChecksFired, e.heroPointSurvivalsFired > 0 && (v += 1);
-	let ee = o / a, y = s / a, b = c.length > 0 ? c.reduce((e, t) => e + t, 0) / c.length : null, x = Jt(o, a, s, c);
+	let ee = o / a, y = s / a, b = c.length > 0 ? c.reduce((e, t) => e + t, 0) / c.length : null, x = Yt(o, a, s, c);
 	return {
 		iterationsRequested: t.iterations,
 		iterationsCompleted: a,
@@ -1782,7 +1782,7 @@ function Gt(e, t, n, r, i) {
 		anyPcDownProbability: ee,
 		tpkProbability: y,
 		meanFirstDownRound: b,
-		medianFirstDownRound: c.length > 0 ? Kt(c) : null,
+		medianFirstDownRound: c.length > 0 ? qt(c) : null,
 		perPc: p,
 		perEnemy: h,
 		safetyNet: {
@@ -1794,62 +1794,62 @@ function Gt(e, t, n, r, i) {
 		caveats: [...e.caveats]
 	};
 }
-function Kt(e) {
+function qt(e) {
 	let t = [...e].sort((e, t) => e - t), n = Math.floor(t.length / 2);
 	return t.length % 2 == 0 ? (t[n - 1] + t[n]) / 2 : t[n];
 }
-var qt = 1.959963984540054;
-function Jt(e, t, n, r) {
-	let i = Yt(e, t), a = Yt(n, t), o = null;
-	return r.length > 0 && (o = Xt(r)), {
+var Jt = 1.959963984540054;
+function Yt(e, t, n, r) {
+	let i = Xt(e, t), a = Xt(n, t), o = null;
+	return r.length > 0 && (o = Zt(r)), {
 		anyPcDown: i,
 		tpk: a,
 		meanFirstDownRound: o
 	};
 }
-function Yt(e, t) {
+function Xt(e, t) {
 	if (t === 0) return {
 		lower: 0,
 		upper: 0
 	};
-	let n = e / t, r = qt * Math.sqrt(n * (1 - n) / t);
+	let n = e / t, r = Jt * Math.sqrt(n * (1 - n) / t);
 	return {
-		lower: Zt(n - r),
-		upper: Zt(n + r)
+		lower: Qt(n - r),
+		upper: Qt(n + r)
 	};
 }
-function Xt(e) {
+function Zt(e) {
 	let t = e.length;
 	if (t === 0) return {
 		lower: 0,
 		upper: 0
 	};
-	let n = e.reduce((e, t) => e + t, 0) / t, r = e.reduce((e, t) => e + (t - n) ** 2, 0) / t, i = qt * Math.sqrt(r / t);
+	let n = e.reduce((e, t) => e + t, 0) / t, r = e.reduce((e, t) => e + (t - n) ** 2, 0) / t, i = Jt * Math.sqrt(r / t);
 	return {
 		lower: n - i,
 		upper: n + i
 	};
 }
-function Zt(e) {
+function Qt(e) {
 	return Math.max(0, Math.min(1, e));
 }
 //#endregion
 //#region src/engine/run-simulation-in-worker.ts
-var Qt = class extends Error {
+var $t = class extends Error {
 	constructor() {
 		super("Monte Carlo encounter simulation is disabled in module settings."), this.name = "MonteCarloDisabledError";
 	}
 };
-function $t(e, t, n = {}) {
-	return h() ? typeof Worker > "u" ? en(e, t, n) : tn(e, t, n) : {
-		promise: Promise.reject(new Qt()),
+function en(e, t, n = {}) {
+	return h() ? typeof Worker > "u" ? tn(e, t, n) : nn(e, t, n) : {
+		promise: Promise.reject(new $t()),
 		cancel: () => {}
 	};
 }
-function en(e, t, n) {
+function tn(e, t, n) {
 	let r = { aborted: !1 };
 	return {
-		promise: Promise.resolve().then(() => Wt(e, t, {
+		promise: Promise.resolve().then(() => Gt(e, t, {
 			onProgress: n.onProgress,
 			abortSignal: r
 		})),
@@ -1858,7 +1858,7 @@ function en(e, t, n) {
 		}
 	};
 }
-function tn(e, t, n) {
+function nn(e, t, n) {
 	let r = new Worker(new URL(
 		/* @vite-ignore */
 		"" + new URL("assets/simulation.worker-ChHnUOCM.js", import.meta.url).href,
@@ -1906,13 +1906,13 @@ function tn(e, t, n) {
 }
 //#endregion
 //#region src/foundry/encounter-setup.ts
-function nn(e, t = {}) {
-	return rn(Ne(e, { allowSceneFallback: t.allowSceneFallback }), e);
+function rn(e, t = {}) {
+	return an(k(e, { allowSceneFallback: t.allowSceneFallback }), e);
 }
-function rn(e, t) {
+function an(e, t) {
 	let n = [...e.caveats];
 	for (let t of e.unsupported) n.push(`Unsupported actor skipped: ${t}`);
-	let r = on();
+	let r = sn();
 	return {
 		pcs: e.pcs.map((e) => {
 			let i = [];
@@ -1922,8 +1922,8 @@ function rn(e, t) {
 				n.push(`${e.snapshot.name}: PC attack extraction failed; treated as no supported Strike.`);
 			}
 			i.length === 0 && n.push(`${e.snapshot.name} has no supported Strike; will skip its turns in the simulation.`);
-			let a = cn(e.snapshot, "pc", i, n);
-			return a.healing = an(e.snapshot, n), r && sn(e.snapshot, a.healing), a;
+			let a = ln(e.snapshot, "pc", i, n);
+			return a.healing = on(e.snapshot, n), r && cn(e.snapshot, a.healing), a;
 		}),
 		enemies: e.hostiles.map((e) => {
 			let r = [];
@@ -1932,12 +1932,12 @@ function rn(e, t) {
 			} catch {
 				n.push(`${e.snapshot.name}: attack extraction failed; treated as no supported attacks.`);
 			}
-			return r.length === 0 && n.push(`${e.snapshot.name} has no supported attacks; will skip its turns.`), cn(e.snapshot, "enemy", r, n);
+			return r.length === 0 && n.push(`${e.snapshot.name} has no supported attacks; will skip its turns.`), ln(e.snapshot, "enemy", r, n);
 		}),
 		caveats: n
 	};
 }
-function an(e, t) {
+function on(e, t) {
 	let n = e.pcCapabilities;
 	if (!n) return {
 		medicineDC: 15,
@@ -1956,7 +1956,7 @@ function an(e, t) {
 		healCantripLevel: a
 	};
 }
-function on() {
+function sn() {
 	if (typeof game > "u") return !1;
 	try {
 		return !!(game.settings?.get?.("grim-arithmetic", "debugLogging") ?? !1);
@@ -1964,7 +1964,7 @@ function on() {
 		return !1;
 	}
 }
-function sn(e, t) {
+function cn(e, t) {
 	let n = Object.entries(t.healSpellSlotsRemaining).map(([e, t]) => `rank ${e}: ${t}`).join(", ");
 	console.log("Grim Arithmetic | PC healing capability", {
 		name: e.name,
@@ -1975,7 +1975,7 @@ function sn(e, t) {
 		healSpellSlots: n || "(none)"
 	});
 }
-function cn(e, t, n, r) {
+function ln(e, t, n, r) {
 	return e.initiativeBonus === void 0 && r.push(`${e.name}: initiative bonus unknown; defaulting to 0.`), {
 		id: e.id,
 		name: e.name,
@@ -2006,31 +2006,31 @@ function cn(e, t, n, r) {
 }
 //#endregion
 //#region src/ui/panel-data.ts
-var ln = {
+var un = {
 	strikes: 2,
 	mapMode: "auto",
 	shieldBonus: 0,
 	woundedOverride: "current",
 	heroPointMode: "actor",
 	attackId: ""
-}, X = "Permanent death probability is planned for a future milestone and is not modeled in MVP.";
-function un({ selection: e, adapter: t, controls: n, moduleVersion: r }) {
+}, Y = "Permanent death probability is planned for a future milestone and is not modeled in MVP.";
+function dn({ selection: e, adapter: t, controls: n, moduleVersion: r }) {
 	if (e.errors.length > 0 || !e.subjectToken || !e.enemyToken) return {
 		moduleVersion: r,
 		message: "Select one PC token and target one enemy token to estimate immediate down risk.",
-		permanentDeath: X,
+		permanentDeath: Y,
 		errors: e.errors,
-		controls: dn(n, [])
+		controls: fn(n, [])
 	};
-	let i = t.getCombatantFromToken(e.subjectToken), a = t.getCombatantFromToken(e.enemyToken), o = t.getAttacksFromToken(e.enemyToken), s = pn(o, n.attackId), c = fn(i, a, s), l = dn(n, o, s?.id);
+	let i = t.getCombatantFromToken(e.subjectToken), a = t.getCombatantFromToken(e.enemyToken), o = t.getAttacksFromToken(e.enemyToken), s = mn(o, n.attackId), c = pn(i, a, s), l = fn(n, o, s?.id);
 	if (c.length > 0 || !i || !a || !s) return {
 		moduleVersion: r,
 		message: "Grim Arithmetic could not extract enough PF2e data for this token pair yet.",
-		permanentDeath: X,
+		permanentDeath: Y,
 		errors: c,
 		controls: l
 	};
-	let u = mn(n.mapMode, s.mapType), d = i.defenses.ac + n.shieldBonus, f = i.hp.current + (i.hp.temp ?? 0), p = gn(i, n.woundedOverride), m = i.deathState?.doomed ?? 0, h = _n(i, n.heroPointMode), g = ae({
+	let u = hn(n.mapMode, s.mapType), d = i.defenses.ac + n.shieldBonus, f = i.hp.current + (i.hp.temp ?? 0), p = _n(i, n.woundedOverride), m = i.deathState?.doomed ?? 0, h = vn(i, n.heroPointMode), g = C({
 		hp: f,
 		ac: d,
 		attackBonus: s.attackBonus,
@@ -2046,33 +2046,33 @@ function un({ selection: e, adapter: t, controls: n, moduleVersion: r }) {
 	return n.shieldBonus > 0 && _.push(`Applies a +${n.shieldBonus} shield/status AC adjustment.`), n.woundedOverride !== "current" && _.push(`Uses wounded override ${n.woundedOverride} for dying severity if the PC is downed.`), n.heroPointMode !== "actor" && _.push(`Uses Hero Point override: ${n.heroPointMode}.`), {
 		moduleVersion: r,
 		message: "Immediate down-risk estimate based on the selected PC and targeted enemy.",
-		permanentDeath: X,
+		permanentDeath: Y,
 		errors: [],
 		controls: l,
 		subject: i,
 		enemy: a,
 		attack: s,
 		risk: {
-			downPercent: Z(g.downProbability),
+			downPercent: X(g.downProbability),
 			expectedHpAfterTurn: g.expectedHpAfterTurn.toFixed(1),
 			riskLabel: g.riskLabel,
 			effectiveAc: d,
 			modeledHp: f,
-			woundedNote: hn(i, n.woundedOverride),
+			woundedNote: gn(i, n.woundedOverride),
 			damage: g.damage,
 			damageAdjustment: g.damageAdjustment,
 			dyingSeverity: g.dyingSeverity,
 			strikeChances: g.hitChanceByStrike.map((e, t) => ({
 				index: t + 1,
-				hitPercent: Z(e),
-				critPercent: Z(g.critChanceByStrike[t] ?? 0)
+				hitPercent: X(e),
+				critPercent: X(g.critChanceByStrike[t] ?? 0)
 			})),
 			assumptions: _,
 			notModeled: g.notModeled
 		}
 	};
 }
-function dn(e, t, n = e.attackId) {
+function fn(e, t, n = e.attackId) {
 	let r = t.some((e) => e.id === n) ? n : t[0]?.id ?? "";
 	return {
 		strikes: [
@@ -2130,42 +2130,42 @@ function dn(e, t, n = e.attackId) {
 		}))
 	};
 }
-function fn(e, t, n) {
+function pn(e, t, n) {
 	let r = [];
 	return e || r.push("Could not read selected PC HP/AC from PF2e actor data."), t || r.push("Could not read targeted enemy HP/AC from PF2e actor data."), e && e.disposition !== "pc" && r.push("Selected token is not recognized as a PC/character by the PF2e adapter."), t && t.disposition !== "enemy" && r.push("Targeted token is not recognized as an enemy/NPC by the PF2e adapter."), n || r.push("Targeted enemy has no supported melee Strike with a numeric attack bonus and supported damage formula."), r;
 }
-function pn(e, t) {
+function mn(e, t) {
 	return e.find((e) => e.id === t) ?? e[0];
 }
-function mn(e, t) {
+function hn(e, t) {
 	return e === "auto" ? t === "unknown" ? "normal" : t : e;
 }
-function hn(e, t) {
+function gn(e, t) {
 	return t === "current" ? `Current actor wounded value used for dying severity: ${e.deathState?.wounded ?? 0}` : `Override used for dying severity: Wounded ${t}`;
 }
-function gn(e, t) {
+function _n(e, t) {
 	return t === "current" ? e.deathState?.wounded ?? 0 : Number(t);
 }
-function _n(e, t) {
+function vn(e, t) {
 	return t === "available" ? !0 : t === "unavailable" ? !1 : (e.deathState?.heroPoints ?? 0) > 0;
 }
-function Z(e) {
+function X(e) {
 	return Math.round(e * 100);
 }
-var vn = { tacticsProfile: "spread-damage" }, Q = {
+var yn = { tacticsProfile: "spread-damage" }, Z = {
 	"random-legal": "Random legal",
 	"spread-damage": "Spread damage",
 	"focus-fire": "Focus fire",
 	predator: "Predator",
 	"boss-cinematic": "Boss cinematic"
-}, yn = {
+}, bn = {
 	"random-legal": "Enemies pick any legal PC target and any attack independently per strike.",
 	"spread-damage": "Enemies spread strikes across higher-HP standing PCs; never target downed.",
 	"focus-fire": "Enemies concentrate every strike on the lowest-HP standing PC.",
 	predator: "Enemies prioritize wounded > low-HP > full-HP PCs; attack downed only as a last resort.",
 	"boss-cinematic": "Enemy uses the highest-damage attack on the toughest standing PC, all strikes on the same target."
 };
-function bn({ moduleVersion: e, enabled: t, controls: n, state: r }) {
+function xn({ moduleVersion: e, enabled: t, controls: n, state: r }) {
 	let i = [
 		"PCs Strike the most-dangerous standing enemy (2 strikes per turn by default).",
 		"PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP.",
@@ -2179,10 +2179,10 @@ function bn({ moduleVersion: e, enabled: t, controls: n, state: r }) {
 		disabledMessage: "Monte Carlo simulation is disabled in Grim Arithmetic module settings. Enable it in Configure Settings to run forecasts on this client.",
 		message: "",
 		state: "idle",
-		controls: Sn(n),
+		controls: Q(n),
 		assumptions: i
 	};
-	let a = Sn(n);
+	let a = Q(n);
 	if (r.kind === "idle") return {
 		moduleVersion: e,
 		enabled: !0,
@@ -2225,17 +2225,17 @@ function bn({ moduleVersion: e, enabled: t, controls: n, state: r }) {
 		state: "done",
 		controls: a,
 		result: Cn(o),
-		pessimismWarning: xn(o),
+		pessimismWarning: Sn(o),
 		assumptions: [...i, ...o.caveats.map((e) => `Setup: ${e}`)]
 	};
 }
-function xn(e) {
+function Sn(e) {
 	if (!(e.anyPcDownProbability < .8)) return "High-risk encounter. Even with PCs healing, recovering, and spending Hero Points, the modeled outcome ends badly in most iterations. Reactions (Shield Block, Champion) and tactical positioning are still not modeled, so real-table risk may be a bit lower — but this encounter has structural lethality worth examining.";
 }
-function Sn(e) {
-	return { tacticsProfile: Object.keys(Q).sort().map((t) => ({
+function Q(e) {
+	return { tacticsProfile: Object.keys(Z).sort().map((t) => ({
 		value: t,
-		label: Q[t],
+		label: Z[t],
 		selected: e.tacticsProfile === t
 	})) };
 }
@@ -2244,8 +2244,8 @@ function Cn(e) {
 	return {
 		iterationsCompleted: e.iterationsCompleted,
 		iterationsRequested: e.iterationsRequested,
-		tacticsProfileLabel: Q[e.tacticsProfile],
-		tacticsProfileDescription: yn[e.tacticsProfile],
+		tacticsProfileLabel: Z[e.tacticsProfile],
+		tacticsProfileDescription: bn[e.tacticsProfile],
 		aborted: e.aborted,
 		anyPcDownPercent: i,
 		anyPcDownCi: o,
@@ -2297,65 +2297,78 @@ function En(e) {
 }
 //#endregion
 //#region src/ui/forecast-panel.ts
-var Dn = class e extends Application {
-	static instance;
-	controls = { ...vn };
+var Dn = foundry.applications.api, On = Dn.HandlebarsApplicationMixin(Dn.ApplicationV2), kn = `${t}-forecast`, An = class e extends On {
+	static singleton;
+	controls = { ...yn };
 	runState = { kind: "idle" };
 	currentHandle;
-	static get defaultOptions() {
-		return foundry.utils.mergeObject(super.defaultOptions, {
-			id: `${t}-forecast`,
+	static DEFAULT_OPTIONS = {
+		id: kn,
+		classes: ["grim-arithmetic-window"],
+		tag: "section",
+		window: {
 			title: `${n} — Encounter Forecast`,
-			template: `modules/${t}/templates/forecast-panel.hbs`,
+			resizable: !0
+		},
+		position: {
 			width: 800,
-			height: "auto",
-			resizable: !0,
-			classes: ["grim-arithmetic-window"]
-		});
-	}
+			height: 720
+		},
+		actions: {
+			run: function() {
+				this.startRun();
+			},
+			cancel: function() {
+				this.currentHandle?.cancel();
+			}
+		}
+	};
+	static PARTS = { main: { template: `modules/${t}/templates/forecast-panel.hbs` } };
 	static getInstance() {
-		return e.instance ||= new e(), e.instance;
+		return e.singleton ||= new e(), e.singleton;
 	}
 	static open() {
-		e.getInstance().render(!0);
+		e.getInstance().render({ force: !0 });
 	}
-	async getData() {
-		return bn({
+	async _prepareContext() {
+		return xn({
 			moduleVersion: r,
 			enabled: h(),
 			controls: this.controls,
 			state: this.runState
 		});
 	}
-	activateListeners(e) {
-		super.activateListeners(e), e.find("[data-grim-forecast-control]").on("change", (e) => {
-			let t = e.currentTarget;
-			t.dataset?.grimForecastControl === "tacticsProfile" && (t.value === "random-legal" || t.value === "spread-damage" || t.value === "focus-fire" || t.value === "predator" || t.value === "boss-cinematic") && (this.controls.tacticsProfile = t.value), this.render(!1);
-		}), e.find("[data-grim-forecast-run]").on("click", () => {
-			this.startRun();
-		}), e.find("[data-grim-forecast-cancel]").on("click", () => {
-			this.currentHandle?.cancel();
+	async _onRender() {
+		let e = this.element;
+		e && e.querySelectorAll("[data-grim-forecast-control]").forEach((e) => {
+			e.addEventListener("change", () => {
+				if (e.dataset.grimForecastControl === "tacticsProfile") {
+					let t = e.value;
+					(t === "random-legal" || t === "spread-damage" || t === "focus-fire" || t === "predator" || t === "boss-cinematic") && (this.controls.tacticsProfile = t);
+				}
+				this.render();
+			});
 		});
 	}
-	async close(e) {
-		return this.currentHandle?.cancel(), super.close(e);
+	async _preClose() {
+		this.currentHandle?.cancel();
 	}
 	startRun() {
-		let e = new O(), t;
+		let e = new A(), t;
 		try {
-			t = nn(e);
+			t = rn(e);
 		} catch (e) {
 			this.runState = {
 				kind: "error",
 				message: e instanceof Error ? e.message : String(e)
-			}, this.render(!1);
+			}, this.render();
 			return;
 		}
 		if (t.pcs.length === 0 || t.enemies.length === 0) {
 			this.runState = {
 				kind: "error",
 				message: "No active combat with both PCs and enemies. Start a combat encounter, then run the forecast."
-			}, this.render(!1);
+			}, this.render();
 			return;
 		}
 		let n = {
@@ -2367,36 +2380,36 @@ var Dn = class e extends Application {
 			kind: "running",
 			completed: 0,
 			total: 5e3
-		}, this.render(!1);
-		let r = $t(t, n, { onProgress: (e, t) => {
+		}, this.render();
+		let r = en(t, n, { onProgress: (e, t) => {
 			this.runState.kind === "running" && (this.runState = {
 				kind: "running",
 				completed: e,
 				total: t
-			}, this.render(!1));
+			}, this.render());
 		} });
 		this.currentHandle = r, r.promise.then((e) => {
 			this.runState = {
 				kind: "done",
 				result: e
-			}, this.currentHandle = void 0, this.render(!1);
+			}, this.currentHandle = void 0, this.render();
 		}, (e) => {
 			this.runState = {
 				kind: "error",
 				message: e instanceof Error ? e.message : String(e)
-			}, this.currentHandle = void 0, this.render(!1);
+			}, this.currentHandle = void 0, this.render();
 		});
 	}
 };
 //#endregion
 //#region src/foundry/selection.ts
-function On() {
-	return kn({
+function jn() {
+	return Mn({
 		controlled: canvas.tokens?.controlled,
 		targets: game.user?.targets
 	});
 }
-function kn(e) {
+function Mn(e) {
 	let t = e.controlled ?? [], n = Array.from(e.targets ?? []), r = [], i = t.length === 1 ? t[0] : null, a = n.length === 1 ? n[0] : null;
 	return t.length === 0 && r.push("No PC token selected. Select one PC token."), t.length > 1 && r.push("Multiple tokens selected. Select only one PC token."), n.length === 0 && r.push("No target selected. Target one enemy token."), n.length > 1 && r.push("Multiple targets selected. Target only one enemy token."), {
 		subjectToken: i,
@@ -2406,7 +2419,7 @@ function kn(e) {
 }
 //#endregion
 //#region src/ui/pair-detail-resolver.ts
-function An(e, t) {
+function Nn(e, t) {
 	let n = [];
 	return e || n.push("PC token is no longer on the canvas. The encounter may have changed since the danger board was rendered."), t || n.push("Enemy token is no longer on the canvas. The encounter may have changed since the danger board was rendered."), {
 		subjectToken: e,
@@ -2416,134 +2429,147 @@ function An(e, t) {
 }
 //#endregion
 //#region src/ui/pair-detail-panel.ts
-var $ = class e extends Application {
-	static instance;
-	controls = { ...ln };
+var Pn = foundry.applications.api, Fn = Pn.HandlebarsApplicationMixin(Pn.ApplicationV2), In = `${t}-pair-detail`, $ = class e extends Fn {
+	static singleton;
+	controls = { ...un };
 	explicitSelection;
-	static get defaultOptions() {
-		return foundry.utils.mergeObject(super.defaultOptions, {
-			id: `${t}-pair-detail`,
-			title: `${n} — Pair Detail`,
-			template: `modules/${t}/templates/pair-detail-panel.hbs`,
+	static DEFAULT_OPTIONS = {
+		id: In,
+		classes: ["grim-arithmetic-window"],
+		tag: "section",
+		window: {
+			title: `${n} - Pair Detail`,
+			resizable: !0
+		},
+		position: {
 			width: 500,
-			height: "auto",
-			resizable: !0,
-			classes: ["grim-arithmetic-window"]
-		});
-	}
+			height: 640
+		},
+		actions: { refresh: function() {
+			this.render();
+		} }
+	};
+	static PARTS = { main: { template: `modules/${t}/templates/pair-detail-panel.hbs` } };
 	static getInstance() {
-		return e.instance ||= new e(), e.instance;
+		return e.singleton ||= new e(), e.singleton;
 	}
 	static openForPair(t, n, r) {
 		let i = canvas.tokens?.get(t) ?? null, a = canvas.tokens?.get(n) ?? null, o = e.getInstance();
-		o.explicitSelection = An(i, a), r !== void 0 && (o.controls.attackId = r), o.render(!0);
+		o.explicitSelection = Nn(i, a), r !== void 0 && (o.controls.attackId = r), o.render({ force: !0 });
 	}
 	static openForSelection() {
 		let t = e.getInstance();
-		t.explicitSelection = void 0, t.render(!0);
+		t.explicitSelection = void 0, t.render({ force: !0 });
 	}
-	async getData() {
-		return un({
-			selection: this.explicitSelection ?? On(),
-			adapter: new O(),
+	async _prepareContext() {
+		return dn({
+			selection: this.explicitSelection ?? jn(),
+			adapter: new A(),
 			controls: this.controls,
 			moduleVersion: r
 		});
 	}
-	activateListeners(e) {
-		super.activateListeners(e), e.find("[data-grim-control]").on("change", (e) => {
-			let t = e.currentTarget, n = In(t);
-			n && (this.updateControl(n, t.value), this.render(!1));
-		}), e.find("[data-grim-refresh]").on("click", () => {
-			this.render(!1);
+	async _onRender() {
+		let e = this.element;
+		e && e.querySelectorAll("[data-grim-control]").forEach((e) => {
+			e.addEventListener("change", () => {
+				let t = Hn(e);
+				t && (this.updateControl(t, e.value), this.render());
+			});
 		});
 	}
 	updateControl(e, t) {
-		e === "strikes" && (this.controls.strikes = jn(Number(t))), e === "mapMode" && (this.controls.mapMode = Mn(t)), e === "shieldBonus" && (this.controls.shieldBonus = Nn(t)), e === "woundedOverride" && (this.controls.woundedOverride = Pn(t)), e === "heroPointMode" && (this.controls.heroPointMode = Fn(t)), e === "attackId" && (this.controls.attackId = t);
+		e === "strikes" && (this.controls.strikes = Ln(Number(t))), e === "mapMode" && (this.controls.mapMode = Rn(t)), e === "shieldBonus" && (this.controls.shieldBonus = zn(t)), e === "woundedOverride" && (this.controls.woundedOverride = Bn(t)), e === "heroPointMode" && (this.controls.heroPointMode = Vn(t)), e === "attackId" && (this.controls.attackId = t);
 	}
 };
-function jn(e) {
+function Ln(e) {
 	return e === 1 || e === 2 || e === 3 ? e : 2;
 }
-function Mn(e) {
+function Rn(e) {
 	return e === "normal" || e === "agile" || e === "none" ? e : "auto";
 }
-function Nn(e) {
+function zn(e) {
 	return e === "1" ? 1 : e === "2" ? 2 : 0;
 }
-function Pn(e) {
+function Bn(e) {
 	return e === "0" || e === "1" || e === "2" || e === "3" ? e : "current";
 }
-function Fn(e) {
+function Vn(e) {
 	return e === "available" || e === "unavailable" ? e : "actor";
 }
-function In(e) {
-	let t = e.dataset?.grimControl;
+function Hn(e) {
+	let t = e.dataset.grimControl;
 	return t === "strikes" || t === "mapMode" || t === "shieldBonus" || t === "woundedOverride" || t === "heroPointMode" || t === "attackId" ? t : null;
 }
 //#endregion
 //#region src/ui/danger-board-panel.ts
-var Ln = "Encounter-wide immediate risk. Click a row to see the detail math, or use the selection-target button to model an arbitrary pair.", Rn = class extends Application {
-	static get defaultOptions() {
-		return foundry.utils.mergeObject(super.defaultOptions, {
-			id: `${t}-danger-board`,
+var Un = "Encounter-wide immediate risk. Click a row to see the detail math, or use the selection-target button to model an arbitrary pair.", Wn = foundry.applications.api, Gn = Wn.HandlebarsApplicationMixin(Wn.ApplicationV2), Kn = class extends Gn {
+	static DEFAULT_OPTIONS = {
+		id: `${t}-danger-board`,
+		classes: ["grim-arithmetic-window"],
+		tag: "section",
+		window: {
 			title: `${n} — Encounter Danger Board`,
-			template: `modules/${t}/templates/danger-board-panel.hbs`,
+			resizable: !0
+		},
+		position: {
 			width: 640,
-			height: "auto",
-			resizable: !0,
-			classes: ["grim-arithmetic-window"]
-		});
-	}
-	async getData() {
-		let e = new O();
+			height: "auto"
+		},
+		actions: {
+			openDetailPair: function(e, t) {
+				let n = t.dataset, r = n.grimPcId, i = n.grimEnemyId, a = n.grimAttackId;
+				!r || !i || $.openForPair(r, i, a);
+			},
+			openDetailSelection: function() {
+				$.openForSelection();
+			},
+			openForecast: function() {
+				An.open();
+			},
+			refresh: function() {
+				this.render();
+			}
+		}
+	};
+	static PARTS = { main: { template: `modules/${t}/templates/danger-board-panel.hbs` } };
+	async _prepareContext() {
+		let e = new A();
 		return {
 			moduleVersion: r,
-			message: Ln,
-			dangerBoard: it(Ce(Ne(e), {
+			message: Un,
+			dangerBoard: rt(Ce(k(e), {
 				adapter: e,
-				controls: ln,
+				controls: un,
 				pairLimit: 200
 			})),
 			forecastEnabled: h()
 		};
 	}
-	activateListeners(e) {
-		super.activateListeners(e), e.find("[data-grim-open-detail-pair]").on("click", (e) => {
-			let t = e.currentTarget.dataset, n = t?.grimPcId, r = t?.grimEnemyId, i = t?.grimAttackId;
-			!n || !r || $.openForPair(n, r, i);
-		}), e.find("[data-grim-open-detail-selection]").on("click", () => {
-			$.openForSelection();
-		}), e.find("[data-grim-open-forecast]").on("click", () => {
-			Dn.open();
-		}), e.find("[data-grim-refresh]").on("click", () => {
-			this.render(!1);
-		});
-	}
-}, zn = `${t}-open-panel`;
-function Bn() {
-	new Rn().render(!0);
+}, qn = `${t}-open-panel`;
+function Jn() {
+	new Kn().render(!0);
 }
-function Vn() {
+function Yn() {
 	Hooks.on("getSceneControlButtons", (e) => {
 		let t = e.tokens;
-		t && (t.tools[zn] = {
-			name: zn,
+		t && (t.tools[qn] = {
+			name: qn,
 			title: "Grim Arithmetic",
 			icon: "fa-solid fa-skull",
 			order: Object.keys(t.tools).length,
 			button: !0,
 			visible: !!game.user?.isGM,
-			onChange: Bn
+			onChange: Jn
 		});
 	});
 }
 //#endregion
 //#region src/main.ts
 Hooks.once("init", () => {
-	console.log(`${n} | Initializing`), m(), Vn(), Hn();
+	console.log(`${n} | Initializing`), m(), Yn(), Xn();
 });
-function Hn() {
+function Xn() {
 	let e = globalThis.Handlebars;
 	e && e.registerHelper("eq", function(e, t) {
 		return e === t;
@@ -2553,10 +2579,10 @@ Hooks.once("ready", () => {
 	if (!game.user?.isGM) return;
 	let e = game.modules.get(t);
 	e && (e.api = {
-		openPanel: () => new Rn().render(!0),
+		openPanel: () => new Kn().render(!0),
 		openPairDetail: (e, t, n) => $.openForPair(e, t, n),
 		openPairDetailFromSelection: () => $.openForSelection(),
-		openForecast: () => Dn.open(),
+		openForecast: () => An.open(),
 		captureTokenDebug: (e = canvas.tokens?.controlled?.[0]) => a(e)
 	});
 });
