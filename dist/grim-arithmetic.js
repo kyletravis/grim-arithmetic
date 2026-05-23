@@ -6,7 +6,7 @@ var e = {
 	authors: [{ name: "Kyle Travis" }],
 	compatibility: {
 		minimum: "13",
-		verified: "14.361"
+		verified: "14.363"
 	},
 	relationships: { systems: [{
 		id: "pf2e",
