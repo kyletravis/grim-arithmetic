@@ -82,14 +82,6 @@ Starfinder 2e support is on the roadmap.
 
 Grim Arithmetic is an independent module and is not affiliated with, endorsed by, or sponsored by Foundry Gaming LLC, Paizo Inc., or the Pathfinder/Starfinder brands.
 
-## More documentation
-
-- [Calculation Guide](./docs/ARITHMETIC.md) — how the math works
-- [Full Install Guide](./docs/INSTALL.md) — manual / server-side install
-- [Testing Guide](./docs/TESTING.md) — Foundry v13/v14 PF2e smoke tests
-- [Product Requirements](./PRD.md) and [Backlog](./BACKLOG.md)
-- [Release Workflow](./docs/RELEASE.md)
-
 ## Known issues
 - A "message channel closed before a response was received" console error reported in some sessions traces to a browser extension's `chrome.runtime.onMessage` listener, not Grim Arithmetic. The module uses zero Chrome extension APIs (KHT-107 — closed as external).
 
