@@ -14,9 +14,9 @@ A GM-only Foundry VTT module for **Pathfinder 2e** that surfaces real, immediate
   </thead>
   <tbody>
     <tr>
-      <td><a href="resources/ga03.png"><img src="resources/ga03.png" width="300" alt="Encounter Danger Board"></a></td>
-      <td><a href="resources/ga04.png"><img src="resources/ga04.png" width="200" alt="Pair Detail"></a></td>
-      <td><a href="resources/ga05.png"><img src="resources/ga05.png" width="350" alt="Forecast Panel"></a></td>
+      <td><a href="resources/ga06.png"><img src="resources/ga06.png" width="300" alt="Encounter Danger Board"></a></td>
+      <td><a href="resources/ga07.png"><img src="resources/ga07.png" width="200" alt="Pair Detail"></a></td>
+      <td><a href="resources/ga08.png"><img src="resources/ga08.png" width="350" alt="Forecast Panel"></a></td>
     </tr>
   </tbody>
 </table>

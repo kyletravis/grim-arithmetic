@@ -1,12 +1,14 @@
 node_modules/
-dist/
 coverage/
-releases/
+dist/
+docs/
 plans/
+releases/
 screenshots/
 .DS_Store
 *.log
 .env
 .env.*
 !.env.example
+PRD.md
 SECURITY_REVIEW.md
