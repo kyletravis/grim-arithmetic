@@ -11,7 +11,7 @@
 
     <form class="grim-arithmetic-forecast__controls">
       <label>
-        Tactics profile
+        <span data-tooltip="How simulated enemies pick targets and actions each round — changes who gets attacked and how focused the damage is.">Tactics profile</span>
         <select data-grim-forecast-control="tacticsProfile" {{#if (eq state "running")}}disabled{{/if}}>
           {{#each controls.tacticsProfile}}
             <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -51,33 +51,33 @@
         </p>
         <div class="grim-arithmetic-forecast__headline">
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label">Any PC down</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Chance at least one PC is knocked out (0 HP) at some point in the encounter.">Any PC down</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.anyPcDownPercent}}%</span>
-            {{#if result.anyPcDownCi}}<span class="grim-arithmetic-forecast__ci">[{{result.anyPcDownCi}}]</span>{{/if}}
+            {{#if result.anyPcDownCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{result.anyPcDownCi}}]</span>{{/if}}
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label">TPK risk</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Total Party Kill — chance the entire party is downed during the encounter.">TPK risk</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.tpkPercent}}%</span>
-            {{#if result.tpkCi}}<span class="grim-arithmetic-forecast__ci">[{{result.tpkCi}}]</span>{{/if}}
+            {{#if result.tpkCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{result.tpkCi}}]</span>{{/if}}
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label">Expected first down</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Average combat round in which the first PC is knocked out, across all simulated runs.">Expected first down</span>
             <span class="grim-arithmetic-forecast__metric-value">round {{result.meanFirstDownRound}}</span>
-            {{#if result.meanFirstDownCi}}<span class="grim-arithmetic-forecast__ci">[{{result.meanFirstDownCi}}]</span>{{/if}}
+            {{#if result.meanFirstDownCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{result.meanFirstDownCi}}]</span>{{/if}}
           </div>
         </div>
 
         <div class="grim-arithmetic-forecast__headline grim-arithmetic-forecast__safety-net">
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label">Heals per run</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Average number of healing actions the party spends per simulated encounter.">Heals per run</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.meanHealsPerIteration}}</span>
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label">Recovery checks per run</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Average number of PF2e recovery checks (rolled while dying) per simulated encounter.">Recovery checks per run</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.meanRecoveryChecksPerIteration}}</span>
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label">Hero Point saves</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Share of runs where spending a Hero Point to avoid death changed a PC's outcome.">Hero Point saves</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.heroPointSurvivalPercent}}%</span>
           </div>
         </div>
@@ -95,22 +95,22 @@
           <thead>
             <tr>
               <th>PC</th>
-              <th>Down</th>
-              <th>Death</th>
-              <th>Expected HP</th>
-              <th>Biggest threat</th>
-              <th>Risk</th>
+              <th data-tooltip="Chance this PC is knocked out at least once during the encounter.">Down</th>
+              <th data-tooltip="Chance this PC dies during the encounter.">Death</th>
+              <th data-tooltip="This PC's average ending HP across all runs.">Expected HP</th>
+              <th data-tooltip="The enemy that dealt this PC the most damage on average.">Biggest threat</th>
+              <th data-tooltip="Overall danger rating for this PC, derived from down/death chance.">Risk</th>
             </tr>
           </thead>
           <tbody>
             {{#each result.perPc}}
               <tr>
                 <td>{{name}}</td>
-                <td>{{downPercent}}%{{#if downCi}} <span class="grim-arithmetic-forecast__ci">[{{downCi}}]</span>{{/if}}</td>
-                <td>{{deathPercent}}%{{#if deathCi}} <span class="grim-arithmetic-forecast__ci">[{{deathCi}}]</span>{{/if}}</td>
+                <td>{{downPercent}}%{{#if downCi}} <span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{downCi}}]</span>{{/if}}</td>
+                <td>{{deathPercent}}%{{#if deathCi}} <span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{deathCi}}]</span>{{/if}}</td>
                 <td>{{meanEndingHp}}</td>
                 <td>{{topContributingEnemyName}}</td>
-                <td><span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}">{{riskLabel}}</span></td>
+                <td><span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="Risk rating from chance of being downed: Low → Grim.">{{riskLabel}}</span></td>
               </tr>
             {{/each}}
           </tbody>
@@ -121,8 +121,8 @@
           <thead>
             <tr>
               <th>Enemy</th>
-              <th>Damage share</th>
-              <th>Top target</th>
+              <th data-tooltip="Percentage of the party's total damage taken that this enemy dealt.">Damage share</th>
+              <th data-tooltip="The PC this enemy attacked most often.">Top target</th>
             </tr>
           </thead>
           <tbody>
