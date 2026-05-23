@@ -2,6 +2,14 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.1-rc1 - Hover descriptions
+
+Release candidate adding on-hover descriptions across all three GM windows so the dense PF2e mortality metrics explain themselves.
+
+### Hover descriptions (KHT-108)
+- Every labeled metric, control, and table header in the **Encounter Forecast**, **Encounter Danger Board**, and **Pair Detail** windows now carries a `data-tooltip` describing what it means — e.g. "Any PC down", "TPK risk", "Recovery checks per run", "Hero Point saves", "MAP", "Damage swing", "Dying if downed".
+- Uses Foundry v13+'s native `data-tooltip` tooltip system, so no extra JavaScript or CSS is required and the panel context builders are unchanged.
+
 ## v0.7.0 - ApplicationV2 migration + readability tweaks
 
 v0.7.0 migrates Grim Arithmetic's three windows off the deprecated V1 `Application` framework so Foundry v13+ no longer logs a console deprecation warning, plus a small set of UX fixes against the V2 dark window theme.

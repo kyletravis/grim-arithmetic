@@ -8,7 +8,7 @@
 
   <form class="grim-arithmetic-panel__controls">
     <label>
-      Enemy Strike
+      <span data-tooltip="Which of the enemy's attacks to model.">Enemy Strike</span>
       <select data-grim-control="attackId" {{#unless controls.attacks.length}}disabled{{/unless}}>
         {{#each controls.attacks}}
           <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -17,7 +17,7 @@
     </label>
 
     <label>
-      Enemy turn
+      <span data-tooltip="How many Strikes the enemy makes this turn (drives the multiple-attack penalty).">Enemy turn</span>
       <select data-grim-control="strikes">
         {{#each controls.strikes}}
           <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -26,7 +26,7 @@
     </label>
 
     <label>
-      MAP
+      <span data-tooltip="Multiple Attack Penalty — how the −5/−10 penalty on later Strikes is applied.">MAP</span>
       <select data-grim-control="mapMode">
         {{#each controls.mapMode}}
           <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -35,7 +35,7 @@
     </label>
 
     <label>
-      Shield / AC adjustment
+      <span data-tooltip="Temporary AC change to model, e.g. Raise a Shield.">Shield / AC adjustment</span>
       <select data-grim-control="shieldBonus">
         {{#each controls.shieldBonus}}
           <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -44,7 +44,7 @@
     </label>
 
     <label>
-      Wounded display
+      <span data-tooltip="Override the PC's PF2e Wounded value used in dying math.">Wounded display</span>
       <select data-grim-control="woundedOverride">
         {{#each controls.woundedOverride}}
           <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -53,7 +53,7 @@
     </label>
 
     <label>
-      Hero Point prevention
+      <span data-tooltip="Whether a Hero Point is assumed available to avoid death.">Hero Point prevention</span>
       <select data-grim-control="heroPointMode">
         {{#each controls.heroPointMode}}
           <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -79,46 +79,46 @@
     <section class="grim-arithmetic-panel__summary">
       <h3>{{subject.name}} vs {{enemy.name}}</h3>
       <dl>
-        <dt>Enemy Strike</dt>
+        <dt data-tooltip="The enemy attack being modeled — its to-hit bonus and damage formula.">Enemy Strike</dt>
         <dd>{{attack.name}} — +{{attack.attackBonus}}, {{attack.damageFormula}}</dd>
 
-        <dt>Modeled HP</dt>
+        <dt data-tooltip="The PC's HP used here, including temporary HP.">Modeled HP</dt>
         <dd>{{risk.modeledHp}}</dd>
 
-        <dt>Effective AC</dt>
+        <dt data-tooltip="The PC's AC after the shield/AC adjustment above.">Effective AC</dt>
         <dd>{{risk.effectiveAc}}</dd>
 
-        <dt>Wounded</dt>
+        <dt data-tooltip="The PF2e Wounded value applied — it raises the dying counter when knocked out.">Wounded</dt>
         <dd>{{risk.woundedNote}}</dd>
 
-        <dt>Damage range</dt>
+        <dt data-tooltip="Min–max damage on a normal hit and on a critical hit.">Damage range</dt>
         <dd>{{risk.damage.min}}–{{risk.damage.max}} normal, {{risk.damage.critMin}}–{{risk.damage.critMax}} crit</dd>
 
-        <dt>Average damage</dt>
+        <dt data-tooltip="Mean damage per hit.">Average damage</dt>
         <dd>{{risk.damage.average}}</dd>
 
-        <dt>Damage swing</dt>
+        <dt data-tooltip="How variable the damage is — higher means less predictable.">Damage swing</dt>
         <dd>{{risk.damage.swinginess}}</dd>
 
-        <dt>Damage adjustment</dt>
+        <dt data-tooltip="Modifiers applied to raw damage (resistances, weaknesses, etc.).">Damage adjustment</dt>
         <dd>{{risk.damageAdjustment.note}}</dd>
 
-        <dt>Down chance</dt>
+        <dt data-tooltip="Chance this attack sequence knocks the PC out this turn.">Down chance</dt>
         <dd><strong>{{risk.downPercent}}%</strong> — {{risk.riskLabel}}</dd>
 
-        <dt>Expected HP after turn</dt>
+        <dt data-tooltip="The PC's average remaining HP after the modeled enemy turn.">Expected HP after turn</dt>
         <dd>{{risk.expectedHpAfterTurn}}</dd>
 
-        <dt>Dying if downed</dt>
+        <dt data-tooltip="The PF2e Dying value the PC starts at if knocked out — normal hit vs crit.">Dying if downed</dt>
         <dd>Normal hit: Dying {{risk.dyingSeverity.normalDownDying}}; crit: Dying {{risk.dyingSeverity.critDownDying}}</dd>
 
-        <dt>Death threshold</dt>
+        <dt data-tooltip="The Dying value at which the PC dies, accounting for Doomed.">Death threshold</dt>
         <dd>Dying {{risk.dyingSeverity.deathThreshold}} after Doomed {{risk.dyingSeverity.doomed}}</dd>
 
-        <dt>Immediate death flag</dt>
+        <dt data-tooltip="Whether the attack can kill the PC outright (massive/instant death).">Immediate death flag</dt>
         <dd>{{risk.dyingSeverity.immediateDeathFlag}}</dd>
 
-        <dt>Hero Point note</dt>
+        <dt data-tooltip="How a Hero Point would affect this outcome.">Hero Point note</dt>
         <dd>{{risk.dyingSeverity.heroPointNote}}</dd>
       </dl>
     </section>
