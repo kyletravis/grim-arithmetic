@@ -2,13 +2,16 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
-## v0.7.1-rc1 - Hover descriptions
+## v0.7.1-rc2 - Hover descriptions
 
 Release candidate adding on-hover descriptions across all three GM windows so the dense PF2e mortality metrics explain themselves.
 
 ### Hover descriptions (KHT-108)
 - Every labeled metric, control, and table header in the **Encounter Forecast**, **Encounter Danger Board**, and **Pair Detail** windows now carries a `data-tooltip` describing what it means — e.g. "Any PC down", "TPK risk", "Recovery checks per run", "Hero Point saves", "MAP", "Damage swing", "Dying if downed".
 - Uses Foundry v13+'s native `data-tooltip` tooltip system, so no extra JavaScript or CSS is required and the panel context builders are unchanged.
+
+### Manifest cleanup
+- Removed the unknown `system` and `templates` keys from `module.json` that triggered a Foundry package warning. The `pf2e` system requirement is already declared via `relationships.systems`, and templates are loaded at runtime through each panel's ApplicationV2 `static PARTS`.
 
 ## v0.7.0 - ApplicationV2 migration + readability tweaks
 
