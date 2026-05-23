@@ -43,7 +43,6 @@ execFileSync('rsync', [
   join(root, 'dist'),
   join(root, 'styles'),
   join(root, 'templates'),
-  join(root, 'docs'),
   stagingDir
 ]);
 
