@@ -4,7 +4,7 @@ import { DEFAULT_MAX_ROUNDS } from '../engine/simulation-types';
 import { buildEncounterSetup } from '../foundry/encounter-setup';
 import { isMonteCarloEnabled } from '../settings';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
-import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from '../constants';
+import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
   buildForecastPanelData,
   DEFAULT_SIMULATION_CONTROLS,
@@ -37,7 +37,7 @@ export class ForecastPanel extends Base {
     classes: ['grim-arithmetic-window'],
     tag: 'section',
     window: {
-      title: `${MODULE_TITLE} — Encounter Forecast`,
+      title: 'GrimArithmetic.Window.Forecast',
       resizable: true
     },
     position: {

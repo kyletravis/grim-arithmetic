@@ -4,22 +4,22 @@ export const ENABLE_MONTE_CARLO_SETTING = 'enableMonteCarlo';
 
 export function registerSettings(): void {
   game.settings.register(MODULE_ID, 'defaultStrikes', {
-    name: 'Default enemy Strike count',
-    hint: 'Default number of Strikes used for immediate-threat estimates.',
+    name: 'GrimArithmetic.Settings.DefaultStrikes.Name',
+    hint: 'GrimArithmetic.Settings.DefaultStrikes.Hint',
     scope: 'world',
     config: true,
     type: Number,
     default: 2,
     choices: {
-      1: '1 Strike',
-      2: '2 Strikes',
-      3: '3 Strikes'
+      1: 'GrimArithmetic.Settings.DefaultStrikes.Choices.1',
+      2: 'GrimArithmetic.Settings.DefaultStrikes.Choices.2',
+      3: 'GrimArithmetic.Settings.DefaultStrikes.Choices.3'
     }
   });
 
   game.settings.register(MODULE_ID, 'debugLogging', {
-    name: 'Debug logging',
-    hint: 'Log Grim Arithmetic debug information to the browser console.',
+    name: 'GrimArithmetic.Settings.DebugLogging.Name',
+    hint: 'GrimArithmetic.Settings.DebugLogging.Hint',
     scope: 'client',
     config: true,
     type: Boolean,
@@ -27,8 +27,8 @@ export function registerSettings(): void {
   });
 
   game.settings.register(MODULE_ID, ENABLE_MONTE_CARLO_SETTING, {
-    name: 'Enable Monte Carlo encounter simulation',
-    hint: 'Disable on low-end machines if simulation runs are too slow. The Encounter Danger Board still works either way.',
+    name: 'GrimArithmetic.Settings.EnableMonteCarlo.Name',
+    hint: 'GrimArithmetic.Settings.EnableMonteCarlo.Hint',
     scope: 'client',
     config: true,
     type: Boolean,

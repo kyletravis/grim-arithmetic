@@ -1,6 +1,6 @@
 import { getCurrentTokenSelection, TokenSelectionResult } from '../foundry/selection';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
-import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from '../constants';
+import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
   buildMortalityPanelData,
   DEFAULT_PANEL_CONTROLS,
@@ -34,7 +34,7 @@ export class PairDetailPanel extends Base {
     classes: ['grim-arithmetic-window'],
     tag: 'section',
     window: {
-      title: `${MODULE_TITLE} - Pair Detail`,
+      title: 'GrimArithmetic.Window.PairDetail',
       resizable: true
     },
     position: {

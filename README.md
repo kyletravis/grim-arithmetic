@@ -92,3 +92,7 @@ npm install
 npm run check     # eslint + vitest + vite build
 npm run package   # build the release zip
 ```
+
+## Author
+
+Kyle Travis — [kyletravis.com](https://kyletravis.com) · [@kyletravis](https://x.com/kyletravis)

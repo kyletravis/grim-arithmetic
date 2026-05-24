@@ -1,69 +1,69 @@
 <section class="grim-arithmetic-panel">
   <header class="grim-arithmetic-panel__header">
-    <h2>Grim Arithmetic v{{moduleVersion}}</h2>
-    <p class="grim-arithmetic-panel__tagline">Encounter danger board — immediate mortality pressure, not fate.</p>
+    <h2>{{localize "GrimArithmetic.DangerBoard.Heading" version=moduleVersion}}</h2>
+    <p class="grim-arithmetic-panel__tagline">{{localize "GrimArithmetic.DangerBoard.Tagline"}}</p>
   </header>
 
   <p class="grim-arithmetic-panel__hint">{{message}}</p>
 
   <div class="grim-arithmetic-panel__board-actions">
     {{#if forecastEnabled}}
-      <button type="button" data-action="openForecast" data-tooltip="Run a Monte Carlo simulation of the whole encounter to forecast downs, deaths, and TPK risk.">Encounter Forecast</button>
+      <button type="button" data-action="openForecast" data-tooltip="{{localize "GrimArithmetic.DangerBoard.ForecastTooltip"}}">{{localize "GrimArithmetic.DangerBoard.ForecastButton"}}</button>
     {{/if}}
-    <button type="button" data-action="openDetailSelection" data-tooltip="Open a detailed one-attacker-vs-one-PC mortality breakdown for the selected token and target.">Detail Selection + Target</button>
-    <button type="button" data-action="refresh" data-tooltip="Recompute the danger board from the current combat state.">Refresh</button>
+    <button type="button" data-action="openDetailSelection" data-tooltip="{{localize "GrimArithmetic.DangerBoard.DetailSelectionTooltip"}}">{{localize "GrimArithmetic.DangerBoard.DetailSelectionButton"}}</button>
+    <button type="button" data-action="refresh" data-tooltip="{{localize "GrimArithmetic.DangerBoard.RefreshTooltip"}}">{{localize "GrimArithmetic.DangerBoard.RefreshButton"}}</button>
   </div>
 
   <section class="grim-arithmetic-panel__danger-board">
     {{#if dangerBoard.skipped}}
       <p class="grim-arithmetic-panel__danger-board-empty">
-        Encounter too large to compute a danger board safely. Reduce combatants, or use the selection + target button above for a single-pair view.
+        {{localize "GrimArithmetic.DangerBoard.TooLarge"}}
       </p>
     {{else if dangerBoard.empty}}
       <p class="grim-arithmetic-panel__danger-board-empty">
-        No encounter-wide risk to show. Start a combat with PCs and hostile NPCs, or use the selection + target button above.
+        {{localize "GrimArithmetic.DangerBoard.Empty"}}
       </p>
     {{else}}
-      <h3 class="grim-arithmetic-panel__section-title" data-tooltip="PCs ranked by their single-round chance of being knocked out by the most dangerous incoming attack.">Most endangered PCs</h3>
+      <h3 class="grim-arithmetic-panel__section-title" data-tooltip="{{localize "GrimArithmetic.DangerBoard.EndangeredTooltip"}}">{{localize "GrimArithmetic.DangerBoard.EndangeredTitle"}}</h3>
       <ol class="grim-arithmetic-panel__danger-grid">
         {{#each dangerBoard.topEndangeredPcs}}
           <li class="grim-arithmetic-panel__danger-row">
             <span class="grim-arithmetic-panel__danger-row-rank" aria-hidden="true"></span>
             <span class="grim-arithmetic-panel__danger-row-label">
               <strong>{{pcName}}</strong>
-              <span class="grim-arithmetic-panel__danger-row-vs">vs</span>
+              <span class="grim-arithmetic-panel__danger-row-vs">{{localize "GrimArithmetic.Common.Vs"}}</span>
               {{enemyName}} <em>{{attackName}}</em>
             </span>
-            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="Chance this PC is knocked out in one round by this attack.">{{downPercent}}%</span>
-            <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="Risk rating from chance of being downed: Low → Grim.">{{riskLabel}}</span>
+            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="{{localize "GrimArithmetic.Common.DownTooltip"}}">{{downPercent}}%</span>
+            <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="{{localize "GrimArithmetic.Common.RiskPillTooltip"}}">{{riskLabel}}</span>
             <button type="button"
                     class="grim-arithmetic-panel__danger-row-action"
                     data-action="openDetailPair"
                     data-grim-pc-id="{{pcId}}"
                     data-grim-enemy-id="{{enemyId}}"
-                    data-grim-attack-id="{{attackId}}">Detail</button>
+                    data-grim-attack-id="{{attackId}}">{{localize "GrimArithmetic.Common.Detail"}}</button>
           </li>
         {{/each}}
       </ol>
 
-      <h3 class="grim-arithmetic-panel__section-title" data-tooltip="Enemy attacks ranked by their single-round chance of knocking out a PC.">Most dangerous enemies</h3>
+      <h3 class="grim-arithmetic-panel__section-title" data-tooltip="{{localize "GrimArithmetic.DangerBoard.DangerousTooltip"}}">{{localize "GrimArithmetic.DangerBoard.DangerousTitle"}}</h3>
       <ol class="grim-arithmetic-panel__danger-grid">
         {{#each dangerBoard.topDangerousEnemies}}
           <li class="grim-arithmetic-panel__danger-row">
             <span class="grim-arithmetic-panel__danger-row-rank" aria-hidden="true"></span>
             <span class="grim-arithmetic-panel__danger-row-label">
               <strong>{{enemyName}}</strong> <em>{{attackName}}</em>
-              <span class="grim-arithmetic-panel__danger-row-vs">vs</span>
+              <span class="grim-arithmetic-panel__danger-row-vs">{{localize "GrimArithmetic.Common.Vs"}}</span>
               {{pcName}}
             </span>
-            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="Chance this PC is knocked out in one round by this attack.">{{downPercent}}%</span>
-            <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="Risk rating from chance of being downed: Low → Grim.">{{riskLabel}}</span>
+            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="{{localize "GrimArithmetic.Common.DownTooltip"}}">{{downPercent}}%</span>
+            <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="{{localize "GrimArithmetic.Common.RiskPillTooltip"}}">{{riskLabel}}</span>
             <button type="button"
                     class="grim-arithmetic-panel__danger-row-action"
                     data-action="openDetailPair"
                     data-grim-pc-id="{{pcId}}"
                     data-grim-enemy-id="{{enemyId}}"
-                    data-grim-attack-id="{{attackId}}">Detail</button>
+                    data-grim-attack-id="{{attackId}}">{{localize "GrimArithmetic.Common.Detail"}}</button>
           </li>
         {{/each}}
       </ol>

@@ -1,7 +1,7 @@
 <section class="grim-arithmetic-panel grim-arithmetic-forecast">
   <header class="grim-arithmetic-panel__header">
-    <h2>Encounter Forecast</h2>
-    <p class="grim-arithmetic-panel__tagline">Monte Carlo simulation of the active encounter under explicit assumptions.</p>
+    <h2>{{localize "GrimArithmetic.Forecast.Heading"}}</h2>
+    <p class="grim-arithmetic-panel__tagline">{{localize "GrimArithmetic.Forecast.Tagline"}}</p>
   </header>
 
   {{#unless enabled}}
@@ -11,7 +11,7 @@
 
     <form class="grim-arithmetic-forecast__controls">
       <label>
-        <span data-tooltip="How simulated enemies pick targets and actions each round — changes who gets attacked and how focused the damage is.">Tactics Profile</span>
+        <span data-tooltip="{{localize "GrimArithmetic.Forecast.TacticsTooltip"}}">{{localize "GrimArithmetic.Forecast.TacticsLabel"}}</span>
         <ul class="grim-arithmetic-forecast__tactics-defs">
           {{#each controls.tacticsProfile}}
             <li><strong>{{label}}:</strong> {{description}}</li>
@@ -25,20 +25,20 @@
       </label>
 
       <div class="grim-arithmetic-forecast__buttons">
-        <button type="button" data-action="run" {{#if (eq state "running")}}disabled{{/if}}>Forecast</button>
-        <button type="button" data-action="cancel" {{#unless (eq state "running")}}disabled{{/unless}}>Cancel</button>
+        <button type="button" data-action="run" {{#if (eq state "running")}}disabled{{/if}}>{{localize "GrimArithmetic.Forecast.RunButton"}}</button>
+        <button type="button" data-action="cancel" {{#unless (eq state "running")}}disabled{{/unless}}>{{localize "GrimArithmetic.Forecast.CancelButton"}}</button>
       </div>
     </form>
 
     {{#if (eq state "running")}}
       <section class="grim-arithmetic-forecast__progress">
-        <p>Running iteration {{progress.completed}} of {{progress.total}} ({{progress.percent}}%)…</p>
+        <p>{{localize "GrimArithmetic.Forecast.Progress" completed=progress.completed total=progress.total percent=progress.percent}}</p>
       </section>
     {{/if}}
 
     {{#if (eq state "error")}}
       <section class="grim-arithmetic-forecast__error">
-        <h3>Forecast failed</h3>
+        <h3>{{localize "GrimArithmetic.Forecast.FailedHeading"}}</h3>
         <p>{{errorMessage}}</p>
       </section>
     {{/if}}
@@ -46,7 +46,7 @@
     {{#if (eq state "done")}}
       {{#if pessimismWarning}}
         <section class="grim-arithmetic-forecast__pessimism-banner">
-          <strong>High-risk encounter.</strong>
+          <strong>{{localize "GrimArithmetic.Forecast.PessimismLead"}}</strong>
           {{pessimismWarning}}
         </section>
       {{/if}}
@@ -56,78 +56,78 @@
         </p>
         <div class="grim-arithmetic-forecast__headline">
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Chance at least one PC is knocked out (0 HP) at some point in the encounter.">Any PC down</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="{{localize "GrimArithmetic.Forecast.AnyPcDownTooltip"}}">{{localize "GrimArithmetic.Forecast.AnyPcDownLabel"}}</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.anyPcDownPercent}}%</span>
-            {{#if result.anyPcDownCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{result.anyPcDownCi}}]</span>{{/if}}
+            {{#if result.anyPcDownCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="{{localize "GrimArithmetic.Common.CiTooltip"}}">[{{result.anyPcDownCi}}]</span>{{/if}}
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Total Party Kill — chance the entire party is downed during the encounter.">TPK risk</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="{{localize "GrimArithmetic.Forecast.TpkTooltip"}}">{{localize "GrimArithmetic.Forecast.TpkLabel"}}</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.tpkPercent}}%</span>
-            {{#if result.tpkCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{result.tpkCi}}]</span>{{/if}}
+            {{#if result.tpkCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="{{localize "GrimArithmetic.Common.CiTooltip"}}">[{{result.tpkCi}}]</span>{{/if}}
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Average combat round in which the first PC is knocked out, across all simulated runs.">Expected first down</span>
-            <span class="grim-arithmetic-forecast__metric-value">round {{result.meanFirstDownRound}}</span>
-            {{#if result.meanFirstDownCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{result.meanFirstDownCi}}]</span>{{/if}}
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="{{localize "GrimArithmetic.Forecast.FirstDownTooltip"}}">{{localize "GrimArithmetic.Forecast.FirstDownLabel"}}</span>
+            <span class="grim-arithmetic-forecast__metric-value">{{localize "GrimArithmetic.Forecast.RoundPrefix"}} {{result.meanFirstDownRound}}</span>
+            {{#if result.meanFirstDownCi}}<span class="grim-arithmetic-forecast__ci" data-tooltip="{{localize "GrimArithmetic.Common.CiTooltip"}}">[{{result.meanFirstDownCi}}]</span>{{/if}}
           </div>
         </div>
 
         <div class="grim-arithmetic-forecast__headline grim-arithmetic-forecast__safety-net">
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Average number of healing actions the party spends per simulated encounter.">Heals per run</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="{{localize "GrimArithmetic.Forecast.HealsTooltip"}}">{{localize "GrimArithmetic.Forecast.HealsLabel"}}</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.meanHealsPerIteration}}</span>
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Average number of PF2e recovery checks (rolled while dying) per simulated encounter.">Recovery checks per run</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="{{localize "GrimArithmetic.Forecast.RecoveryTooltip"}}">{{localize "GrimArithmetic.Forecast.RecoveryLabel"}}</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.meanRecoveryChecksPerIteration}}</span>
           </div>
           <div class="grim-arithmetic-forecast__metric">
-            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="Share of runs where spending a Hero Point to avoid death changed a PC's outcome.">Hero Point saves</span>
+            <span class="grim-arithmetic-forecast__metric-label" data-tooltip="{{localize "GrimArithmetic.Forecast.HeroPointTooltip"}}">{{localize "GrimArithmetic.Forecast.HeroPointLabel"}}</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.heroPointSurvivalPercent}}%</span>
           </div>
         </div>
 
         <p class="grim-arithmetic-forecast__run-meta">
           {{result.tacticsProfileLabel}}
-          {{#if result.aborted}} · <strong>aborted</strong>{{/if}}
+          {{#if result.aborted}} · <strong>{{localize "GrimArithmetic.Forecast.Aborted"}}</strong>{{/if}}
         </p>
         {{#if result.anyPcDownCi}}
-          <p class="grim-arithmetic-forecast__ci-note">Bracketed values are 95% confidence intervals from sampling variance.</p>
+          <p class="grim-arithmetic-forecast__ci-note">{{localize "GrimArithmetic.Forecast.CiNote"}}</p>
         {{/if}}
 
-        <h3>Most likely to drop</h3>
+        <h3>{{localize "GrimArithmetic.Forecast.MostLikelyToDrop"}}</h3>
         <table class="grim-arithmetic-forecast__table">
           <thead>
             <tr>
-              <th>PC</th>
-              <th data-tooltip="Chance this PC is knocked out at least once during the encounter.">Down</th>
-              <th data-tooltip="Chance this PC dies during the encounter.">Death</th>
-              <th data-tooltip="This PC's average ending HP across all runs.">Expected HP</th>
-              <th data-tooltip="The enemy that dealt this PC the most damage on average.">Biggest threat</th>
-              <th data-tooltip="Overall danger rating for this PC, derived from down/death chance.">Risk</th>
+              <th>{{localize "GrimArithmetic.Forecast.Table.Pc"}}</th>
+              <th data-tooltip="{{localize "GrimArithmetic.Forecast.Table.DownTooltip"}}">{{localize "GrimArithmetic.Forecast.Table.Down"}}</th>
+              <th data-tooltip="{{localize "GrimArithmetic.Forecast.Table.DeathTooltip"}}">{{localize "GrimArithmetic.Forecast.Table.Death"}}</th>
+              <th data-tooltip="{{localize "GrimArithmetic.Forecast.Table.ExpectedHpTooltip"}}">{{localize "GrimArithmetic.Forecast.Table.ExpectedHp"}}</th>
+              <th data-tooltip="{{localize "GrimArithmetic.Forecast.Table.BiggestThreatTooltip"}}">{{localize "GrimArithmetic.Forecast.Table.BiggestThreat"}}</th>
+              <th data-tooltip="{{localize "GrimArithmetic.Forecast.Table.RiskTooltip"}}">{{localize "GrimArithmetic.Forecast.Table.Risk"}}</th>
             </tr>
           </thead>
           <tbody>
             {{#each result.perPc}}
               <tr>
                 <td>{{name}}</td>
-                <td>{{downPercent}}%{{#if downCi}} <span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{downCi}}]</span>{{/if}}</td>
-                <td>{{deathPercent}}%{{#if deathCi}} <span class="grim-arithmetic-forecast__ci" data-tooltip="95% confidence interval — the range the true value likely falls in given sampling variance.">[{{deathCi}}]</span>{{/if}}</td>
+                <td>{{downPercent}}%{{#if downCi}} <span class="grim-arithmetic-forecast__ci" data-tooltip="{{localize "GrimArithmetic.Common.CiTooltip"}}">[{{downCi}}]</span>{{/if}}</td>
+                <td>{{deathPercent}}%{{#if deathCi}} <span class="grim-arithmetic-forecast__ci" data-tooltip="{{localize "GrimArithmetic.Common.CiTooltip"}}">[{{deathCi}}]</span>{{/if}}</td>
                 <td>{{meanEndingHp}}</td>
                 <td>{{topContributingEnemyName}}</td>
-                <td><span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="Risk rating from chance of being downed: Low → Grim.">{{riskLabel}}</span></td>
+                <td><span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="{{localize "GrimArithmetic.Common.RiskPillTooltip"}}">{{riskLabel}}</span></td>
               </tr>
             {{/each}}
           </tbody>
         </table>
 
-        <h3>Biggest threats</h3>
+        <h3>{{localize "GrimArithmetic.Forecast.BiggestThreats"}}</h3>
         <table class="grim-arithmetic-forecast__table">
           <thead>
             <tr>
-              <th>Enemy</th>
-              <th data-tooltip="Percentage of the party's total damage taken that this enemy dealt.">Damage share</th>
-              <th data-tooltip="The PC this enemy attacked most often.">Top target</th>
+              <th>{{localize "GrimArithmetic.Forecast.Table.Enemy"}}</th>
+              <th data-tooltip="{{localize "GrimArithmetic.Forecast.Table.DamageShareTooltip"}}">{{localize "GrimArithmetic.Forecast.Table.DamageShare"}}</th>
+              <th data-tooltip="{{localize "GrimArithmetic.Forecast.Table.TopTargetTooltip"}}">{{localize "GrimArithmetic.Forecast.Table.TopTarget"}}</th>
             </tr>
           </thead>
           <tbody>
@@ -144,7 +144,7 @@
     {{/if}}
 
     <section class="grim-arithmetic-forecast__assumptions">
-      <h3>Modeled assumptions</h3>
+      <h3>{{localize "GrimArithmetic.Forecast.ModeledAssumptions"}}</h3>
       <ul>
         {{#each assumptions}}
           <li>{{this}}</li>
