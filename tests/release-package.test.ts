@@ -16,7 +16,7 @@ describe('release packaging metadata', () => {
 
     expect(typeof version).toBe('string');
     expect(moduleJson.version).toBe(version);
-    expect(moduleJson.compatibility).toMatchObject({ minimum: '13', verified: '14.361' });
+    expect(moduleJson.compatibility).toMatchObject({ minimum: '13', verified: '14.363' });
     expect(packageJson.license).toBe('MIT');
     expect(existsSync(join(root, 'LICENSE'))).toBe(true);
     expect(existsSync(join(root, 'CHANGELOG.md'))).toBe(true);
