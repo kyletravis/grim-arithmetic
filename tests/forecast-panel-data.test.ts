@@ -51,6 +51,26 @@ describe('buildForecastPanelData: idle state', () => {
     expect(data.controls.tacticsProfile.find((o) => o.selected)?.value).toBe('boss-cinematic');
   });
 
+  it('carries the per-profile definition on each tactics option (KHT-111)', () => {
+    const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
+    for (const option of data.controls.tacticsProfile) {
+      expect(option.description).toBe(
+        TACTICS_PROFILE_DESCRIPTIONS[option.value as keyof typeof TACTICS_PROFILE_DESCRIPTIONS]
+      );
+      expect(option.description.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('capitalizes the second word of multi-word tactics labels (KHT-111)', () => {
+    expect(TACTICS_PROFILE_LABELS).toMatchObject({
+      'random-legal': 'Random Legal',
+      'spread-damage': 'Spread Damage',
+      'focus-fire': 'Focus Fire',
+      predator: 'Predator',
+      'boss-cinematic': 'Boss Cinematic'
+    });
+  });
+
   it('always lists the v0.6.0-rc.4 baseline assumptions (PCs heal, recover, spend HP)', () => {
     const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
     expect(data.assumptions.find((a) => a.includes('PCs Strike the most-dangerous'))).toBeDefined();

@@ -11,7 +11,12 @@
 
     <form class="grim-arithmetic-forecast__controls">
       <label>
-        <span data-tooltip="How simulated enemies pick targets and actions each round — changes who gets attacked and how focused the damage is.">Tactics profile</span>
+        <span data-tooltip="How simulated enemies pick targets and actions each round — changes who gets attacked and how focused the damage is.">Tactics Profile</span>
+        <ul class="grim-arithmetic-forecast__tactics-defs">
+          {{#each controls.tacticsProfile}}
+            <li><strong>{{label}}:</strong> {{description}}</li>
+          {{/each}}
+        </ul>
         <select data-grim-forecast-control="tacticsProfile" {{#if (eq state "running")}}disabled{{/if}}>
           {{#each controls.tacticsProfile}}
             <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
