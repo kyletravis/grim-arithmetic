@@ -57,9 +57,16 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
         run: |
           VERSION="${REF_NAME#v}"
-          awk -v header="## v${VERSION}" '
-            $0 == header { found = 1; next }
-            found && /^## v/ { exit }
+          # Match "## v<version>" as a whole token (optionally followed by " - title"),
+          # so it doesn't fall back to the full changelog, and so v0.7.1 doesn't also
+          # match v0.7.1-rc4 or a future v0.7.10. Literal (index) matching avoids regex
+          # dot pitfalls in the version string.
+          awk -v ver="$VERSION" '
+            index($0, "## v" ver) == 1 {
+              rest = substr($0, length("## v" ver) + 1)
+              if (rest == "" || substr(rest, 1, 1) == " ") { found = 1; next }
+            }
+            found && index($0, "## v") == 1 { exit }
             found { print }
           ' CHANGELOG.md > release-notes.md
           if [ ! -s release-notes.md ]; then
