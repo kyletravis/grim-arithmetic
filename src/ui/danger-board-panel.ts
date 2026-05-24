@@ -2,7 +2,7 @@ import { computeEncounterRiskMatrix, MAX_PAIRS } from '../engine/encounter-risk'
 import { getEncounterParticipants } from '../foundry/encounter-participants';
 import { isMonteCarloEnabled } from '../settings';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
-import { MODULE_ID, MODULE_TITLE, MODULE_VERSION } from '../constants';
+import { MODULE_ID, MODULE_VERSION } from '../constants';
 import { buildDangerBoardData, DangerBoardData } from './danger-board';
 import { ForecastPanel } from './forecast-panel';
 import { DEFAULT_PANEL_CONTROLS } from './panel-data';
@@ -33,7 +33,7 @@ export class DangerBoardPanel extends Base {
     classes: ['grim-arithmetic-window'],
     tag: 'section',
     window: {
-      title: `${MODULE_TITLE} — Encounter Danger Board`,
+      title: 'GrimArithmetic.Window.DangerBoard',
       resizable: true
     },
     position: {

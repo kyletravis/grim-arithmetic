@@ -1,8 +1,7 @@
 node_modules/
 coverage/
 dist/
-docs/
-plans/
+docs/plans/
 releases/
 screenshots/
 .DS_Store

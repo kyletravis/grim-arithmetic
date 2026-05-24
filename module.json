@@ -5,7 +5,8 @@
   "version": "0.7.1-rc3",
   "authors": [
     {
-      "name": "Kyle Travis"
+      "name": "Kyle Travis",
+      "url": "https://kyletravis.com"
     }
   ],
   "compatibility": {
@@ -25,6 +26,13 @@
   ],
   "styles": [
     "styles/grim-arithmetic.css"
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
   ],
   "url": "https://github.com/kyletravis/grim-arithmetic",
   "manifest": "https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json",

@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # Guard: the pushed tag must match package.json version, because
+      # build-release.mjs derives the zip name and module.json download URL
+      # from package.json. A mismatch would publish a broken download link.
+      - name: Verify tag matches package.json version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          TAG="${REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          echo "Tag version:  $TAG"
+          echo "package.json: $PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag $REF_NAME does not match package.json version $PKG"
+            exit 1
+          fi
+
+      - run: npm ci
+
+      # check ends with `vite build`, producing dist/; package zips it.
+      - run: npm run check
+      - run: npm run package
+
+      - name: Determine prerelease flag
+        id: prerelease
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          case "$REF_NAME" in
+            *-rc*|*-beta*|*-alpha*) echo "value=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "value=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      # Pull just this version's section out of CHANGELOG.md for the release body.
+      - name: Extract changelog section
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF_NAME#v}"
+          awk -v header="## v${VERSION}" '
+            $0 == header { found = 1; next }
+            found && /^## v/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "No changelog section for v${VERSION}; falling back to full changelog."
+            cp CHANGELOG.md release-notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Grim Arithmetic ${{ github.ref_name }}
+          body_path: release-notes.md
+          prerelease: ${{ steps.prerelease.outputs.value == 'true' }}
+          files: |
+            releases/grim-arithmetic-${{ github.ref_name }}.zip
+            releases/module.json

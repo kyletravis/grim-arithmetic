@@ -19,6 +19,7 @@ const requiredPaths = [
   'templates/danger-board-panel.hbs',
   'templates/pair-detail-panel.hbs',
   'templates/forecast-panel.hbs',
+  'lang/en.json',
   'README.md',
   'LICENSE',
   'CHANGELOG.md'
@@ -43,6 +44,7 @@ execFileSync('rsync', [
   join(root, 'dist'),
   join(root, 'styles'),
   join(root, 'templates'),
+  join(root, 'lang'),
   stagingDir
 ]);
 
