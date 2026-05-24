@@ -2,7 +2,7 @@ var e = {
 	id: "grim-arithmetic",
 	title: "Grim Arithmetic",
 	description: "GM-facing PF2e mortality and encounter-risk analysis for Foundry VTT.",
-	version: "0.7.1-rc2",
+	version: "0.7.1-rc3",
 	authors: [{ name: "Kyle Travis" }],
 	compatibility: {
 		minimum: "13",
@@ -16,7 +16,7 @@ var e = {
 	styles: ["styles/grim-arithmetic.css"],
 	url: "https://github.com/kyletravis/grim-arithmetic",
 	manifest: "https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json",
-	download: "https://github.com/kyletravis/grim-arithmetic/releases/download/v0.7.1-rc2/grim-arithmetic-v0.7.1-rc2.zip"
+	download: "https://github.com/kyletravis/grim-arithmetic/releases/download/v0.7.1-rc3/grim-arithmetic-v0.7.1-rc3.zip"
 }, t = "grim-arithmetic", n = "Grim Arithmetic", r = e.version;
 //#endregion
 //#region src/debug-capture.ts
@@ -2147,11 +2147,11 @@ function X(e) {
 	return Math.round(e * 100);
 }
 var yn = { tacticsProfile: "spread-damage" }, Z = {
-	"random-legal": "Random legal",
-	"spread-damage": "Spread damage",
-	"focus-fire": "Focus fire",
+	"random-legal": "Random Legal",
+	"spread-damage": "Spread Damage",
+	"focus-fire": "Focus Fire",
 	predator: "Predator",
-	"boss-cinematic": "Boss cinematic"
+	"boss-cinematic": "Boss Cinematic"
 }, bn = {
 	"random-legal": "Enemies pick any legal PC target and any attack independently per strike.",
 	"spread-damage": "Enemies spread strikes across higher-HP standing PCs; never target downed.",
@@ -2230,6 +2230,7 @@ function Q(e) {
 	return { tacticsProfile: Object.keys(Z).sort().map((t) => ({
 		value: t,
 		label: Z[t],
+		description: bn[t],
 		selected: e.tacticsProfile === t
 	})) };
 }

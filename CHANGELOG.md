@@ -2,6 +2,15 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.1-rc3 - Tactics profile definitions
+
+Release candidate adding inline definitions for the Encounter Forecast's tactics profiles, plus label polish.
+
+### Tactics profile definitions (KHT-111)
+- The **Encounter Forecast** window now shows a bulleted list defining each tactics profile (Random Legal, Spread Damage, Focus Fire, Predator, Boss Cinematic) directly above the **Tactics Profile** dropdown. Definitions are driven by the engine's existing `TACTICS_PROFILE_DESCRIPTIONS`, so they stay in sync with simulation behavior.
+- Capitalized the second word of each multi-word tactics label and the word "Profile" in the control heading.
+- Bumped verified Foundry compatibility to **v14.363**.
+
 ## v0.7.1-rc2 - Hover descriptions
 
 Release candidate adding on-hover descriptions across all three GM windows so the dense PF2e mortality metrics explain themselves.

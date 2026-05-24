@@ -261,6 +261,22 @@
   width: 100%;
 }
 
+.grim-arithmetic-forecast__tactics-defs {
+  margin: 0.1rem 0 0.4rem;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.grim-arithmetic-forecast__tactics-defs li {
+  margin: 0.1rem 0;
+}
+
+.grim-arithmetic-forecast__tactics-defs strong {
+  font-weight: 700;
+}
+
 .grim-arithmetic-forecast__buttons {
   display: flex;
   gap: 0.5rem;

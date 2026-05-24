@@ -294,8 +294,13 @@ export type ForecastRunState =
   | { kind: 'done'; result: SimulationResult }
   | { kind: 'error'; message: string };
 
+/** A tactics-profile select option carrying its player-facing definition. */
+export interface TacticsProfileOption extends SelectOption {
+  description: string;
+}
+
 export interface ForecastControlsView {
-  tacticsProfile: SelectOption[];
+  tacticsProfile: TacticsProfileOption[];
 }
 
 export interface ForecastProgressView {
@@ -367,11 +372,11 @@ export interface ForecastPanelData {
 }
 
 export const TACTICS_PROFILE_LABELS: Record<TacticsProfileId, string> = {
-  'random-legal': 'Random legal',
-  'spread-damage': 'Spread damage',
-  'focus-fire': 'Focus fire',
+  'random-legal': 'Random Legal',
+  'spread-damage': 'Spread Damage',
+  'focus-fire': 'Focus Fire',
   predator: 'Predator',
-  'boss-cinematic': 'Boss cinematic'
+  'boss-cinematic': 'Boss Cinematic'
 };
 
 export const TACTICS_PROFILE_DESCRIPTIONS: Record<TacticsProfileId, string> = {
@@ -491,6 +496,7 @@ function buildForecastControlsView(controls: SimulationControls): ForecastContro
       .map((id) => ({
         value: id,
         label: TACTICS_PROFILE_LABELS[id],
+        description: TACTICS_PROFILE_DESCRIPTIONS[id],
         selected: controls.tacticsProfile === id
       }))
   };
