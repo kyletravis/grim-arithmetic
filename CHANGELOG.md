@@ -2,6 +2,22 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.1 - Localization, tooltips, and tactics clarity
+
+Builds on v0.7.0's ApplicationV2 migration with internationalization groundwork, on-hover help across every window, clearer tactics options, and a real CI/release pipeline. No changes to the underlying mortality math.
+
+### Internationalization (i18n)
+- The GM-facing UI is now translation-ready. The three settings, all window titles, and every static label, heading, button, and tooltip across the **Encounter Danger Board**, **Pair Detail**, and **Encounter Forecast** load from a bundled language file (`lang/en.json`). English ships in the box, with no visible change for English users.
+
+### Usability
+- On-hover descriptions on every labeled metric, control, and table header across all three windows — e.g. "Any PC down", "TPK risk", "Recovery checks per run", "MAP", "Damage swing", "Dying if downed" (KHT-108).
+- The **Encounter Forecast** lists an inline definition for each tactics profile (Random Legal, Spread Damage, Focus Fire, Predator, Boss Cinematic) above the selector, and tactics labels read more clearly (KHT-111).
+
+### Compatibility & packaging
+- Verified against **Foundry VTT v14.363**.
+- Removed the unknown `system`/`templates` manifest keys that triggered a Foundry package warning.
+- Added GitHub Actions CI (lint + tests + build on every push/PR) and a tag-driven release workflow; published the `docs/` reference set on GitHub.
+
 ## v0.7.1-rc4 - Localization groundwork
 
 Release candidate adding internationalization (i18n) scaffolding so the GM-facing UI can be translated, plus developer tooling. No visible text changes for English users.
