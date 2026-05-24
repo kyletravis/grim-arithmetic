@@ -2,6 +2,18 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.1-rc4 - Localization groundwork
+
+Release candidate adding internationalization (i18n) scaffolding so the GM-facing UI can be translated, plus developer tooling. No visible text changes for English users.
+
+### Internationalization (i18n)
+- All UI chrome now loads strings from a language file (`lang/en.json`) through Foundry's localization system: the three settings, the three window titles, and every static label, heading, button, and tooltip across the **Encounter Danger Board**, **Pair Detail**, and **Encounter Forecast** windows. English ships in the box, and the module is now translation-ready.
+- Engine-generated caveats and risk labels remain English for now and are tracked for a follow-up pass (KHT-112).
+
+### Tooling & docs
+- Added GitHub Actions: `test.yml` (lint + tests + build on every push/PR) and `release.yml` (tag-driven release with automatic prerelease detection for `-rc` tags).
+- Published the `docs/` reference set (install, testing, release, arithmetic) on GitHub; release packaging now bundles `lang/`.
+
 ## v0.7.1-rc3 - Tactics profile definitions
 
 Release candidate adding inline definitions for the Encounter Forecast's tactics profiles, plus label polish.
