@@ -3,7 +3,7 @@
     "Settings": {
       "DefaultStrikes": {
         "Name": "Default enemy Strike count",
-        "Hint": "Default number of Strikes used for immediate-threat estimates.",
+        "Hint": "How many Strikes each enemy is assumed to make per round when estimating immediate knock-out threat on the Encounter Danger Board.",
         "Choices": {
           "1": "1 Strike",
           "2": "2 Strikes",
@@ -12,11 +12,11 @@
       },
       "DebugLogging": {
         "Name": "Debug logging",
-        "Hint": "Log Grim Arithmetic debug information to the browser console."
+        "Hint": "Write Grim Arithmetic diagnostic messages to the browser console (F12). Leave off unless troubleshooting."
       },
       "EnableMonteCarlo": {
         "Name": "Enable Monte Carlo encounter simulation",
-        "Hint": "Disable on low-end machines if simulation runs are too slow. The Encounter Danger Board still works either way."
+        "Hint": "Turn on the Encounter Forecast's full-fight simulation. Disable on low-end machines if runs are too slow — the Encounter Danger Board still works either way."
       }
     },
     "Window": {
@@ -28,7 +28,8 @@
       "Detail": "Detail",
       "Vs": "vs",
       "DownTooltip": "Chance this PC is knocked out in one round by this attack.",
-      "RiskPillTooltip": "Risk rating from chance of being downed: Low → Grim.",
+      "RiskPillTooltip": "Risk of being downed this round, lowest to highest: Low, Guarded, Dangerous, Severe, Grim.",
+      "RiskPillTooltipHtml": "Risk of being downed this round:<br>Low — below 5%<br>Guarded — 5–15%<br>Dangerous — 15–35%<br>Severe — 35–60%<br>Grim — 60% or more",
       "CiTooltip": "95% confidence interval — the range the true value likely falls in given sampling variance."
     },
     "DangerBoard": {

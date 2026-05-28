@@ -36,6 +36,34 @@ export function registerSettings(): void {
   });
 }
 
+const GRIM_SETTING_KEYS = ['defaultStrikes', 'debugLogging', ENABLE_MONTE_CARLO_SETTING] as const;
+
+export interface SettingsRegistry {
+  get(key: string): { config?: boolean } | undefined;
+}
+
+/**
+ * Hide every Grim Arithmetic setting from non-GM players (KHT-118).
+ *
+ * Settings must be registered during `init`, but `game.user` is not populated
+ * until later — so registration can't know who the GM is. We register with
+ * `config: true` and, once `game.user.isGM` is known (the `ready` hook), flip
+ * the `config` flag to false for non-GMs. Foundry's settings menu reads each
+ * registration's `config` flag at render time and omits a module's heading
+ * when it has no visible settings, so this removes the entire Grim Arithmetic
+ * section for players — heading included. No-op for the GM.
+ */
+export function applyPlayerSettingsVisibility(
+  registry: SettingsRegistry | undefined | null,
+  isGM: boolean
+): void {
+  if (isGM || !registry) return;
+  for (const key of GRIM_SETTING_KEYS) {
+    const registration = registry.get(`${MODULE_ID}.${key}`);
+    if (registration) registration.config = false;
+  }
+}
+
 /**
  * True when the Monte Carlo simulation feature is enabled for this client.
  *

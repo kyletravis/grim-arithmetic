@@ -1,9 +1,10 @@
 import { MODULE_ID, MODULE_TITLE } from './constants';
 import { logDebugCapture } from './debug-capture';
-import { registerSettings } from './settings';
+import { registerSettings, applyPlayerSettingsVisibility, type SettingsRegistry } from './settings';
 import { DangerBoardPanel } from './ui/danger-board-panel';
 import { ForecastPanel } from './ui/forecast-panel';
 import { PairDetailPanel } from './ui/pair-detail-panel';
+import { applyTooltipDelay } from './ui/tooltip-delay';
 import { registerTokenControls } from './ui/token-controls';
 
 Hooks.once('init', () => {
@@ -22,6 +23,13 @@ function registerHandlebarsHelpers(): void {
 }
 
 Hooks.once('ready', () => {
+  applyTooltipDelay(750);
+  // Runs before the GM guard below: players must reach this to have their settings hidden.
+  applyPlayerSettingsVisibility(
+    (game.settings as { settings?: SettingsRegistry } | undefined)?.settings,
+    game.user?.isGM === true
+  );
+
   if (!game.user?.isGM) return;
 
   const grimArithmeticModule = game.modules.get(MODULE_ID);

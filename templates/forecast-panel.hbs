@@ -115,7 +115,7 @@
                 <td>{{deathPercent}}%{{#if deathCi}} <span class="grim-arithmetic-forecast__ci" data-tooltip="{{localize "GrimArithmetic.Common.CiTooltip"}}">[{{deathCi}}]</span>{{/if}}</td>
                 <td>{{meanEndingHp}}</td>
                 <td>{{topContributingEnemyName}}</td>
-                <td><span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="{{localize "GrimArithmetic.Common.RiskPillTooltip"}}">{{riskLabel}}</span></td>
+                <td><span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="{{localize "GrimArithmetic.Common.RiskPillTooltip"}}" data-tooltip-html="{{localize "GrimArithmetic.Common.RiskPillTooltipHtml"}}">{{riskLabel}}</span></td>
               </tr>
             {{/each}}
           </tbody>
