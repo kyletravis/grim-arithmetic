@@ -2,6 +2,14 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.2-rc1 - Player-safe options and calmer tooltips
+
+Release candidate. Two usability fixes on top of v0.7.1; no changes to the underlying mortality math.
+
+### Usability
+- The Grim Arithmetic settings section is now GM-only — regular players no longer see any module options (KHT-118). The GM-facing options carry clearer descriptions of what each one does.
+- Hover help across all three windows now waits a beat (750ms) before appearing, so tooltips no longer flicker continuously while scanning down a list of values (KHT-120).
+
 ## v0.7.1 - Localization, tooltips, and tactics clarity
 
 Builds on v0.7.0's ApplicationV2 migration with internationalization groundwork, on-hover help across every window, clearer tactics options, and a real CI/release pipeline. No changes to the underlying mortality math.
