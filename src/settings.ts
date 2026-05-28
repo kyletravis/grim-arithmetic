@@ -2,29 +2,12 @@ import { MODULE_ID } from './constants';
 
 export const ENABLE_MONTE_CARLO_SETTING = 'enableMonteCarlo';
 
-/**
- * True only when the current user is the GM. Used to gate the module's
- * config UI so players see no Grim Arithmetic options (KHT-118). Returns
- * false when game/user are unavailable (test env, pre-init), so settings
- * default to hidden rather than leaking to players.
- */
-export function isSettingsConfigVisible(): boolean {
-  if (typeof game === 'undefined') return false;
-  try {
-    return (game as { user?: { isGM?: boolean } }).user?.isGM === true;
-  } catch {
-    return false;
-  }
-}
-
 export function registerSettings(): void {
-  const config = isSettingsConfigVisible();
-
   game.settings.register(MODULE_ID, 'defaultStrikes', {
     name: 'GrimArithmetic.Settings.DefaultStrikes.Name',
     hint: 'GrimArithmetic.Settings.DefaultStrikes.Hint',
     scope: 'world',
-    config,
+    config: true,
     type: Number,
     default: 2,
     choices: {
@@ -38,7 +21,7 @@ export function registerSettings(): void {
     name: 'GrimArithmetic.Settings.DebugLogging.Name',
     hint: 'GrimArithmetic.Settings.DebugLogging.Hint',
     scope: 'client',
-    config,
+    config: true,
     type: Boolean,
     default: false
   });
@@ -47,10 +30,38 @@ export function registerSettings(): void {
     name: 'GrimArithmetic.Settings.EnableMonteCarlo.Name',
     hint: 'GrimArithmetic.Settings.EnableMonteCarlo.Hint',
     scope: 'client',
-    config,
+    config: true,
     type: Boolean,
     default: true
   });
+}
+
+const GRIM_SETTING_KEYS = ['defaultStrikes', 'debugLogging', ENABLE_MONTE_CARLO_SETTING] as const;
+
+export interface SettingsRegistry {
+  get(key: string): { config?: boolean } | undefined;
+}
+
+/**
+ * Hide every Grim Arithmetic setting from non-GM players (KHT-118).
+ *
+ * Settings must be registered during `init`, but `game.user` is not populated
+ * until later — so registration can't know who the GM is. We register with
+ * `config: true` and, once `game.user.isGM` is known (the `ready` hook), flip
+ * the `config` flag to false for non-GMs. Foundry's settings menu reads each
+ * registration's `config` flag at render time and omits a module's heading
+ * when it has no visible settings, so this removes the entire Grim Arithmetic
+ * section for players — heading included. No-op for the GM.
+ */
+export function applyPlayerSettingsVisibility(
+  registry: SettingsRegistry | undefined | null,
+  isGM: boolean
+): void {
+  if (isGM || !registry) return;
+  for (const key of GRIM_SETTING_KEYS) {
+    const registration = registry.get(`${MODULE_ID}.${key}`);
+    if (registration) registration.config = false;
+  }
 }
 
 /**

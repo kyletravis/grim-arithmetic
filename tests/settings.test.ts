@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { ENABLE_MONTE_CARLO_SETTING, isMonteCarloEnabled, isSettingsConfigVisible } from '../src/settings';
+import { describe, expect, it } from 'vitest';
+import { ENABLE_MONTE_CARLO_SETTING, isMonteCarloEnabled, applyPlayerSettingsVisibility } from '../src/settings';
 
 describe('settings: enableMonteCarlo', () => {
   it('exposes the setting key as a stable constant', () => {
@@ -13,22 +13,41 @@ describe('settings: enableMonteCarlo', () => {
   });
 });
 
-describe('settings: isSettingsConfigVisible (KHT-118)', () => {
-  afterEach(() => {
-    delete (globalThis as { game?: unknown }).game;
+describe('settings: applyPlayerSettingsVisibility (KHT-118)', () => {
+  const KEYS = ['grim-arithmetic.defaultStrikes', 'grim-arithmetic.debugLogging', 'grim-arithmetic.enableMonteCarlo'];
+
+  function makeRegistry(): Map<string, { config: boolean }> {
+    return new Map([
+      ['grim-arithmetic.defaultStrikes', { config: true }],
+      ['grim-arithmetic.debugLogging', { config: true }],
+      ['grim-arithmetic.enableMonteCarlo', { config: true }],
+      ['core.someCoreSetting', { config: true }]
+    ]);
+  }
+
+  it('leaves every setting visible for the GM', () => {
+    const registry = makeRegistry();
+    applyPlayerSettingsVisibility(registry, true);
+    for (const key of KEYS) expect(registry.get(key)!.config).toBe(true);
   });
 
-  it('defaults to hidden outside Foundry (test env, no game)', () => {
-    expect(isSettingsConfigVisible()).toBe(false);
+  it('hides all three Grim Arithmetic settings from non-GM players', () => {
+    const registry = makeRegistry();
+    applyPlayerSettingsVisibility(registry, false);
+    for (const key of KEYS) expect(registry.get(key)!.config).toBe(false);
   });
 
-  it('is hidden for a non-GM user', () => {
-    (globalThis as { game?: unknown }).game = { user: { isGM: false } };
-    expect(isSettingsConfigVisible()).toBe(false);
+  it("does not touch other modules' settings", () => {
+    const registry = makeRegistry();
+    applyPlayerSettingsVisibility(registry, false);
+    expect(registry.get('core.someCoreSetting')!.config).toBe(true);
   });
 
-  it('is visible for a GM user', () => {
-    (globalThis as { game?: unknown }).game = { user: { isGM: true } };
-    expect(isSettingsConfigVisible()).toBe(true);
+  it('is a no-op when the registry is missing', () => {
+    expect(() => applyPlayerSettingsVisibility(undefined, false)).not.toThrow();
+  });
+
+  it('is a no-op when the registry is null', () => {
+    expect(() => applyPlayerSettingsVisibility(null, false)).not.toThrow();
   });
 });
