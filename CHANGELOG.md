@@ -4,11 +4,12 @@ All notable changes to Grim Arithmetic are documented here.
 
 ## v0.7.2-rc1 - Player-safe options and calmer tooltips
 
-Release candidate. Two usability fixes on top of v0.7.1; no changes to the underlying mortality math.
+Release candidate. Three usability fixes on top of v0.7.1; no changes to the underlying mortality math.
 
 ### Usability
 - The Grim Arithmetic settings section is now GM-only — regular players no longer see any module options (KHT-118). The GM-facing options carry clearer descriptions of what each one does.
 - Hover help across all three windows now waits a beat (750ms) before appearing, so tooltips no longer flicker continuously while scanning down a list of values (KHT-120).
+- The risk-rating tooltip now spells out the full ladder — Low, Guarded, Dangerous, Severe, Grim, with the chance-of-being-downed band for each — instead of just "Low → Grim" (KHT-121).
 
 ## v0.7.1 - Localization, tooltips, and tactics clarity
 
