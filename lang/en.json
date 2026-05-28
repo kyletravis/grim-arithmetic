@@ -28,7 +28,8 @@
       "Detail": "Detail",
       "Vs": "vs",
       "DownTooltip": "Chance this PC is knocked out in one round by this attack.",
-      "RiskPillTooltip": "Risk rating from chance of being downed: Low → Grim.",
+      "RiskPillTooltip": "Risk of being downed this round, lowest to highest: Low, Guarded, Dangerous, Severe, Grim.",
+      "RiskPillTooltipHtml": "Risk of being downed this round:<br>Low — below 5%<br>Guarded — 5–15%<br>Dangerous — 15–35%<br>Severe — 35–60%<br>Grim — 60% or more",
       "CiTooltip": "95% confidence interval — the range the true value likely falls in given sampling variance."
     },
     "DangerBoard": {
