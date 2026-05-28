@@ -2,12 +2,29 @@ import { MODULE_ID } from './constants';
 
 export const ENABLE_MONTE_CARLO_SETTING = 'enableMonteCarlo';
 
+/**
+ * True only when the current user is the GM. Used to gate the module's
+ * config UI so players see no Grim Arithmetic options (KHT-118). Returns
+ * false when game/user are unavailable (test env, pre-init), so settings
+ * default to hidden rather than leaking to players.
+ */
+export function isSettingsConfigVisible(): boolean {
+  if (typeof game === 'undefined') return false;
+  try {
+    return (game as { user?: { isGM?: boolean } }).user?.isGM === true;
+  } catch {
+    return false;
+  }
+}
+
 export function registerSettings(): void {
+  const config = isSettingsConfigVisible();
+
   game.settings.register(MODULE_ID, 'defaultStrikes', {
     name: 'GrimArithmetic.Settings.DefaultStrikes.Name',
     hint: 'GrimArithmetic.Settings.DefaultStrikes.Hint',
     scope: 'world',
-    config: true,
+    config,
     type: Number,
     default: 2,
     choices: {
@@ -21,7 +38,7 @@ export function registerSettings(): void {
     name: 'GrimArithmetic.Settings.DebugLogging.Name',
     hint: 'GrimArithmetic.Settings.DebugLogging.Hint',
     scope: 'client',
-    config: true,
+    config,
     type: Boolean,
     default: false
   });
@@ -30,7 +47,7 @@ export function registerSettings(): void {
     name: 'GrimArithmetic.Settings.EnableMonteCarlo.Name',
     hint: 'GrimArithmetic.Settings.EnableMonteCarlo.Hint',
     scope: 'client',
-    config: true,
+    config,
     type: Boolean,
     default: true
   });
