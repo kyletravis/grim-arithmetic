@@ -4,6 +4,7 @@ import { registerSettings } from './settings';
 import { DangerBoardPanel } from './ui/danger-board-panel';
 import { ForecastPanel } from './ui/forecast-panel';
 import { PairDetailPanel } from './ui/pair-detail-panel';
+import { applyTooltipDelay } from './ui/tooltip-delay';
 import { registerTokenControls } from './ui/token-controls';
 
 Hooks.once('init', () => {
@@ -22,6 +23,8 @@ function registerHandlebarsHelpers(): void {
 }
 
 Hooks.once('ready', () => {
+  applyTooltipDelay(750);
+
   if (!game.user?.isGM) return;
 
   const grimArithmeticModule = game.modules.get(MODULE_ID);
