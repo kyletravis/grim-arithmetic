@@ -2,6 +2,14 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.2-rc2 - Forecast tables sorted by risk
+
+Release candidate building on v0.7.2-rc1; no changes to the underlying mortality math.
+
+### Usability
+- The **Encounter Forecast**'s Biggest Threats table now lists enemies from most to least dangerous, sorted by their share of total damage descending; enemies showing the same percentage are ordered alphabetically by name (KHT-126).
+- The **Encounter Forecast**'s Most Likely to Drop table now lists party members from most to least at risk, sorted by their chance of being downed descending; party members showing the same percentage are ordered alphabetically by name (KHT-127).
+
 ## v0.7.2-rc1 - Player-safe options and calmer tooltips
 
 Release candidate. Three usability fixes on top of v0.7.1; no changes to the underlying mortality math.
