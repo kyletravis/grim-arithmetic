@@ -140,9 +140,7 @@ function makeResult(overrides: Partial<SimulationResult> = {}): SimulationResult
         topContributingEnemyId: 'troll'
       }
     ],
-    perEnemy: [
-      { id: 'troll', name: 'Troll Mauler', damageShare: 1, topTargetId: 'mira' }
-    ],
+    perEnemy: [{ id: 'troll', name: 'Troll Mauler', damageShare: 1, topTargetId: 'mira' }],
     safetyNet: {
       meanHealsPerIteration: 0,
       meanRecoveryChecksPerIteration: 0,
@@ -193,9 +191,7 @@ describe('buildForecastPanelData: done state', () => {
       ...baseArgs({ kind: 'done', result: makeResult() })
     });
     expect(data.result?.tacticsProfileLabel).toBe(TACTICS_PROFILE_LABELS['focus-fire']);
-    expect(data.result?.tacticsProfileDescription).toBe(
-      TACTICS_PROFILE_DESCRIPTIONS['focus-fire']
-    );
+    expect(data.result?.tacticsProfileDescription).toBe(TACTICS_PROFILE_DESCRIPTIONS['focus-fire']);
   });
 
   it('flags aborted results and surfaces a partial-completion message', () => {
@@ -256,6 +252,118 @@ describe('buildForecastPanelData: done state', () => {
     expect(data.result?.meanHealsPerIteration).toBe('1.4');
     expect(data.result?.meanRecoveryChecksPerIteration).toBe('0.7');
     expect(data.result?.heroPointSurvivalPercent).toBe(18);
+  });
+
+  it('orders perPc rows by down probability descending (KHT-127)', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          perPc: [
+            {
+              id: 'low',
+              name: 'Low',
+              downProbability: 0.1,
+              deathProbability: 0,
+              meanEndingHp: 20,
+              topContributingEnemyId: null
+            },
+            {
+              id: 'high',
+              name: 'High',
+              downProbability: 0.6,
+              deathProbability: 0,
+              meanEndingHp: 5,
+              topContributingEnemyId: null
+            },
+            {
+              id: 'mid',
+              name: 'Mid',
+              downProbability: 0.3,
+              deathProbability: 0,
+              meanEndingHp: 12,
+              topContributingEnemyId: null
+            }
+          ]
+        })
+      })
+    });
+    expect(data.result?.perPc.map((p) => p.name)).toEqual(['High', 'Mid', 'Low']);
+  });
+
+  it('breaks displayed-percent ties alphabetically by name, even when raw down probabilities differ (KHT-127)', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          perPc: [
+            // Reverse-alphabetical input; Zara's raw value edges Anna's but both
+            // round to 99%, so the alphabetical tie-break must still order Anna first.
+            {
+              id: 'zara',
+              name: 'Zara',
+              downProbability: 0.994,
+              deathProbability: 0,
+              meanEndingHp: 5,
+              topContributingEnemyId: null
+            },
+            {
+              id: 'anna',
+              name: 'Anna',
+              downProbability: 0.988,
+              deathProbability: 0,
+              meanEndingHp: 5,
+              topContributingEnemyId: null
+            },
+            {
+              id: 'cara',
+              name: 'Cara',
+              downProbability: 0.5,
+              deathProbability: 0,
+              meanEndingHp: 18,
+              topContributingEnemyId: null
+            }
+          ]
+        })
+      })
+    });
+    expect(data.result?.perPc.map((p) => p.name)).toEqual(['Anna', 'Zara', 'Cara']);
+    expect(data.result?.perPc.map((p) => p.downPercent)).toEqual([99, 99, 50]);
+  });
+
+  it('orders perEnemy rows by damage share descending (KHT-126)', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          perEnemy: [
+            { id: 'low', name: 'Low', damageShare: 0.1, topTargetId: null },
+            { id: 'high', name: 'High', damageShare: 0.6, topTargetId: null },
+            { id: 'mid', name: 'Mid', damageShare: 0.3, topTargetId: null }
+          ]
+        })
+      })
+    });
+    expect(data.result?.perEnemy.map((e) => e.name)).toEqual(['High', 'Mid', 'Low']);
+  });
+
+  it('breaks displayed-percent ties alphabetically by name, even when raw damage shares differ (KHT-126)', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          perEnemy: [
+            // Reverse-alphabetical input; Zara's raw share edges Anna's but both
+            // round to 99%, so the alphabetical tie-break must still order Anna first.
+            { id: 'zara', name: 'Zara', damageShare: 0.994, topTargetId: null },
+            { id: 'anna', name: 'Anna', damageShare: 0.988, topTargetId: null },
+            { id: 'cara', name: 'Cara', damageShare: 0.5, topTargetId: null }
+          ]
+        })
+      })
+    });
+    expect(data.result?.perEnemy.map((e) => e.name)).toEqual(['Anna', 'Zara', 'Cara']);
+    expect(data.result?.perEnemy.map((e) => e.damageSharePercent)).toEqual([99, 99, 50]);
   });
 
   it('formats zero safety-net values without NaN or undefined', () => {

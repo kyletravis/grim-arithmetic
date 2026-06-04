@@ -144,7 +144,9 @@ export function buildMortalityPanelData<TokenLike>({
     assumptions.push(`Applies a +${controls.shieldBonus} shield/status AC adjustment.`);
   }
   if (controls.woundedOverride !== 'current') {
-    assumptions.push(`Uses wounded override ${controls.woundedOverride} for dying severity if the PC is downed.`);
+    assumptions.push(
+      `Uses wounded override ${controls.woundedOverride} for dying severity if the PC is downed.`
+    );
   }
   if (controls.heroPointMode !== 'actor') {
     assumptions.push(`Uses Hero Point override: ${controls.heroPointMode}.`);
@@ -246,21 +248,34 @@ function buildExtractionErrors(
   return errors;
 }
 
-function resolveSelectedAttack(attacks: AttackSnapshot[], selectedAttackId: string): AttackSnapshot | undefined {
+function resolveSelectedAttack(
+  attacks: AttackSnapshot[],
+  selectedAttackId: string
+): AttackSnapshot | undefined {
   return attacks.find((attack) => attack.id === selectedAttackId) ?? attacks[0];
 }
 
-function resolveMapType(mapMode: PanelControls['mapMode'], attackMapType: AttackSnapshot['mapType']): MapType {
+function resolveMapType(
+  mapMode: PanelControls['mapMode'],
+  attackMapType: AttackSnapshot['mapType']
+): MapType {
   if (mapMode !== 'auto') return mapMode;
   return attackMapType === 'unknown' ? 'normal' : attackMapType;
 }
 
-function getWoundedNote(subject: CombatantSnapshot, override: PanelControls['woundedOverride']): string {
-  if (override === 'current') return `Current actor wounded value used for dying severity: ${subject.deathState?.wounded ?? 0}`;
+function getWoundedNote(
+  subject: CombatantSnapshot,
+  override: PanelControls['woundedOverride']
+): string {
+  if (override === 'current')
+    return `Current actor wounded value used for dying severity: ${subject.deathState?.wounded ?? 0}`;
   return `Override used for dying severity: Wounded ${override}`;
 }
 
-function resolveWounded(subject: CombatantSnapshot, override: PanelControls['woundedOverride']): number {
+function resolveWounded(
+  subject: CombatantSnapshot,
+  override: PanelControls['woundedOverride']
+): number {
   if (override === 'current') return subject.deathState?.wounded ?? 0;
   return Number(override);
 }
@@ -383,8 +398,10 @@ export const TACTICS_PROFILE_DESCRIPTIONS: Record<TacticsProfileId, string> = {
   'random-legal': 'Enemies pick any legal PC target and any attack independently per strike.',
   'spread-damage': 'Enemies spread strikes across higher-HP standing PCs; never target downed.',
   'focus-fire': 'Enemies concentrate every strike on the lowest-HP standing PC.',
-  predator: 'Enemies prioritize wounded > low-HP > full-HP PCs; attack downed only as a last resort.',
-  'boss-cinematic': 'Enemy uses the highest-damage attack on the toughest standing PC, all strikes on the same target.'
+  predator:
+    'Enemies prioritize wounded > low-HP > full-HP PCs; attack downed only as a last resort.',
+  'boss-cinematic':
+    'Enemy uses the highest-damage attack on the toughest standing PC, all strikes on the same target.'
 };
 
 export function buildForecastPanelData({
@@ -426,8 +443,7 @@ export function buildForecastPanelData({
       moduleVersion,
       enabled: true,
       disabledMessage: '',
-      message:
-        'Select a tactics profile and click Forecast to simulate the active encounter.',
+      message: 'Select a tactics profile and click Forecast to simulate the active encounter.',
       state: 'idle',
       controls: controlsView,
       assumptions: baseAssumptions
@@ -467,17 +483,12 @@ export function buildForecastPanelData({
     moduleVersion,
     enabled: true,
     disabledMessage: '',
-    message: result.aborted
-      ? 'Forecast aborted.'
-      : 'Forecast complete.',
+    message: result.aborted ? 'Forecast aborted.' : 'Forecast complete.',
     state: 'done',
     controls: controlsView,
     result: buildForecastResultView(result),
     pessimismWarning: buildPessimismWarning(result),
-    assumptions: [
-      ...baseAssumptions,
-      ...result.caveats.map((c) => `Setup: ${c}`)
-    ]
+    assumptions: [...baseAssumptions, ...result.caveats.map((c) => `Setup: ${c}`)]
   };
 }
 
@@ -538,36 +549,44 @@ function buildForecastResultView(result: SimulationResult): ForecastResultView {
     meanHealsPerIteration: result.safetyNet.meanHealsPerIteration.toFixed(1),
     meanRecoveryChecksPerIteration: result.safetyNet.meanRecoveryChecksPerIteration.toFixed(1),
     heroPointSurvivalPercent: Math.round(result.safetyNet.heroPointSurvivalRate * 100),
-    perPc: result.perPc.map((pc) => {
-      const downCi = proportionCI(pc.downProbability, result.iterationsCompleted);
-      const deathCi = proportionCI(pc.deathProbability, result.iterationsCompleted);
-      return {
-        id: pc.id,
-        name: pc.name,
-        downPercent: Math.round(pc.downProbability * 100),
-        downCi: downCi
-          ? `${Math.round(downCi.lower * 100)}%–${Math.round(downCi.upper * 100)}%`
-          : null,
-        deathPercent: Math.round(pc.deathProbability * 100),
-        deathCi: deathCi
-          ? `${Math.round(deathCi.lower * 100)}%–${Math.round(deathCi.upper * 100)}%`
-          : null,
-        meanEndingHp: pc.meanEndingHp.toFixed(1),
-        topContributingEnemyName: pc.topContributingEnemyId
-          ? enemyNamesById.get(pc.topContributingEnemyId) ?? pc.topContributingEnemyId
-          : '—',
-        riskClass: forecastRiskClass(pc.downProbability),
-        riskLabel: forecastRiskLabel(pc.downProbability)
-      };
-    }),
-    perEnemy: result.perEnemy.map((enemy) => ({
-      id: enemy.id,
-      name: enemy.name,
-      damageSharePercent: Math.round(enemy.damageShare * 100),
-      topTargetName: enemy.topTargetId
-        ? pcNamesById.get(enemy.topTargetId) ?? enemy.topTargetId
-        : '—'
-    })),
+    perPc: result.perPc
+      .map((pc) => {
+        const downCi = proportionCI(pc.downProbability, result.iterationsCompleted);
+        const deathCi = proportionCI(pc.deathProbability, result.iterationsCompleted);
+        return {
+          id: pc.id,
+          name: pc.name,
+          downPercent: Math.round(pc.downProbability * 100),
+          downCi: downCi
+            ? `${Math.round(downCi.lower * 100)}%–${Math.round(downCi.upper * 100)}%`
+            : null,
+          deathPercent: Math.round(pc.deathProbability * 100),
+          deathCi: deathCi
+            ? `${Math.round(deathCi.lower * 100)}%–${Math.round(deathCi.upper * 100)}%`
+            : null,
+          meanEndingHp: pc.meanEndingHp.toFixed(1),
+          topContributingEnemyName: pc.topContributingEnemyId
+            ? (enemyNamesById.get(pc.topContributingEnemyId) ?? pc.topContributingEnemyId)
+            : '—',
+          riskClass: forecastRiskClass(pc.downProbability),
+          riskLabel: forecastRiskLabel(pc.downProbability)
+        };
+      })
+      // Sort at displayed precision so rows showing the same percent always fall
+      // back to the alphabetical tie-break (raw-value sorting hid sub-percent gaps).
+      .sort((a, b) => b.downPercent - a.downPercent || a.name.localeCompare(b.name)),
+    perEnemy: result.perEnemy
+      .map((enemy) => ({
+        id: enemy.id,
+        name: enemy.name,
+        damageSharePercent: Math.round(enemy.damageShare * 100),
+        topTargetName: enemy.topTargetId
+          ? (pcNamesById.get(enemy.topTargetId) ?? enemy.topTargetId)
+          : '—'
+      }))
+      // Sort at displayed precision so rows showing the same percent always fall
+      // back to the alphabetical tie-break (raw-value sorting hid sub-percent gaps).
+      .sort((a, b) => b.damageSharePercent - a.damageSharePercent || a.name.localeCompare(b.name)),
     caveats: result.caveats
   };
 }
@@ -575,7 +594,7 @@ function buildForecastResultView(result: SimulationResult): ForecastResultView {
 function proportionCI(probability: number, total: number): { lower: number; upper: number } | null {
   if (total === 0) return null;
   const p = probability;
-  const se = Math.sqrt(p * (1 - p) / total);
+  const se = Math.sqrt((p * (1 - p)) / total);
   const margin = 1.959963984540054 * se;
   return {
     lower: Math.max(0, p - margin),
