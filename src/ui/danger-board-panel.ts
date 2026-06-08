@@ -10,13 +10,9 @@ import { PairDetailPanel } from './pair-detail-panel';
 
 export interface DangerBoardPanelData {
   moduleVersion: string;
-  message: string;
   dangerBoard: DangerBoardData;
   forecastEnabled: boolean;
 }
-
-const HEADER_MESSAGE =
-  'Encounter-wide immediate risk. Click a row to see the detail math, or use the selection-target button to model an arbitrary pair.';
 
 interface ApplicationV2Like {
   render(force?: boolean | Record<string, unknown>): Promise<unknown>;
@@ -37,7 +33,7 @@ export class DangerBoardPanel extends Base {
       resizable: true
     },
     position: {
-      width: 640,
+      width: 740,
       height: 'auto'
     },
     actions: {
@@ -78,7 +74,6 @@ export class DangerBoardPanel extends Base {
     const dangerBoard = buildDangerBoardData(matrix);
     return {
       moduleVersion: MODULE_VERSION,
-      message: HEADER_MESSAGE,
       dangerBoard,
       forecastEnabled: isMonteCarloEnabled()
     };

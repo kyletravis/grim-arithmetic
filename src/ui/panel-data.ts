@@ -27,7 +27,6 @@ export interface SelectOption {
 export interface MortalityPanelData {
   moduleVersion: string;
   message: string;
-  permanentDeath: string;
   errors: string[];
   controls: {
     strikes: SelectOption[];
@@ -78,9 +77,6 @@ export const DEFAULT_PANEL_CONTROLS: PanelControls = {
   attackId: ''
 };
 
-const PERMANENT_DEATH_MESSAGE =
-  'Permanent death probability is planned for a future milestone and is not modeled in MVP.';
-
 export function buildMortalityPanelData<TokenLike>({
   selection,
   adapter,
@@ -96,7 +92,6 @@ export function buildMortalityPanelData<TokenLike>({
     return {
       moduleVersion,
       message: 'Select one PC token and target one enemy token to estimate immediate down risk.',
-      permanentDeath: PERMANENT_DEATH_MESSAGE,
       errors: selection.errors,
       controls: buildControlOptions(controls, [])
     };
@@ -113,7 +108,6 @@ export function buildMortalityPanelData<TokenLike>({
     return {
       moduleVersion,
       message: 'Grim Arithmetic could not extract enough PF2e data for this token pair yet.',
-      permanentDeath: PERMANENT_DEATH_MESSAGE,
       errors,
       controls: panelControls
     };
@@ -155,7 +149,6 @@ export function buildMortalityPanelData<TokenLike>({
   return {
     moduleVersion,
     message: 'Immediate down-risk estimate based on the selected PC and targeted enemy.',
-    permanentDeath: PERMANENT_DEATH_MESSAGE,
     errors: [],
     controls: panelControls,
     subject,
@@ -316,6 +309,8 @@ export interface TacticsProfileOption extends SelectOption {
 
 export interface ForecastControlsView {
   tacticsProfile: TacticsProfileOption[];
+  /** Description of the currently-selected profile, shown inline under the select. */
+  selectedTacticsDescription: string;
 }
 
 export interface ForecastProgressView {
@@ -382,8 +377,10 @@ export interface ForecastPanelData {
    * number as a campaign-death prophecy.
    */
   pessimismWarning?: string;
-  /** Always-visible assumptions block. */
-  assumptions: string[];
+  /** Single critical caveat shown inline below the stats. */
+  vitalAssumption: string;
+  /** Remaining modeling assumptions plus setup caveats, shown in a collapsible. */
+  otherAssumptions: string[];
 }
 
 export const TACTICS_PROFILE_LABELS: Record<TacticsProfileId, string> = {
@@ -415,12 +412,15 @@ export function buildForecastPanelData({
   controls: SimulationControls;
   state: ForecastRunState;
 }): ForecastPanelData {
-  const baseAssumptions = [
+  // The "not modeled" caveat is the one assumption a GM must see to read the
+  // numbers correctly, so it stays inline; the rest collapse behind a disclosure.
+  const vitalAssumption =
+    'Not modeled: reactions (Shield Block, Champion), spells beyond Heal, persistent damage, attacks of opportunity, movement / reach / line of sight.';
+  const otherAssumptions = [
     'PCs Strike the most-dangerous standing enemy (2 strikes per turn by default).',
     'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP.',
     'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success / crit-failure step dying.',
-    'Hero Points are spent to prevent death (once per iteration per PC).',
-    'Not modeled: reactions (Shield Block, Champion), spells beyond Heal, persistent damage, attacks of opportunity, movement / reach / line of sight.'
+    'Hero Points are spent to prevent death (once per iteration per PC).'
   ];
 
   if (!enabled) {
@@ -432,7 +432,8 @@ export function buildForecastPanelData({
       message: '',
       state: 'idle',
       controls: buildForecastControlsView(controls),
-      assumptions: baseAssumptions
+      vitalAssumption,
+      otherAssumptions
     };
   }
 
@@ -446,7 +447,8 @@ export function buildForecastPanelData({
       message: 'Select a tactics profile and click Forecast to simulate the active encounter.',
       state: 'idle',
       controls: controlsView,
-      assumptions: baseAssumptions
+      vitalAssumption,
+      otherAssumptions
     };
   }
   if (state.kind === 'running') {
@@ -462,7 +464,8 @@ export function buildForecastPanelData({
         total: state.total,
         percent: state.total > 0 ? Math.round((state.completed / state.total) * 100) : 0
       },
-      assumptions: baseAssumptions
+      vitalAssumption,
+      otherAssumptions
     };
   }
   if (state.kind === 'error') {
@@ -474,7 +477,8 @@ export function buildForecastPanelData({
       state: 'error',
       controls: controlsView,
       errorMessage: state.message,
-      assumptions: baseAssumptions
+      vitalAssumption,
+      otherAssumptions
     };
   }
   // done
@@ -488,15 +492,18 @@ export function buildForecastPanelData({
     controls: controlsView,
     result: buildForecastResultView(result),
     pessimismWarning: buildPessimismWarning(result),
-    assumptions: [...baseAssumptions, ...result.caveats.map((c) => `Setup: ${c}`)]
+    vitalAssumption,
+    otherAssumptions: [...otherAssumptions, ...result.caveats.map((c) => `Setup: ${c}`)]
   };
 }
 
 function buildPessimismWarning(result: SimulationResult): string | undefined {
   if (result.anyPcDownProbability < 0.8) return undefined;
+  // The bold "High-risk encounter." lead is rendered separately (PessimismLead),
+  // so the body stays tight and avoids repeating it.
   return (
-    'High-risk encounter. Even with PCs healing, recovering, and spending Hero Points, the modeled outcome ends badly in most iterations. ' +
-    'Reactions (Shield Block, Champion) and tactical positioning are still not modeled, so real-table risk may be a bit lower — but this encounter has structural lethality worth examining.'
+    'Even with healing, recovery, and Hero Points, most runs end badly. Reactions and positioning are not modeled, ' +
+    'so real-table risk may be a bit lower — but the structural lethality is worth examining.'
   );
 }
 
@@ -509,7 +516,8 @@ function buildForecastControlsView(controls: SimulationControls): ForecastContro
         label: TACTICS_PROFILE_LABELS[id],
         description: TACTICS_PROFILE_DESCRIPTIONS[id],
         selected: controls.tacticsProfile === id
-      }))
+      })),
+    selectedTacticsDescription: TACTICS_PROFILE_DESCRIPTIONS[controls.tacticsProfile]
   };
 }
 

@@ -1,5 +1,20 @@
 .grim-arithmetic-panel {
-  padding: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  font-family: var(--font-primary, 'Signika', sans-serif);
+  line-height: 1.4;
+}
+
+/* One typeface for the whole module. The broad selector overrides Foundry's
+   per-element defaults (buttons, selects, tables) so titles, labels,
+   descriptions, and controls all read as a single family. The h2 title opts
+   into the display face below. */
+.grim-arithmetic-panel,
+.grim-arithmetic-panel *,
+.grim-arithmetic-panel button,
+.grim-arithmetic-panel select,
+.grim-arithmetic-panel input,
+.grim-arithmetic-panel textarea {
+  font-family: var(--font-primary, 'Signika', sans-serif);
 }
 
 .application.grim-arithmetic-window .window-content {
@@ -7,18 +22,43 @@
   overflow-x: hidden;
 }
 
+.grim-arithmetic-panel__header {
+  margin-bottom: 0.6rem;
+}
+
 .grim-arithmetic-panel__header h2 {
-  margin: 0 0 0.25rem;
+  margin: 0;
+  /* Modesto Condensed is bundled with Foundry core — the native display face. */
+  font-family: 'Modesto Condensed', var(--font-primary, 'Signika'), sans-serif;
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+}
+
+.grim-arithmetic-panel__version {
+  margin: 0.1rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
 }
 
 .grim-arithmetic-panel__tagline {
-  margin: 0 0 0.75rem;
-  opacity: 0.8;
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  opacity: 0.75;
   font-style: italic;
 }
 
+/* Uniform section heading ("eyebrow") style across every board. */
 .grim-arithmetic-panel h3 {
-  margin: 0.75rem 0 0.35rem;
+  margin: 0.85rem 0 0.4rem;
+  font-family: var(--font-primary, 'Signika', sans-serif);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
 
 .grim-arithmetic-panel dl {
@@ -85,13 +125,6 @@
   text-shadow: none;
 }
 
-.grim-arithmetic-panel__caveat {
-  margin-top: 0.75rem;
-  padding: 0.5rem;
-  border-left: 3px solid #8b1e1e;
-  background: rgba(139, 30, 30, 0.12);
-}
-
 .grim-arithmetic-panel__hint {
   margin: 0 0 0.5rem;
   opacity: 0.85;
@@ -108,10 +141,6 @@
 
 .grim-arithmetic-panel__section-title {
   margin: 0.25rem 0 0.4rem;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  opacity: 0.85;
 }
 
 .grim-arithmetic-panel__board-actions {
@@ -146,8 +175,9 @@
   grid-template-columns: 1.5rem minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.5rem;
-  margin: 0.2rem 0;
+  padding: 0.2rem 0.5rem;
+  margin: 0.15rem 0;
+  line-height: 1.2;
   background: rgba(0, 0, 0, 0.04);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 4px;
@@ -184,8 +214,9 @@
 }
 
 .grim-arithmetic-panel__danger-row-action {
-  min-height: 1.75rem;
+  min-height: 1.5rem;
   padding: 0 0.5rem;
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 
@@ -238,12 +269,44 @@
   opacity: 0.85;
 }
 
+/* Risk-band legend at the top of the danger board (most → least dangerous).
+   Auto-flow columns keep every band on one line; a bottom rule separates it
+   from the ranked lists below. */
+.grim-arithmetic-panel ul.grim-arithmetic-panel__risk-legend {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  justify-content: start;
+  align-items: center;
+  gap: 0 0.8rem;
+  margin: 0 0 0.6rem;
+  padding: 0 0 0.55rem;
+  list-style: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 0.74rem;
+}
+
+.grim-arithmetic-panel__risk-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.grim-arithmetic-panel__risk-legend-range {
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- Forecast (Monte Carlo) panel --- */
 
 .grim-arithmetic-forecast__controls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem;
+  column-gap: 0.5rem;
+  row-gap: 0.25rem;
+  /* Align the run/cancel button to the bottom of the select, not the hint row. */
   align-items: end;
   margin: 0.75rem 0;
 }
@@ -259,22 +322,18 @@
 .grim-arithmetic-forecast__controls select,
 .grim-arithmetic-forecast__controls input[type='text'] {
   width: 100%;
+  padding-left: 0.4rem;
 }
 
-.grim-arithmetic-forecast__tactics-defs {
-  margin: 0.1rem 0 0.4rem;
-  padding-left: 1.1rem;
+.grim-arithmetic-forecast__control-hint {
+  grid-column: 1 / -1;
+  /* Indent to line up with the selected option text inside the select above
+     (0.4rem select padding + 1px select border). */
+  padding-left: calc(0.4rem + 1px);
+  margin: 0;
   font-size: 0.8rem;
   font-weight: 400;
   opacity: 0.85;
-}
-
-.grim-arithmetic-forecast__tactics-defs li {
-  margin: 0.1rem 0;
-}
-
-.grim-arithmetic-forecast__tactics-defs strong {
-  font-weight: 700;
 }
 
 .grim-arithmetic-forecast__buttons {
@@ -306,12 +365,13 @@
 }
 
 .grim-arithmetic-forecast__pessimism-banner {
-  margin: 0.5rem 0 0.75rem;
+  margin: 0.75rem 0;
   padding: 0.6rem 0.75rem;
+  border: 1px solid rgba(183, 121, 31, 0.5);
   border-left: 4px solid #b7791f;
-  background: rgba(183, 121, 31, 0.16);
-  border-radius: 2px;
-  font-size: 0.9rem;
+  background: rgba(183, 121, 31, 0.14);
+  border-radius: 4px;
+  font-size: 0.88rem;
   line-height: 1.4;
 }
 
@@ -319,8 +379,8 @@
   display: inline-block;
   margin-right: 0.35rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  font-size: 0.74rem;
 }
 
 .grim-arithmetic-forecast__error {
@@ -335,6 +395,36 @@
   padding: 0.5rem 0.75rem 0.75rem;
   border: 1px solid rgba(139, 30, 30, 0.35);
   border-radius: 4px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.grim-arithmetic-forecast__result-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.grim-arithmetic-forecast__status {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #1e5631;
+  background: rgba(60, 120, 60, 0.16);
+  border: 1px solid rgba(60, 120, 60, 0.4);
+}
+
+.grim-arithmetic-forecast__status--aborted {
+  color: #7a4a10;
+  background: rgba(183, 121, 31, 0.16);
+  border-color: rgba(183, 121, 31, 0.45);
 }
 
 .grim-arithmetic-forecast__headline {
@@ -342,6 +432,12 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
   margin-bottom: 0.5rem;
+}
+
+/* Primary threat metrics read red; mitigation (safety-net) metrics read green. */
+.grim-arithmetic-forecast__headline--danger .grim-arithmetic-forecast__metric {
+  background: rgba(139, 30, 30, 0.06);
+  border-color: rgba(139, 30, 30, 0.2);
 }
 
 .grim-arithmetic-forecast__safety-net {
@@ -364,8 +460,8 @@
 }
 
 .grim-arithmetic-forecast__metric-label {
-  font-size: 0.78rem;
-  letter-spacing: 0.03em;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.75;
 }
@@ -374,12 +470,6 @@
   font-size: 1.4rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-.grim-arithmetic-forecast__run-meta {
-  margin: 0.25rem 0 0.5rem;
-  font-size: 0.85em;
-  opacity: 0.85;
 }
 
 .grim-arithmetic-forecast__table {
@@ -397,8 +487,8 @@
 }
 
 .grim-arithmetic-forecast__table th {
-  font-size: 0.8rem;
-  letter-spacing: 0.02em;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   opacity: 0.7;
 }
@@ -406,16 +496,32 @@
 .grim-arithmetic-forecast__assumptions {
   margin-top: 0.75rem;
   padding: 0.5rem 0.75rem;
-  border-left: 3px solid #8b6c1e;
-  background: rgba(139, 108, 30, 0.1);
+  border-left: 3px solid #6e6e6e;
+  background: rgba(110, 110, 110, 0.1);
+  border-radius: 4px;
   font-size: 0.9rem;
 }
 
-.grim-arithmetic-forecast__assumptions h3 {
-  margin: 0 0 0.25rem;
+.grim-arithmetic-forecast__assumptions-vital {
+  margin: 0;
+}
+
+/* Shared collapsible disclosure used for assumptions/caveats across panels. */
+.grim-arithmetic-details {
+  margin-top: 0.4rem;
   font-size: 0.85rem;
-  letter-spacing: 0.03em;
+}
+
+.grim-arithmetic-details > summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.grim-arithmetic-details[open] > summary {
+  margin-bottom: 0.25rem;
 }
 
 .grim-arithmetic-forecast__ci {
@@ -425,15 +531,8 @@
   margin-left: 0.25rem;
 }
 
-.grim-arithmetic-forecast__ci-note {
-  margin: 0 0 0.5rem;
-  font-size: 0.8em;
-  opacity: 0.6;
-  font-style: italic;
-}
-
 .grim-arithmetic-forecast__profile {
-  margin: 0 0 0.5rem;
+  margin: 0;
   font-size: 0.88rem;
   opacity: 0.75;
 }

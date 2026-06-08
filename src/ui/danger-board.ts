@@ -13,9 +13,26 @@ export interface DangerBoardEntry {
   label: string;
 }
 
+export interface RiskLegendEntry {
+  riskClass: string;
+  label: string;
+  range: string;
+}
+
+/** Risk bands shown as a legend so GMs can read the row pills at a glance.
+ *  Ordered most-to-least dangerous; ranges mirror Common.RiskPillTooltipHtml. */
+export const RISK_LEGEND: RiskLegendEntry[] = [
+  { riskClass: 'grim', label: 'Grim', range: '≥60%' },
+  { riskClass: 'severe', label: 'Severe', range: '35–60%' },
+  { riskClass: 'dangerous', label: 'Dangerous', range: '15–35%' },
+  { riskClass: 'guarded', label: 'Guarded', range: '5–15%' },
+  { riskClass: 'low', label: 'Low', range: '<5%' }
+];
+
 export interface DangerBoardData {
   topEndangeredPcs: DangerBoardEntry[];
   topDangerousEnemies: DangerBoardEntry[];
+  legend: RiskLegendEntry[];
   caveats: string[];
   empty: boolean;
   skipped: boolean;
@@ -46,6 +63,7 @@ export function buildDangerBoardData(
   return {
     topEndangeredPcs,
     topDangerousEnemies,
+    legend: RISK_LEGEND,
     caveats: matrix.caveats,
     empty: matrix.pairs.length === 0,
     skipped: matrix.skipped

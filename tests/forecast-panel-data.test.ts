@@ -73,11 +73,22 @@ describe('buildForecastPanelData: idle state', () => {
 
   it('always lists the v0.6.0-rc.4 baseline assumptions (PCs heal, recover, spend HP)', () => {
     const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
-    expect(data.assumptions.find((a) => a.includes('PCs Strike the most-dangerous'))).toBeDefined();
-    expect(data.assumptions.find((a) => a.includes('Heal spells / Battle Medicine'))).toBeDefined();
-    expect(data.assumptions.find((a) => a.includes('recovery checks'))).toBeDefined();
-    expect(data.assumptions.find((a) => a.includes('Hero Points'))).toBeDefined();
-    expect(data.assumptions.find((a) => a.includes('Not modeled:'))).toBeDefined();
+    // The "not modeled" caveat is surfaced inline; the rest collapse (KHT-129).
+    expect(data.vitalAssumption).toContain('Not modeled:');
+    expect(data.otherAssumptions.find((a) => a.includes('PCs Strike the most-dangerous'))).toBeDefined();
+    expect(data.otherAssumptions.find((a) => a.includes('Heal spells / Battle Medicine'))).toBeDefined();
+    expect(data.otherAssumptions.find((a) => a.includes('recovery checks'))).toBeDefined();
+    expect(data.otherAssumptions.find((a) => a.includes('Hero Points'))).toBeDefined();
+  });
+
+  it('surfaces the selected tactics profile description inline (KHT-129)', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({ kind: 'idle' }),
+      controls: makeControls({ tacticsProfile: 'boss-cinematic' })
+    });
+    expect(data.controls.selectedTacticsDescription).toBe(
+      TACTICS_PROFILE_DESCRIPTIONS['boss-cinematic']
+    );
   });
 });
 
@@ -205,14 +216,14 @@ describe('buildForecastPanelData: done state', () => {
     expect(data.message).toBe('Forecast aborted.');
   });
 
-  it('threads setup caveats into the assumptions block', () => {
+  it('threads setup caveats into the collapsed assumptions block', () => {
     const data = buildForecastPanelData({
       ...baseArgs({
         kind: 'done',
         result: makeResult({ caveats: ['unsupported actor X skipped'] })
       })
     });
-    expect(data.assumptions.some((a) => a.includes('unsupported actor X skipped'))).toBe(true);
+    expect(data.otherAssumptions.some((a) => a.includes('unsupported actor X skipped'))).toBe(true);
   });
 
   it('shows a pessimism banner when any-PC-down >= 80%', () => {

@@ -7,16 +7,13 @@
   {{#unless enabled}}
     <p class="grim-arithmetic-forecast__disabled">{{disabledMessage}}</p>
   {{else}}
-    <p class="grim-arithmetic-panel__hint">{{message}}</p>
+    {{#unless (eq state "done")}}
+      <p class="grim-arithmetic-panel__hint">{{message}}</p>
+    {{/unless}}
 
     <form class="grim-arithmetic-forecast__controls">
       <label>
         <span data-tooltip="{{localize "GrimArithmetic.Forecast.TacticsTooltip"}}">{{localize "GrimArithmetic.Forecast.TacticsLabel"}}</span>
-        <ul class="grim-arithmetic-forecast__tactics-defs">
-          {{#each controls.tacticsProfile}}
-            <li><strong>{{label}}:</strong> {{description}}</li>
-          {{/each}}
-        </ul>
         <select data-grim-forecast-control="tacticsProfile" {{#if (eq state "running")}}disabled{{/if}}>
           {{#each controls.tacticsProfile}}
             <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
@@ -25,9 +22,14 @@
       </label>
 
       <div class="grim-arithmetic-forecast__buttons">
-        <button type="button" data-action="run" {{#if (eq state "running")}}disabled{{/if}}>{{localize "GrimArithmetic.Forecast.RunButton"}}</button>
-        <button type="button" data-action="cancel" {{#unless (eq state "running")}}disabled{{/unless}}>{{localize "GrimArithmetic.Forecast.CancelButton"}}</button>
+        {{#if (eq state "running")}}
+          <button type="button" data-action="cancel">{{localize "GrimArithmetic.Forecast.CancelButton"}}</button>
+        {{else}}
+          <button type="button" data-action="run">{{localize "GrimArithmetic.Forecast.RunButton"}}</button>
+        {{/if}}
       </div>
+
+      <small class="grim-arithmetic-forecast__control-hint">{{controls.selectedTacticsDescription}}</small>
     </form>
 
     {{#if (eq state "running")}}
@@ -44,17 +46,16 @@
     {{/if}}
 
     {{#if (eq state "done")}}
-      {{#if pessimismWarning}}
-        <section class="grim-arithmetic-forecast__pessimism-banner">
-          <strong>{{localize "GrimArithmetic.Forecast.PessimismLead"}}</strong>
-          {{pessimismWarning}}
-        </section>
-      {{/if}}
       <section class="grim-arithmetic-forecast__result">
-        <p class="grim-arithmetic-forecast__profile">
-          <strong>{{result.tacticsProfileLabel}}</strong> — {{result.tacticsProfileDescription}}
-        </p>
-        <div class="grim-arithmetic-forecast__headline">
+        <div class="grim-arithmetic-forecast__result-head">
+          <p class="grim-arithmetic-forecast__profile">
+            <strong>{{result.tacticsProfileLabel}}</strong> — {{result.tacticsProfileDescription}}
+          </p>
+          <span class="grim-arithmetic-forecast__status{{#if result.aborted}} grim-arithmetic-forecast__status--aborted{{/if}}">
+            {{#if result.aborted}}{{localize "GrimArithmetic.Forecast.StatusAborted"}}{{else}}{{localize "GrimArithmetic.Forecast.StatusComplete"}}{{/if}}
+          </span>
+        </div>
+        <div class="grim-arithmetic-forecast__headline grim-arithmetic-forecast__headline--danger">
           <div class="grim-arithmetic-forecast__metric">
             <span class="grim-arithmetic-forecast__metric-label" data-tooltip="{{localize "GrimArithmetic.Forecast.AnyPcDownTooltip"}}">{{localize "GrimArithmetic.Forecast.AnyPcDownLabel"}}</span>
             <span class="grim-arithmetic-forecast__metric-value">{{result.anyPcDownPercent}}%</span>
@@ -86,14 +87,6 @@
             <span class="grim-arithmetic-forecast__metric-value">{{result.heroPointSurvivalPercent}}%</span>
           </div>
         </div>
-
-        <p class="grim-arithmetic-forecast__run-meta">
-          {{result.tacticsProfileLabel}}
-          {{#if result.aborted}} · <strong>{{localize "GrimArithmetic.Forecast.Aborted"}}</strong>{{/if}}
-        </p>
-        {{#if result.anyPcDownCi}}
-          <p class="grim-arithmetic-forecast__ci-note">{{localize "GrimArithmetic.Forecast.CiNote"}}</p>
-        {{/if}}
 
         <h3>{{localize "GrimArithmetic.Forecast.MostLikelyToDrop"}}</h3>
         <table class="grim-arithmetic-forecast__table">
@@ -141,15 +134,27 @@
           </tbody>
         </table>
       </section>
+
+      {{#if pessimismWarning}}
+        <section class="grim-arithmetic-forecast__pessimism-banner">
+          <strong>{{localize "GrimArithmetic.Forecast.PessimismLead"}}</strong>
+          {{pessimismWarning}}
+        </section>
+      {{/if}}
     {{/if}}
 
     <section class="grim-arithmetic-forecast__assumptions">
-      <h3>{{localize "GrimArithmetic.Forecast.ModeledAssumptions"}}</h3>
-      <ul>
-        {{#each assumptions}}
-          <li>{{this}}</li>
-        {{/each}}
-      </ul>
+      <p class="grim-arithmetic-forecast__assumptions-vital">{{vitalAssumption}}</p>
+      {{#if otherAssumptions.length}}
+        <details class="grim-arithmetic-details">
+          <summary>{{localize "GrimArithmetic.Forecast.MoreAssumptions"}}</summary>
+          <ul>
+            {{#each otherAssumptions}}
+              <li>{{this}}</li>
+            {{/each}}
+          </ul>
+        </details>
+      {{/if}}
     </section>
   {{/unless}}
 </section>

@@ -133,23 +133,23 @@
     </section>
 
     <section class="grim-arithmetic-panel__details">
-      <h3>{{localize "GrimArithmetic.PairDetail.Assumptions"}}</h3>
-      <ul>
-        {{#each risk.assumptions}}
-          <li>{{this}}</li>
-        {{/each}}
-      </ul>
+      <details class="grim-arithmetic-details">
+        <summary>{{localize "GrimArithmetic.PairDetail.AssumptionsSummary"}}</summary>
 
-      <h3>{{localize "GrimArithmetic.PairDetail.NotModeledYet"}}</h3>
-      <ul>
-        {{#each risk.notModeled}}
-          <li>{{this}}</li>
-        {{/each}}
-      </ul>
+        <h3>{{localize "GrimArithmetic.PairDetail.Assumptions"}}</h3>
+        <ul>
+          {{#each risk.assumptions}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+
+        <h3>{{localize "GrimArithmetic.PairDetail.NotModeledYet"}}</h3>
+        <ul>
+          {{#each risk.notModeled}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </details>
     </section>
   {{/if}}
-
-  <aside class="grim-arithmetic-panel__caveat">
-    {{permanentDeath}}
-  </aside>
 </section>

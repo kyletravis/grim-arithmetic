@@ -1,10 +1,9 @@
 <section class="grim-arithmetic-panel">
   <header class="grim-arithmetic-panel__header">
-    <h2>{{localize "GrimArithmetic.DangerBoard.Heading" version=moduleVersion}}</h2>
+    <h2>{{localize "GrimArithmetic.DangerBoard.Heading"}}</h2>
+    <p class="grim-arithmetic-panel__version">{{localize "GrimArithmetic.DangerBoard.Version" version=moduleVersion}}</p>
     <p class="grim-arithmetic-panel__tagline">{{localize "GrimArithmetic.DangerBoard.Tagline"}}</p>
   </header>
-
-  <p class="grim-arithmetic-panel__hint">{{message}}</p>
 
   <div class="grim-arithmetic-panel__board-actions">
     {{#if forecastEnabled}}
@@ -24,6 +23,15 @@
         {{localize "GrimArithmetic.DangerBoard.Empty"}}
       </p>
     {{else}}
+      <ul class="grim-arithmetic-panel__risk-legend" aria-label="{{localize "GrimArithmetic.DangerBoard.LegendLabel"}}">
+        {{#each dangerBoard.legend}}
+          <li>
+            <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}">{{label}}</span>
+            <span class="grim-arithmetic-panel__risk-legend-range">{{range}}</span>
+          </li>
+        {{/each}}
+      </ul>
+
       <h3 class="grim-arithmetic-panel__section-title" data-tooltip="{{localize "GrimArithmetic.DangerBoard.EndangeredTooltip"}}">{{localize "GrimArithmetic.DangerBoard.EndangeredTitle"}}</h3>
       <ol class="grim-arithmetic-panel__danger-grid">
         {{#each dangerBoard.topEndangeredPcs}}
@@ -34,8 +42,8 @@
               <span class="grim-arithmetic-panel__danger-row-vs">{{localize "GrimArithmetic.Common.Vs"}}</span>
               {{enemyName}} <em>{{attackName}}</em>
             </span>
-            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="{{localize "GrimArithmetic.Common.DownTooltip"}}">{{downPercent}}%</span>
             <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="{{localize "GrimArithmetic.Common.RiskPillTooltip"}}" data-tooltip-html="{{localize "GrimArithmetic.Common.RiskPillTooltipHtml"}}">{{riskLabel}}</span>
+            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="{{localize "GrimArithmetic.Common.DownTooltip"}}">{{downPercent}}%</span>
             <button type="button"
                     class="grim-arithmetic-panel__danger-row-action"
                     data-action="openDetailPair"
@@ -56,8 +64,8 @@
               <span class="grim-arithmetic-panel__danger-row-vs">{{localize "GrimArithmetic.Common.Vs"}}</span>
               {{pcName}}
             </span>
-            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="{{localize "GrimArithmetic.Common.DownTooltip"}}">{{downPercent}}%</span>
             <span class="grim-arithmetic-panel__risk-pill grim-arithmetic-panel__risk-pill--{{riskClass}}" data-tooltip="{{localize "GrimArithmetic.Common.RiskPillTooltip"}}" data-tooltip-html="{{localize "GrimArithmetic.Common.RiskPillTooltipHtml"}}">{{riskLabel}}</span>
+            <span class="grim-arithmetic-panel__danger-row-percent" data-tooltip="{{localize "GrimArithmetic.Common.DownTooltip"}}">{{downPercent}}%</span>
             <button type="button"
                     class="grim-arithmetic-panel__danger-row-action"
                     data-action="openDetailPair"
@@ -70,11 +78,14 @@
     {{/if}}
 
     {{#if dangerBoard.caveats.length}}
-      <ul class="grim-arithmetic-panel__danger-caveats">
-        {{#each dangerBoard.caveats}}
-          <li>{{this}}</li>
-        {{/each}}
-      </ul>
+      <details class="grim-arithmetic-details">
+        <summary>{{localize "GrimArithmetic.DangerBoard.CaveatsSummary"}}</summary>
+        <ul class="grim-arithmetic-panel__danger-caveats">
+          {{#each dangerBoard.caveats}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </details>
     {{/if}}
   </section>
 </section>

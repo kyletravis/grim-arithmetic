@@ -33,7 +33,9 @@
       "CiTooltip": "95% confidence interval — the range the true value likely falls in given sampling variance."
     },
     "DangerBoard": {
-      "Heading": "Grim Arithmetic v{version}",
+      "Heading": "Grim Arithmetic",
+      "Version": "v{version}",
+      "LegendLabel": "Risk level legend",
       "Tagline": "Encounter danger board — immediate mortality pressure, not fate.",
       "ForecastButton": "Encounter Forecast",
       "ForecastTooltip": "Run a Monte Carlo simulation of the whole encounter to forecast downs, deaths, and TPK risk.",
@@ -46,7 +48,8 @@
       "EndangeredTitle": "Most endangered PCs",
       "EndangeredTooltip": "PCs ranked by their single-round chance of being knocked out by the most dangerous incoming attack.",
       "DangerousTitle": "Most dangerous enemies",
-      "DangerousTooltip": "Enemy attacks ranked by their single-round chance of knocking out a PC."
+      "DangerousTooltip": "Enemy attacks ranked by their single-round chance of knocking out a PC.",
+      "CaveatsSummary": "Notes & caveats"
     },
     "Forecast": {
       "Heading": "Encounter Forecast",
@@ -58,8 +61,8 @@
       "Progress": "Running iteration {completed} of {total} ({percent}%)…",
       "FailedHeading": "Forecast failed",
       "PessimismLead": "High-risk encounter.",
-      "CiNote": "Bracketed values are 95% confidence intervals from sampling variance.",
-      "Aborted": "aborted",
+      "StatusComplete": "Forecast Completed",
+      "StatusAborted": "Forecast Aborted",
       "RoundPrefix": "round",
       "AnyPcDownLabel": "Any PC down",
       "AnyPcDownTooltip": "Chance at least one PC is knocked out (0 HP) at some point in the encounter.",
@@ -76,6 +79,7 @@
       "MostLikelyToDrop": "Most likely to drop",
       "BiggestThreats": "Biggest threats",
       "ModeledAssumptions": "Modeled assumptions",
+      "MoreAssumptions": "Other modeling assumptions",
       "Table": {
         "Pc": "PC",
         "Down": "Down",
@@ -145,6 +149,7 @@
       "HeroPointNoteTooltip": "How a Hero Point would affect this outcome.",
       "StrikeChances": "Strike chances",
       "StrikeLine": "Strike {index}: hit {hit}%, crit {crit}%",
+      "AssumptionsSummary": "Modeling assumptions & limitations",
       "Assumptions": "Assumptions",
       "NotModeledYet": "Not modeled yet"
     }
