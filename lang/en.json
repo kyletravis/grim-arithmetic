@@ -36,7 +36,7 @@
       "Heading": "Grim Arithmetic",
       "Version": "v{version}",
       "LegendLabel": "Risk level legend",
-      "Tagline": "Encounter danger board — immediate mortality pressure, not fate.",
+      "Tagline": "Immediate Mortality Pressure, Not Fate…",
       "ForecastButton": "Encounter Forecast",
       "ForecastTooltip": "Run a Monte Carlo simulation of the whole encounter to forecast downs, deaths, and TPK risk.",
       "DetailSelectionButton": "Detail Selection + Target",
