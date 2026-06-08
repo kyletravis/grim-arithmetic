@@ -2,6 +2,18 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.2-rc3 - UI cleanup and native styling
+
+Release candidate focused on decluttering and unifying the three windows; no changes to the underlying mortality math (KHT-129).
+
+### Usability
+- **Encounter Forecast**: shows only the selected tactics profile's description instead of all five; keeps the vital "not modeled" caveat inline and collapses the rest; moves the high-risk warning below the statistics; adds a "Forecast Completed" status chip; the run button toggles to Cancel while running; light dividers separate the result tables.
+- **Encounter Danger Board**: the version now sits as small text under the title; a single-line risk-band legend (Grim → Low) with thresholds sits above the lists; removed the redundant header instruction line; each row shows the risk label before the percentage; the window starts wider; tighter row spacing.
+
+### Look & feel
+- Unified typography across all three windows on Foundry's native Signika body font with Modesto Condensed titles, replacing the previous mix of fonts.
+- Optimized spacing, sizing, and semantic box colors throughout.
+
 ## v0.7.2-rc2 - Forecast tables sorted by risk
 
 Release candidate building on v0.7.2-rc1; no changes to the underlying mortality math.
