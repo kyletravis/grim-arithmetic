@@ -2,9 +2,20 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
-## v0.8.0 - Release for new module.zip format
+## v0.8.1 - Foundry v14.364 compatibility
 
-Renamed grim-arithmetic zip to module.zip in the release so that it can be counted accurately atop the README.md file.
+Compatibility bump only; no changes to the underlying mortality math.
+
+### Compatibility
+- Verified against **Foundry VTT v14.364**.
+
+## v0.8.0 - README stats and module.zip downloads
+
+Repository-facing polish; no changes to the underlying mortality math.
+
+### Repository & releases
+- Renamed the release archive from `grim-arithmetic-v<version>.zip` to a stable `module.zip` (the version stays in the release path), so the download count can be tracked accurately atop the README (KHT-130).
+- Added Latest Release, Downloads, Foundry Verified, and License badges to the top of the README (KHT-130).
 
 ## v0.7.3-rc1 - CI automation update
 

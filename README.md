@@ -63,7 +63,7 @@ The board and detail panel are GM-only and never broadcast to players.
 
 | | |
 |---|---|
-| Foundry VTT | v13 minimum, smoke-tested on **v14.361** |
+| Foundry VTT | Built for **v14** (verified on v14.364); **v13** supported for backwards compatibility |
 | System | Pathfinder 2e (`pf2e`) |
 | Current version | see [latest release](https://github.com/kyletravis/grim-arithmetic/releases/latest) |
 
