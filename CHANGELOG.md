@@ -2,6 +2,10 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.8.0 - Release for new module.zip format
+
+Renamed grim-arithmetic zip to module.zip in the release so that it can be counted accurately atop the README.md file.
+
 ## v0.7.3-rc1 - CI automation update
 
 First release using updated CI process. No other material changes.
