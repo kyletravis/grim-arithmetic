@@ -1,0 +1,185 @@
+name: Cut Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, no leading v (e.g. 0.7.3 or 0.7.3-rc1)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+# Queue concurrent dispatches rather than cancel: cancelling mid-flight could
+# leave a bump commit on main with no tag (see recovery note on the tag step).
+concurrency:
+  group: cut-release
+  cancel-in-progress: false
+
+jobs:
+  # Bumps the version on main and tags it, with the commit created via
+  # GitHub's GraphQL createCommitOnBranch mutation so it is GPG-signed by
+  # GitHub and attributed to github-actions[bot] (Verified badge).
+  cut:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.validate.outputs.tag }}
+      sha: ${{ steps.commit.outputs.oid }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      # workflow_dispatch inputs are user-controlled strings, so the version
+      # is passed via env (never interpolated raw into the script).
+      - name: Validate version input
+        id: validate
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+            echo "::error::Invalid version \"$VERSION\". Expected X.Y.Z or X.Y.Z-<prerelease> with no leading v (e.g. 0.7.3, 0.7.3-rc1)."
+            exit 1
+          fi
+
+          # The tag must not already exist; ls-remote exits 0 when it finds the ref.
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" > /dev/null 2>&1; then
+            echo "::error::Tag v$VERSION already exists."
+            exit 1
+          fi
+
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$VERSION" = "$PKG" ]; then
+            echo "::error::Version $VERSION is already the current package.json version; nothing to bump."
+            exit 1
+          fi
+
+          # Guard: CHANGELOG.md must have a section for this version, otherwise
+          # the release notes would fall back to the full changelog. Same
+          # matching idiom as release.yml's "Extract changelog section" step:
+          # "## v<version>" as a whole token, optionally followed by " - title".
+          SECTION="$(awk -v ver="$VERSION" '
+            index($0, "## v" ver) == 1 {
+              rest = substr($0, length("## v" ver) + 1)
+              if (rest == "" || substr(rest, 1, 1) == " ") { found = 1; next }
+            }
+            found && index($0, "## v") == 1 { exit }
+            found { print }
+          ' CHANGELOG.md)"
+          if [ -z "$SECTION" ]; then
+            echo "::error::CHANGELOG.md has no non-empty \"## v$VERSION\" section. Add release notes before cutting."
+            exit 1
+          fi
+
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      # Capture the checked-out HEAD before mutating anything; it becomes
+      # expectedHeadOid below so the commit fails instead of clobbering main
+      # if someone pushes between checkout and commit (race safety).
+      - name: Record base commit
+        id: base
+        run: echo "oid=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # Build must pass on the pre-bump tree; do not mutate main if it's broken.
+      - run: npm ci
+      - run: npm run check
+
+      - name: Bump version files
+        env:
+          VERSION: ${{ inputs.version }}
+        run: node scripts/bump-version.mjs "$VERSION"
+
+      # createCommitOnBranch with GITHUB_TOKEN produces a commit that GitHub
+      # signs itself (Verified badge, github-actions[bot] author) — something
+      # a plain `git commit && git push` from the runner cannot do.
+      # The payload is assembled with jq to guarantee correct JSON escaping.
+      - name: Create signed release commit on main
+        id: commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          REPO: ${{ github.repository }}
+          EXPECTED_HEAD_OID: ${{ steps.base.outputs.oid }}
+        run: |
+          set -euo pipefail
+
+          QUERY='mutation($input: CreateCommitOnBranchInput!) {
+            createCommitOnBranch(input: $input) {
+              commit { oid }
+            }
+          }'
+
+          # Files go in via --rawfile and are base64-encoded inside jq (@base64,
+          # RFC 4648 over the string's UTF-8 bytes): the lockfile is ~128KB
+          # base64-encoded, which would exceed Linux's per-argument limit
+          # (MAX_ARG_STRLEN, 128KB) if passed as a CLI arg via --arg.
+          jq -n \
+            --arg query "$QUERY" \
+            --arg repo "$REPO" \
+            --arg head "$EXPECTED_HEAD_OID" \
+            --arg msg "chore(release): v$VERSION" \
+            --rawfile pkg package.json \
+            --rawfile lock package-lock.json \
+            --rawfile mod module.json \
+            '{
+              query: $query,
+              variables: {
+                input: {
+                  branch: { repositoryNameWithOwner: $repo, branchName: "main" },
+                  expectedHeadOid: $head,
+                  message: { headline: $msg },
+                  fileChanges: {
+                    additions: [
+                      { path: "package.json", contents: ($pkg | @base64) },
+                      { path: "package-lock.json", contents: ($lock | @base64) },
+                      { path: "module.json", contents: ($mod | @base64) }
+                    ]
+                  }
+                }
+              }
+            }' > /tmp/commit-payload.json
+
+          # gh exits nonzero on GraphQL errors, but belt-and-braces: the oid
+          # must also be non-empty before we tag it.
+          NEW_OID="$(gh api graphql --input /tmp/commit-payload.json --jq '.data.createCommitOnBranch.commit.oid')"
+          if [ -z "$NEW_OID" ]; then
+            echo "::error::createCommitOnBranch returned no commit oid."
+            exit 1
+          fi
+          echo "Created commit $NEW_OID"
+          echo "oid=$NEW_OID" >> "$GITHUB_OUTPUT"
+
+      # Lightweight tag pointing at the signed commit; the release page then
+      # shows the Verified badge for the tagged commit.
+      #
+      # Recovery: if the run dies between the commit step and this one, main
+      # has a bump commit but no tag, and re-dispatching fails validation
+      # ("version already current"). Fix by pushing the tag manually at the
+      # commit oid printed above: `git push origin <oid>:refs/tags/v<version>`.
+      # A tag pushed with user credentials DOES fire release.yml's tag-push
+      # trigger, so the release publishes without re-dispatching this workflow.
+      - name: Create release tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+          NEW_OID: ${{ steps.commit.outputs.oid }}
+        run: gh api "repos/${{ github.repository }}/git/refs" -f "ref=refs/tags/v$VERSION" -f "sha=$NEW_OID"
+
+  # Tags created with GITHUB_TOKEN do not trigger `on: push: tags` workflows
+  # (GitHub suppresses events from that token to prevent loops), so the
+  # publish logic is invoked directly as a reusable workflow.
+  publish:
+    needs: cut
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.cut.outputs.tag }}
+    permissions:
+      contents: write

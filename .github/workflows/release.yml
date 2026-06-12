@@ -4,6 +4,16 @@ on:
   push:
     tags:
       - 'v*'
+  # Reusable entry point for the Cut Release workflow. Tags created by Actions
+  # with GITHUB_TOKEN do NOT trigger `on: push: tags` (GitHub suppresses
+  # workflow-triggering events from that token), so cut-release.yml must call
+  # this workflow directly with the tag it just created.
+  workflow_call:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v0.7.3)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -12,7 +22,12 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
+      # In workflow_call mode the default checkout would be the caller's ref
+      # (main), not the tag — pin to the tag explicitly. On tag push,
+      # inputs.tag is empty and github.ref_name is the tag itself.
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
 
       - uses: actions/setup-node@v5
         with:
@@ -24,7 +39,7 @@ jobs:
       # from package.json. A mismatch would publish a broken download link.
       - name: Verify tag matches package.json version
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ inputs.tag || github.ref_name }}
         run: |
           TAG="${REF_NAME#v}"
           PKG="$(node -p "require('./package.json').version")"
@@ -44,7 +59,7 @@ jobs:
       - name: Determine prerelease flag
         id: prerelease
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ inputs.tag || github.ref_name }}
         run: |
           case "$REF_NAME" in
             *-rc*|*-beta*|*-alpha*) echo "value=true" >> "$GITHUB_OUTPUT" ;;
@@ -54,7 +69,7 @@ jobs:
       # Pull just this version's section out of CHANGELOG.md for the release body.
       - name: Extract changelog section
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ inputs.tag || github.ref_name }}
         run: |
           VERSION="${REF_NAME#v}"
           # Match "## v<version>" as a whole token (optionally followed by " - title"),
@@ -77,9 +92,12 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          name: Grim Arithmetic ${{ github.ref_name }}
+          # In workflow_call mode the ref is main, so the tag must be explicit;
+          # otherwise the release would be created against "main".
+          tag_name: ${{ inputs.tag || github.ref_name }}
+          name: Grim Arithmetic ${{ inputs.tag || github.ref_name }}
           body_path: release-notes.md
           prerelease: ${{ steps.prerelease.outputs.value == 'true' }}
           files: |
-            releases/grim-arithmetic-${{ github.ref_name }}.zip
+            releases/grim-arithmetic-${{ inputs.tag || github.ref_name }}.zip
             releases/module.json
