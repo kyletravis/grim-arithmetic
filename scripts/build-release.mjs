@@ -9,7 +9,12 @@ const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const version = packageJson.version;
 const releaseDir = join(root, 'releases');
 const stagingDir = join(releaseDir, `grim-arithmetic-v${version}`);
-const zipName = `grim-arithmetic-v${version}.zip`;
+// Stable asset filename (not version-stamped) so the release path carries the
+// version while the name stays constant. This lets `releases/latest/download/
+// module.zip` resolve, and the shields.io downloads badge count the zip alone
+// (versioned names can't be matched across releases, and `total` also counts
+// the heavily-polled module.json).
+const zipName = 'module.zip';
 const zipPath = join(releaseDir, zipName);
 
 const requiredPaths = [

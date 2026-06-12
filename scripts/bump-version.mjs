@@ -51,7 +51,10 @@ const mod = readJson(files.moduleJson);
 const oldPkgVersion = pkg.version;
 const oldLockVersion = lock.version;
 const oldModVersion = mod.version;
-const downloadUrl = `https://github.com/kyletravis/grim-arithmetic/releases/download/v${newVersion}/grim-arithmetic-v${newVersion}.zip`;
+// Version-specific release path with a stable `module.zip` filename: pinned
+// installs still resolve per-version, and `releases/latest/download/module.zip`
+// works for the downloads badge. Keep in sync with build-release.mjs's zipName.
+const downloadUrl = `https://github.com/kyletravis/grim-arithmetic/releases/download/v${newVersion}/module.zip`;
 
 pkg.version = newVersion;
 lock.version = newVersion;

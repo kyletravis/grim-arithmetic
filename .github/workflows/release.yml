@@ -98,6 +98,8 @@ jobs:
           name: Grim Arithmetic ${{ inputs.tag || github.ref_name }}
           body_path: release-notes.md
           prerelease: ${{ steps.prerelease.outputs.value == 'true' }}
+          # build-release.mjs emits a stable-named releases/module.zip (the tag
+          # in the release path carries the version); keep this in sync with it.
           files: |
-            releases/grim-arithmetic-${{ inputs.tag || github.ref_name }}.zip
+            releases/module.zip
             releases/module.json

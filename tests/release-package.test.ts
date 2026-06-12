@@ -26,8 +26,11 @@ describe('release packaging metadata', () => {
     expect(moduleJson.manifest).toBe(
       'https://github.com/kyletravis/grim-arithmetic/releases/latest/download/module.json'
     );
+    // Stable `module.zip` filename under a version-specific path: pinned
+    // installs resolve per-version and the latest/module.zip downloads badge
+    // can count the zip alone. Keep in sync with scripts/bump-version.mjs.
     expect(moduleJson.download).toBe(
-      `https://github.com/kyletravis/grim-arithmetic/releases/download/v${version}/grim-arithmetic-v${version}.zip`
+      `https://github.com/kyletravis/grim-arithmetic/releases/download/v${version}/module.zip`
     );
   });
 

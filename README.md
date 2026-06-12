@@ -1,5 +1,10 @@
 # Grim Arithmetic
 
+[![Latest Release](https://img.shields.io/github/v/release/kyletravis/grim-arithmetic?style=for-the-badge&label=LATEST%20RELEASE&color=red)](https://github.com/kyletravis/grim-arithmetic/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/kyletravis/grim-arithmetic/latest/module.zip?style=for-the-badge&label=DOWNLOADS&color=2b82fc)](https://github.com/kyletravis/grim-arithmetic/releases/latest)
+[![Foundry Verified](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkyletravis%2Fgrim-arithmetic%2Freleases%2Flatest%2Fdownload%2Fmodule.json&query=%24.compatibility.verified&style=for-the-badge&label=FOUNDRY%20VERIFIED&prefix=v&colorB=orange)](https://foundryvtt.com/packages/grim-arithmetic)
+[![License: MIT](https://img.shields.io/github/license/kyletravis/grim-arithmetic?style=for-the-badge&label=LICENSE&color=blueviolet)](https://github.com/kyletravis/grim-arithmetic/blob/main/LICENSE)
+
 *Foundry knows how hard the encounter is. Grim Arithmetic tells you who might not walk away.*
 
 A GM-only Foundry VTT module for **Pathfinder 2e** that surfaces real, immediate down-risk for every PC vs every enemy in the current scene — using exact dice distributions, not vibes.
@@ -54,20 +59,6 @@ After installing, enable **Grim Arithmetic** inside your PF2e world via **Game S
 
 The board and detail panel are GM-only and never broadcast to players.
 
-## What's new in v0.7.0
-
-- **ApplicationV2 migration** — all three windows (Encounter Danger Board, Pair Detail, Encounter Forecast) now extend `foundry.applications.api.ApplicationV2` + `HandlebarsApplicationMixin`, so Foundry v13+ no longer logs a V1 Application deprecation warning.
-- **Window UX fixes** — Pair Detail and Encounter Forecast windows have bounded heights with proper scrolling, label colors inherit the V2 theme (readable on dark windows), and the Encounter Danger Board buttons were re-ordered and re-cased.
-
-See [`CHANGELOG.md`](./CHANGELOG.md) for the full v0.6.x history.
-
-## Security fixes (v0.6.0)
-
-- **H-1:** Dice formula budget limits (max 500 dice, 100 per term, 50000 outcomes) prevent CPU exhaustion from malformed actor data.
-- **M-1:** Debug capture gated behind `debugLogging` + GM check to prevent stat-block leakage.
-- **M-2:** Dev dependencies pinned to exact lockfile versions.
-- **Low:** No source maps in production builds.
-
 ## Compatibility
 
 | | |
@@ -81,9 +72,6 @@ Starfinder 2e support is on the roadmap.
 ## Disclaimer
 
 Grim Arithmetic is an independent module and is not affiliated with, endorsed by, or sponsored by Foundry Gaming LLC, Paizo Inc., or the Pathfinder/Starfinder brands.
-
-## Known issues
-- A "message channel closed before a response was received" console error reported in some sessions traces to a browser extension's `chrome.runtime.onMessage` listener, not Grim Arithmetic. The module uses zero Chrome extension APIs (KHT-107 — closed as external).
 
 ## Development
 
