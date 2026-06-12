@@ -2,6 +2,10 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.7.3-rc1 - CI automation update
+
+First release using updated CI process. No other material changes.
+
 ## v0.7.2-rc3 - UI cleanup and native styling
 
 Release candidate focused on decluttering and unifying the three windows; no changes to the underlying mortality math (KHT-129).
