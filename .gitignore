@@ -1,7 +1,9 @@
 node_modules/
 coverage/
 dist/
-docs/plans/
+# Internal docs are local-only; only ARITHMETIC.md is published.
+docs/*
+!docs/ARITHMETIC.md
 releases/
 screenshots/
 .DS_Store
