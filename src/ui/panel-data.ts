@@ -1,4 +1,5 @@
 import { DyingSeverity, immediateDownRisk, MapType } from '../engine/mortality';
+import { riskClassFor, riskLabelFor } from '../engine/risk-bands';
 import type { SimulationResult, TacticsProfileId } from '../engine/simulation-types';
 import { TokenSelectionResult } from '../foundry/selection';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
@@ -576,8 +577,8 @@ function buildForecastResultView(result: SimulationResult): ForecastResultView {
           topContributingEnemyName: pc.topContributingEnemyId
             ? (enemyNamesById.get(pc.topContributingEnemyId) ?? pc.topContributingEnemyId)
             : '—',
-          riskClass: forecastRiskClass(pc.downProbability),
-          riskLabel: forecastRiskLabel(pc.downProbability)
+          riskClass: riskClassFor(pc.downProbability),
+          riskLabel: riskLabelFor(pc.downProbability)
         };
       })
       // Sort at displayed precision so rows showing the same percent always fall
@@ -608,16 +609,4 @@ function proportionCI(probability: number, total: number): { lower: number; uppe
     lower: Math.max(0, p - margin),
     upper: Math.min(1, p + margin)
   };
-}
-
-function forecastRiskLabel(probability: number): string {
-  if (probability < 0.05) return 'Low';
-  if (probability < 0.15) return 'Guarded';
-  if (probability < 0.35) return 'Dangerous';
-  if (probability < 0.6) return 'Severe';
-  return 'Grim';
-}
-
-function forecastRiskClass(probability: number): string {
-  return forecastRiskLabel(probability).toLowerCase();
 }

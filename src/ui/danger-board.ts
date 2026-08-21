@@ -1,4 +1,5 @@
 import { EncounterRiskMatrix, PairRisk } from '../engine/encounter-risk';
+import { RISK_BANDS, riskBandRangeText } from '../engine/risk-bands';
 
 export interface DangerBoardEntry {
   pcId: string;
@@ -21,13 +22,11 @@ export interface RiskLegendEntry {
 
 /** Risk bands shown as a legend so GMs can read the row pills at a glance.
  *  Ordered most-to-least dangerous; ranges mirror Common.RiskPillTooltipHtml. */
-export const RISK_LEGEND: RiskLegendEntry[] = [
-  { riskClass: 'grim', label: 'Grim', range: '≥60%' },
-  { riskClass: 'severe', label: 'Severe', range: '35–60%' },
-  { riskClass: 'dangerous', label: 'Dangerous', range: '15–35%' },
-  { riskClass: 'guarded', label: 'Guarded', range: '5–15%' },
-  { riskClass: 'low', label: 'Low', range: '<5%' }
-];
+export const RISK_LEGEND: RiskLegendEntry[] = [...RISK_BANDS].reverse().map((band) => ({
+  riskClass: band.label.toLowerCase(),
+  label: band.label,
+  range: riskBandRangeText(band)
+}));
 
 export interface DangerBoardData {
   topEndangeredPcs: DangerBoardEntry[];

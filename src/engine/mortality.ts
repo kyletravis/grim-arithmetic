@@ -1,5 +1,6 @@
 import { attackOutcomeProbabilities } from './attack-probability';
 import { DamageDistribution, DamageOutcome, damageDistribution } from './dice';
+import { riskLabelFor, type RiskLabel } from './risk-bands';
 
 export type MapType = 'normal' | 'agile' | 'none';
 
@@ -50,7 +51,7 @@ export interface ImmediateDownRiskResult {
   expectedHpAfterTurn: number;
   hitChanceByStrike: number[];
   critChanceByStrike: number[];
-  riskLabel: 'Low' | 'Guarded' | 'Dangerous' | 'Severe' | 'Grim';
+  riskLabel: RiskLabel;
   topRiskDrivers: string[];
   assumptions: string[];
   notModeled: string[];
@@ -119,7 +120,7 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
     expectedHpAfterTurn,
     hitChanceByStrike,
     critChanceByStrike,
-    riskLabel: riskLabel(downProbability),
+    riskLabel: riskLabelFor(downProbability),
     topRiskDrivers: buildRiskDrivers({
       downProbability,
       hitDownProbability: directHitDownProbability,
@@ -379,14 +380,6 @@ function sumDownProbability(damageStates: Map<number, number>, hp: number): numb
 
 function clampProbability(value: number): number {
   return Math.max(0, Math.min(1, value));
-}
-
-function riskLabel(probability: number): ImmediateDownRiskResult['riskLabel'] {
-  if (probability < 0.05) return 'Low';
-  if (probability < 0.15) return 'Guarded';
-  if (probability < 0.35) return 'Dangerous';
-  if (probability < 0.6) return 'Severe';
-  return 'Grim';
 }
 
 function buildRiskDrivers({
