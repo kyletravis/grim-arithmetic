@@ -271,3 +271,33 @@ describe('runSimulation progress and abort', () => {
     expect(result.caveats).toContain('No iterations completed.');
   });
 });
+
+describe('runSimulation: round-cap rate (C6)', () => {
+  it('reports the round-cap rate as a caveat when > 0', () => {
+    // Neither side has attacks, so every iteration runs to the cap.
+    const stalemateSetup: EncounterSetup = {
+      pcs: [makePc('mira')],
+      enemies: [makeEnemy('boss', [])],
+      caveats: []
+    };
+    const result = runSimulation(
+      stalemateSetup,
+      makeConfig({ iterations: 10, tacticsProfile: 'spread-damage', maxRounds: 2, seed: 'cap' })
+    );
+    expect(result.roundCapRate).toBe(1);
+    expect(result.caveats.some((c) => c.includes('100% of runs reached the 2-round cap'))).toBe(
+      true
+    );
+  });
+
+  it('reports a zero round-cap rate when every fight resolves', () => {
+    const setup: EncounterSetup = {
+      pcs: [makePc('mira', { hp: { current: 500, max: 500, temp: 0 }, attacks: [makeAttack()] })],
+      enemies: [makeEnemy('boss', [makeAttack()], { hp: { current: 1, max: 40, temp: 0 } })],
+      caveats: []
+    };
+    const result = runSimulation(setup, makeConfig({ iterations: 20, seed: 'no-cap' }));
+    expect(result.roundCapRate).toBe(0);
+    expect(result.caveats.some((c) => c.includes('round cap'))).toBe(false);
+  });
+});

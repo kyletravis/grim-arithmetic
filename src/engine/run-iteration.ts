@@ -32,7 +32,8 @@ export interface RunIterationOptions {
  *    then resolves each strike via the sample-strike + apply-damage path.
  *  - The plan is committed when the turn starts; a strike that lands on
  *    an already-downed (but not dead) target still increments dying.
- *  - Termination: all PCs downed (TPK), all enemies dead, or maxRounds hit.
+ *  - Termination: all PCs downed (TPK), all enemies dead, or maxRounds hit
+ *    (the last case sets hitRoundCap so the aggregator can flag truncation).
  *
  * Same setup + same config + same seed -> byte-identical IterationResult.
  */
@@ -65,6 +66,7 @@ export function runIteration(
   const events: RoundEvent[] = [];
   let firstDownRound: number | null = null;
   let roundsElapsed = 0;
+  let terminatedEarly = false;
 
   let recoveryChecksFired = 0;
   let heroPointSurvivalsFired = 0;
@@ -209,8 +211,14 @@ export function runIteration(
       }
     }
 
-    if (allPcsDownedOrDead(combatants)) break;
-    if (allEnemiesDead(combatants)) break;
+    if (allPcsDownedOrDead(combatants)) {
+      terminatedEarly = true;
+      break;
+    }
+    if (allEnemiesDead(combatants)) {
+      terminatedEarly = true;
+      break;
+    }
   }
 
   const perCombatant: PerCombatantOutcome[] = Array.from(combatants.values()).map((c) => ({
@@ -235,6 +243,7 @@ export function runIteration(
     perCombatant,
     damageByPair,
     events: config.captureEvents ? events : undefined,
+    hitRoundCap: !terminatedEarly,
     healsFired,
     recoveryChecksFired,
     heroPointSurvivalsFired

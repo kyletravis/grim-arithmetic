@@ -291,3 +291,29 @@ describe('runIteration: recovery checks (C4)', () => {
     expect(result.perCombatant[0]).toMatchObject({ dying: 0, wounded: 1, downed: true });
   });
 });
+
+describe('runIteration: round cap (C6)', () => {
+  it('flags iterations that hit the round cap', () => {
+    // PC with attacks: [] vs enemy with attacks: [] — nobody can end the fight.
+    const setup = makeSetup({
+      pcs: [makePc('mira')],
+      enemies: [makeEnemy('boss', [])]
+    });
+    const result = runIteration(
+      setup,
+      makeConfig({ tacticsProfile: 'spread-damage', maxRounds: 3 }),
+      createRng(1)
+    );
+    expect(result.roundsElapsed).toBe(3);
+    expect(result.hitRoundCap).toBe(true);
+  });
+
+  it('does not flag iterations that end before the cap', () => {
+    const setup = makeSetup({
+      pcs: [makePc('mira', { hp: { current: 200, max: 200, temp: 0 }, attacks: [makeAttack()] })],
+      enemies: [makeEnemy('boss', [makeAttack()], { hp: { current: 1, max: 40, temp: 0 } })]
+    });
+    const result = runIteration(setup, makeConfig({ maxRounds: 10 }), createRng('quick-kill'));
+    expect(result.hitRoundCap).toBe(false);
+  });
+});

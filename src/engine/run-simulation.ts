@@ -111,6 +111,7 @@ function aggregate(
         tpk: { lower: 0, upper: 0 },
         meanFirstDownRound: null
       },
+      roundCapRate: 0,
       caveats: [...setup.caveats, 'No iterations completed.'],
       enemyStrikesPerTurn
     };
@@ -221,6 +222,14 @@ function aggregate(
       ? firstDownRounds.reduce((a, b) => a + b, 0) / firstDownRounds.length
       : null;
 
+  const roundCapRate = results.filter((r) => r.hitRoundCap).length / completedCount;
+  const caveats = [...setup.caveats];
+  if (roundCapRate > 0) {
+    caveats.push(
+      `${Math.round(roundCapRate * 100)}% of runs reached the ${config.maxRounds}-round cap and were cut off; risk may be understated for long fights.`
+    );
+  }
+
   const confidenceIntervals = buildConfidenceIntervals(
     anyDownCount,
     completedCount,
@@ -246,7 +255,8 @@ function aggregate(
       heroPointSurvivalRate: hpSurvivalIterations / completedCount
     },
     confidenceIntervals,
-    caveats: [...setup.caveats],
+    roundCapRate,
+    caveats,
     enemyStrikesPerTurn
   };
 }

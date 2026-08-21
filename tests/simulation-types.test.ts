@@ -114,6 +114,7 @@ describe('simulation-types shapes', () => {
       tpk: false,
       perCombatant: [],
       damageByPair: { 'enemy-1->pc-1': 8 },
+      hitRoundCap: false,
       healsFired: 0,
       recoveryChecksFired: 0,
       heroPointSurvivalsFired: 0
@@ -144,6 +145,7 @@ describe('simulation-types shapes', () => {
         tpk: { lower: 0, upper: 0 },
         meanFirstDownRound: null
       },
+      roundCapRate: 0,
       caveats: [],
       enemyStrikesPerTurn: 2
     };

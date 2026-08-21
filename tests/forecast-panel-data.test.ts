@@ -166,6 +166,7 @@ function makeResult(overrides: Partial<SimulationResult> = {}): SimulationResult
       tpk: { lower: 0.1, upper: 0.14 },
       meanFirstDownRound: { lower: 2.0, upper: 2.2 }
     },
+    roundCapRate: 0,
     caveats: [],
     enemyStrikesPerTurn: 2,
     ...overrides

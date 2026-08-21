@@ -30,7 +30,7 @@ import type { TacticsProfile, TurnPlanHeal, TurnPlanStrike } from './tactics-typ
  * Slot economy: heal-spell consumes the lowest-rank slot remaining.
  */
 export const pcDefaultTactics: TacticsProfile = {
-  id: 'random-legal',
+  id: 'pc-default',
   description:
     'PCs heal dying or low-HP allies when capable; otherwise 2 Strikes against the most-dangerous standing enemy.',
   chooseTurn(context) {
