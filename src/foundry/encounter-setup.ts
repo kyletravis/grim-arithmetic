@@ -73,8 +73,8 @@ function materialize<TokenLike extends { name?: string }>(
     for (const assumption of attackAssumptions) caveats.push(`${p.snapshot.name}: ${assumption}`);
     // everDowned counts the starting state, so a PC already at 0 HP pins
     // "any PC down" at 100% — say so rather than letting it read as a forecast.
-    // Same current+temp pool snapshotToSimulationCombatant uses for `downed`.
-    if (p.snapshot.hp.current + (p.snapshot.hp.temp ?? 0) <= 0) {
+    // Keyed off current HP only, matching `downed` above.
+    if (p.snapshot.hp.current <= 0) {
       caveats.push(`${p.snapshot.name} starts this run at 0 HP, so "any PC down" will read 100%.`);
     }
     const combatant = snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
@@ -154,8 +154,7 @@ function snapshotToSimulationCombatant(
   if (snapshot.initiativeBonus === undefined) {
     caveats.push(`${snapshot.name}: initiative bonus unknown; defaulting to 0.`);
   }
-  const pool = snapshot.hp.current + (snapshot.hp.temp ?? 0);
-  if (side === 'enemy' && pool <= 0) {
+  if (side === 'enemy' && snapshot.hp.current <= 0) {
     caveats.push(`${snapshot.name} is already at 0 HP and is treated as defeated.`);
   }
   return {
@@ -178,8 +177,8 @@ function snapshotToSimulationCombatant(
     wounded: snapshot.deathState?.wounded ?? 0,
     doomed: snapshot.deathState?.doomed ?? 0,
     heroPoints: snapshot.deathState?.heroPoints ?? 0,
-    // Temp HP is what actually keeps a combatant up, so "at 0 HP" means the
-    // whole pool — the same test the starting-at-0-HP caveat uses.
+    // Consciousness keys off current HP; temp HP absorbs damage but does not
+    // keep a creature standing (matches applyDamage).
     //
     // PCs: 0 HP is unconscious whether or not they are still dying (a passed
     // recovery check stabilizes them but leaves them down); never dead at
@@ -189,8 +188,11 @@ function snapshotToSimulationCombatant(
     // applyDamage() uses that same rule mid-fight, and allEnemiesDead() reads
     // `dead` — a hostile left downed-but-alive is never targeted by PC tactics
     // and never dies, so every iteration would run to the round cap.
-    downed: side === 'pc' ? pool <= 0 || (snapshot.deathState?.dying ?? 0) > 0 : pool <= 0,
-    dead: side === 'enemy' && pool <= 0,
+    downed:
+      side === 'pc'
+        ? snapshot.hp.current <= 0 || (snapshot.deathState?.dying ?? 0) > 0
+        : snapshot.hp.current <= 0,
+    dead: side === 'enemy' && snapshot.hp.current <= 0,
     initiativeBonus: snapshot.initiativeBonus ?? 0,
     damageAdjustments: snapshot.damageAdjustments,
     traits: [...snapshot.traits],

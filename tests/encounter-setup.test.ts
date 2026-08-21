@@ -133,7 +133,7 @@ describe('buildEncounterSetupFromSource', () => {
     );
   });
 
-  it('treats a PC kept up by temporary HP as standing, with no 0-HP caveat', () => {
+  it('treats a PC at 0 HP as downed even with temporary HP remaining', () => {
     const source = {
       combatants: [
         {
@@ -151,9 +151,13 @@ describe('buildEncounterSetupFromSource', () => {
     };
 
     const setup = buildEncounterSetupFromSource(source, mockAdapter);
-    // downed and the caveat must agree on what "at 0 HP" means: current + temp.
-    expect(setup.pcs[0].downed).toBe(false);
-    expect(setup.caveats.some((c) => c.includes('starts this run at 0 HP'))).toBe(false);
+    // PF2e: temp HP absorbs damage but does not keep you conscious, and
+    // applyDamage() decides "reached 0 HP" from current alone.
+    expect(setup.pcs[0].downed).toBe(true);
+    expect(setup.pcs[0].dead).toBe(false);
+    expect(setup.caveats).toContain(
+      'Mira starts this run at 0 HP, so "any PC down" will read 100%.'
+    );
   });
 
   it('treats a hostile already at 0 HP as defeated rather than merely downed', () => {
@@ -189,7 +193,7 @@ describe('buildEncounterSetupFromSource', () => {
     expect(setup.caveats).toContain('Troll is already at 0 HP and is treated as defeated.');
   });
 
-  it('does not mark a hostile kept up by temporary HP as defeated', () => {
+  it('treats a hostile at 0 HP as defeated even with temporary HP remaining', () => {
     const source = {
       combatants: [
         {
@@ -207,9 +211,9 @@ describe('buildEncounterSetupFromSource', () => {
     };
 
     const setup = buildEncounterSetupFromSource(source, mockAdapter);
-    expect(setup.enemies[0].dead).toBe(false);
-    expect(setup.enemies[0].downed).toBe(false);
-    expect(setup.caveats.some((c) => c.includes('treated as defeated'))).toBe(false);
+    expect(setup.enemies[0].downed).toBe(true);
+    expect(setup.enemies[0].dead).toBe(true);
+    expect(setup.caveats).toContain('Troll is already at 0 HP and is treated as defeated.');
   });
 
   it('never marks a PC dead at setup, even at 0 HP', () => {
