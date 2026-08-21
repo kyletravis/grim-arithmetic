@@ -30,11 +30,6 @@ export interface PcCapabilities {
    * Example: { 1: 3, 2: 2 } = 3 first-rank, 2 second-rank slots.
    */
   healSpellSlots?: Record<number, number>;
-  /**
-   * Caster level used to scale the Heal cantrip. Null when no Heal cantrip
-   * is prepared / known.
-   */
-  healCantripLevel?: number | null;
 }
 
 export interface CombatantSnapshot {

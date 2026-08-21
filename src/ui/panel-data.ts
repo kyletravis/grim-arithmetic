@@ -388,7 +388,7 @@ export function buildForecastPanelData({
   const otherAssumptions = [
     'Enemies make the configured Default enemy Strike count of Strikes per turn (module setting).',
     'PCs Strike the most-dangerous standing enemy (2 strikes per turn by default).',
-    'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP.',
+    'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP (Battle Medicine follows the Treat Wounds DC table).',
     'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success / crit-failure step dying.',
     'Hero Points are spent to prevent death (once per iteration per PC).'
   ];

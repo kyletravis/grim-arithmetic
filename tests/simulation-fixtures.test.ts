@@ -29,8 +29,8 @@ import type { AttackSnapshot } from '../src/systems/base-adapter';
  *
  * Each PC gets 1 Hero Point and Battle Medicine by default so the rc.4
  * safety-net paths (Hero Point survival, Battle Medicine top-up) exercise.
- * mira specifically is built as a Cleric with prepared Heal spells +
- * Heal cantrip so the spell-slot path exercises too.
+ * mira specifically is built as a Cleric with prepared Heal spells so the
+ * spell-slot path exercises too.
  */
 const DEFAULT_PC_STRIKE: AttackSnapshot = {
   id: 'longsword',
@@ -66,9 +66,8 @@ function pc(id: string, overrides: Partial<SimulationCombatant> = {}): Simulatio
       medicineDC: 15,
       hasBattleMedicine: true,
       battleMedicineUsedTargets: new Set(),
-      // Mira plays a Cleric with prepared Heal slots + cantrip.
-      healSpellSlotsRemaining: isMira ? { 1: 3, 2: 2 } : {},
-      healCantripLevel: isMira ? 4 : null
+      // Mira plays a Cleric with prepared Heal slots.
+      healSpellSlotsRemaining: isMira ? { 1: 3, 2: 2 } : {}
     },
     ...overrides
   };

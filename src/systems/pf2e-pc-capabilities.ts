@@ -1,3 +1,4 @@
+import { selectBattleMedicineDc } from '../engine/heal-actions';
 import { isDebugLoggingEnabled } from '../settings';
 import { PcCapabilities } from './base-adapter';
 import type { Pf2eActorLike } from './pf2e-adapter';
@@ -23,9 +24,9 @@ function isItemLike(value: unknown): value is ItemLike {
  * proficiency + ability + item bonus where applicable. Battle Medicine
  * is a feat item; we detect it by slug.
  *
- * Medicine DC is derived from PF2e's proficiency-rank table: trained 15,
- * expert 20, master 30, legendary 40 (rc.4 default; future iterations
- * may scale by character level instead).
+ * Medicine DC comes from the Treat Wounds table: the healer attempts the
+ * highest DC their proficiency allows that they still succeed at on at
+ * least half their rolls (see selectBattleMedicineDc).
  */
 export function extractPcCapabilities(actor: Pf2eActorLike): PcCapabilities | undefined {
   const system = asRecord(actor.system);
@@ -36,40 +37,34 @@ export function extractPcCapabilities(actor: Pf2eActorLike): PcCapabilities | un
     optionalNumberLike(medicine.mod) ??
     optionalNumberLike(medicine.value);
   const medicineRank = optionalNumberLike(medicine.rank);
-  const medicineDC = medicineDcForRank(medicineRank);
+  const medicineDC = selectBattleMedicineDc(medicineRank, medicineModifier);
   const hasBattleMedicine = detectBattleMedicineFeat(actor);
-  const { healSpellSlots, healCantripLevel } = extractHealCapability(actor);
+  const { healSpellSlots } = extractHealCapability(actor);
 
   if (isDebugLoggingEnabled()) {
-    logHealingExtractionDebug(actor, healSpellSlots, healCantripLevel);
+    logHealingExtractionDebug(actor, healSpellSlots);
   }
 
   const hasAnySignal =
-    medicineModifier !== undefined ||
-    hasBattleMedicine ||
-    Object.keys(healSpellSlots).length > 0 ||
-    healCantripLevel !== null;
+    medicineModifier !== undefined || hasBattleMedicine || Object.keys(healSpellSlots).length > 0;
 
   if (!hasAnySignal) {
-    return { medicineDC, healCantripLevel: null };
+    return { medicineDC };
   }
   return {
     medicineModifier,
     hasBattleMedicine,
     medicineDC,
-    healSpellSlots: Object.keys(healSpellSlots).length > 0 ? healSpellSlots : undefined,
-    healCantripLevel
+    healSpellSlots: Object.keys(healSpellSlots).length > 0 ? healSpellSlots : undefined
   };
 }
 
 function extractHealCapability(actor: Pf2eActorLike): {
   healSpellSlots: Record<number, number>;
-  healCantripLevel: number | null;
 } {
   const spellItems = getActorItemsOfType(actor, 'spell');
   const entryItems = getActorItemsOfType(actor, 'spellcastingEntry');
   const slots: Record<number, number> = {};
-  let cantripLevel: number | null = null;
 
   const healSpellIds = new Set<string>();
   let foundHealSpell = false;
@@ -80,11 +75,6 @@ function extractHealCapability(actor: Pf2eActorLike): {
     foundHealSpell = true;
     const itemId = getItemId(item);
     if (itemId) healSpellIds.add(itemId);
-
-    if (isCantripSpell(system)) {
-      const level = optionalNumberLike(system.casterLevel) ?? extractCasterLevelFromActor(actor);
-      cantripLevel = level ?? cantripLevel ?? 1;
-    }
   }
 
   let entrySlotsFound = false;
@@ -113,14 +103,10 @@ function extractHealCapability(actor: Pf2eActorLike): {
       }
 
       if (preparedHealCount > 0) {
+        // Rank-0 (cantrip) Heal is not modeled; only slotted Heal casts are.
+        if (rank === 0) continue;
         entrySlotsFound = true;
-        if (rank === 0) {
-          if (cantripLevel === null) {
-            cantripLevel = extractCasterLevelFromActor(actor) ?? 1;
-          }
-        } else {
-          slots[rank] = (slots[rank] ?? 0) + preparedHealCount;
-        }
+        slots[rank] = (slots[rank] ?? 0) + preparedHealCount;
         continue;
       }
 
@@ -151,7 +137,7 @@ function extractHealCapability(actor: Pf2eActorLike): {
     }
   }
 
-  return { healSpellSlots: slots, healCantripLevel: cantripLevel };
+  return { healSpellSlots: slots };
 }
 
 function readPreparedList(prepared: unknown): unknown[] {
@@ -199,28 +185,6 @@ function isCantripSpell(system: UnknownRecord): boolean {
   return level === 0;
 }
 
-function extractCasterLevelFromActor(actor: Pf2eActorLike): number | undefined {
-  const system = asRecord(actor.system);
-  const details = asRecord(system.details);
-  const level = asRecord(details.level);
-  return optionalNumberLike(level.value) ?? optionalNumberLike(details.level);
-}
-
-function medicineDcForRank(rank: number | undefined): number {
-  switch (rank) {
-    case 4:
-      return 40;
-    case 3:
-      return 30;
-    case 2:
-      return 20;
-    case 1:
-      return 15;
-    default:
-      return 15;
-  }
-}
-
 function detectBattleMedicineFeat(actor: Pf2eActorLike): boolean {
   const items = getActorItemsOfType(actor, 'feat');
   for (const item of items) {
@@ -234,8 +198,7 @@ function detectBattleMedicineFeat(actor: Pf2eActorLike): boolean {
 
 function logHealingExtractionDebug(
   actor: Pf2eActorLike,
-  extractedSlots: Record<number, number>,
-  extractedCantripLevel: number | null
+  extractedSlots: Record<number, number>
 ): void {
   const allItems = toItemLikes(actor.items);
   const itemTypes = asRecord(actor.itemTypes);
@@ -301,7 +264,6 @@ function logHealingExtractionDebug(
     itemTypesArrayLengths: itemTypeArrayLengths,
     healSpells,
     spellcastingEntries: entries,
-    extractedSlots,
-    extractedCantripLevel
+    extractedSlots
   });
 }

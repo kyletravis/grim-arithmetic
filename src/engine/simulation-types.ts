@@ -56,7 +56,6 @@ export interface HealingState {
   hasBattleMedicine: boolean;
   battleMedicineUsedTargets: Set<string>;
   healSpellSlotsRemaining: Record<number, number>;
-  healCantripLevel: number | null;
 }
 
 export interface SimulationCombatant {

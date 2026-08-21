@@ -21,9 +21,8 @@ import type { TacticsProfile, TurnPlanHeal, TurnPlanStrike } from './tactics-typ
  * emergent (PC1 heals an ally; PC2 re-evaluates and doesn't double-heal).
  *
  * Heal priority within a single PC's choice:
- *   Heal spell (2-action) > Heal cantrip (2-action) >
- *   Heal spell (1-action) > Heal cantrip (1-action) >
- *   Battle Medicine.
+ *   Emergency: Heal spell (2-action) > Heal spell (1-action) > Battle Medicine.
+ *   Top-up:    Heal spell (1-action) > Battle Medicine > Heal spell (2-action).
  * Battle Medicine cannot target a PC already healed by Battle Medicine
  * this iteration (per PF2e 1/target/day rule, approximated for the
  * single-encounter sim).
@@ -81,7 +80,7 @@ export const pcDefaultTactics: TacticsProfile = {
 function canHeal(healing: HealingState | undefined): boolean {
   if (!healing) return false;
   const hasSlot = Object.values(healing.healSpellSlotsRemaining).some((n) => n > 0);
-  return hasSlot || healing.healCantripLevel !== null || healing.hasBattleMedicine;
+  return hasSlot || healing.hasBattleMedicine;
 }
 
 function pickPriorityDyingAlly(
@@ -129,36 +128,14 @@ function planHeal(
   // last.
   const tryKinds: HealKind[] =
     mode === 'emergency'
-      ? [
-          'heal-spell-2action',
-          'heal-cantrip-2action',
-          'heal-spell-1action',
-          'heal-cantrip-1action',
-          'battle-medicine'
-        ]
-      : [
-          'heal-spell-1action',
-          'heal-cantrip-1action',
-          'heal-spell-2action',
-          'heal-cantrip-2action',
-          'battle-medicine'
-        ];
+      ? ['heal-spell-2action', 'heal-spell-1action', 'battle-medicine']
+      : ['heal-spell-1action', 'battle-medicine', 'heal-spell-2action'];
 
   for (const kind of tryKinds) {
-    if (
-      kind === 'heal-spell-2action' ||
-      kind === 'heal-spell-1action' ||
-      kind === 'heal-spell-3action'
-    ) {
+    if (kind === 'heal-spell-2action' || kind === 'heal-spell-1action') {
       const rank = pickLowestSlotRank(healing.healSpellSlotsRemaining);
       if (rank !== undefined) {
         return { kind, healerId: healer.id, targetId: target.id, spellRank: rank };
-      }
-      continue;
-    }
-    if (kind === 'heal-cantrip-2action' || kind === 'heal-cantrip-1action') {
-      if (healing.healCantripLevel !== null) {
-        return { kind, healerId: healer.id, targetId: target.id };
       }
       continue;
     }

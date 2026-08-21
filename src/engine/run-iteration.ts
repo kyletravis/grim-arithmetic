@@ -117,7 +117,6 @@ export function runIteration(
           const result = sampleHealAction(
             {
               kind: plan.heal.kind,
-              healerLevel: actor.healing?.healCantripLevel ?? undefined,
               spellRank: plan.heal.spellRank,
               medicineModifier: actor.healing?.medicineModifier,
               medicineDC: actor.healing?.medicineDC
