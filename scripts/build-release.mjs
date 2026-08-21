@@ -42,10 +42,14 @@ mkdirSync(stagingDir, { recursive: true });
 
 execFileSync('rsync', [
   '-a',
-  '--exclude', '.DS_Store',
-  '--exclude', 'node_modules',
-  '--exclude', '.git',
-  '--exclude', 'coverage',
+  '--exclude',
+  '.DS_Store',
+  '--exclude',
+  'node_modules',
+  '--exclude',
+  '.git',
+  '--exclude',
+  'coverage',
   join(root, 'dist'),
   join(root, 'styles'),
   join(root, 'templates'),

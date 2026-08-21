@@ -15,9 +15,7 @@ export function getStandingPcs(
 }
 
 /** PCs that are downed or otherwise still in play (not dead). */
-export function getNonDeadPcs(
-  pcs: readonly SimulationCombatant[]
-): readonly SimulationCombatant[] {
+export function getNonDeadPcs(pcs: readonly SimulationCombatant[]): readonly SimulationCombatant[] {
   return pcs.filter((pc) => !pc.dead);
 }
 
@@ -26,9 +24,7 @@ export function getNonDeadPcs(
  * attack if none have parseable damage formulas. Returns undefined when
  * the attacker has no attacks at all.
  */
-export function pickHighestDamageAttack(
-  attacker: SimulationCombatant
-): AttackSnapshot | undefined {
+export function pickHighestDamageAttack(attacker: SimulationCombatant): AttackSnapshot | undefined {
   if (attacker.attacks.length === 0) return undefined;
   let best = attacker.attacks[0];
   let bestMean = safeMeanDamage(best.damageFormula);

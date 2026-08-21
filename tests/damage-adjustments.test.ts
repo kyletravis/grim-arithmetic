@@ -90,6 +90,12 @@ describe('v0.4.0 damage adjustments', () => {
       immune: false,
       note: 'Damage type unknown; no resistance, weakness, or immunity applied.'
     });
-    expect(unknown.damage).toMatchObject({ min: 3, max: 6, average: '4.5', critMin: 6, critMax: 12 });
+    expect(unknown.damage).toMatchObject({
+      min: 3,
+      max: 6,
+      average: '4.5',
+      critMin: 6,
+      critMax: 12
+    });
   });
 });

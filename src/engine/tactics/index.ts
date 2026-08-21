@@ -15,10 +15,5 @@ export const TACTICS_PROFILES: Record<TacticsProfileId, TacticsProfile> = {
   'boss-cinematic': bossCinematicTactics
 };
 
-export type {
-  TacticsContext,
-  TacticsProfile,
-  TurnPlan,
-  TurnPlanStrike
-} from './tactics-types';
+export type { TacticsContext, TacticsProfile, TurnPlan, TurnPlanStrike } from './tactics-types';
 export { DEFAULT_STRIKES_PER_TURN } from './tactics-types';

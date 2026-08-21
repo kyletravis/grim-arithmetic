@@ -19,7 +19,10 @@ function makePc(id: string): { token: { id: string; name: string }; snapshot: Co
   };
 }
 
-function makeHostile(id: string): { token: { id: string; name: string }; snapshot: CombatantSnapshot } {
+function makeHostile(id: string): {
+  token: { id: string; name: string };
+  snapshot: CombatantSnapshot;
+} {
   return {
     token: { id, name: `Foe ${id}` },
     snapshot: {
