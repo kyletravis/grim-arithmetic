@@ -84,11 +84,15 @@ function buildDistribution(normalized: string, formula: string): DamageDistribut
   for (const term of terms) {
     const termStates = termDistribution(term);
     if (termStates.size > BUDGET.maxOutcomes) {
-      throw budgetExceeded(`term ${term} produced ${termStates.size} outcomes (max ${BUDGET.maxOutcomes})`);
+      throw budgetExceeded(
+        `term ${term} produced ${termStates.size} outcomes (max ${BUDGET.maxOutcomes})`
+      );
     }
     states = convolve(states, termStates);
     if (states.size > BUDGET.maxOutcomes) {
-      throw budgetExceeded(`convolution produced ${states.size} outcomes (max ${BUDGET.maxOutcomes})`);
+      throw budgetExceeded(
+        `convolution produced ${states.size} outcomes (max ${BUDGET.maxOutcomes})`
+      );
     }
   }
 

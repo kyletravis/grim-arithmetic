@@ -96,7 +96,8 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
     const missProbability = outcome.failure + outcome.criticalFailure;
     expectedDamage += outcome.success * baseDamage.mean + outcome.criticalSuccess * critDamage.mean;
     directHitDownProbability += outcome.success * probabilityAtLeast(baseDamage.outcomes, input.hp);
-    directCritDownProbability += outcome.criticalSuccess * probabilityAtLeast(critDamage.outcomes, input.hp);
+    directCritDownProbability +=
+      outcome.criticalSuccess * probabilityAtLeast(critDamage.outcomes, input.hp);
 
     damageStates = expandDamageStates(damageStates, [
       { damage: 0, probability: missProbability },
@@ -144,7 +145,6 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
   };
 }
 
-
 export function buildDamageAdjustmentSummary(
   damageType: string | undefined,
   targetAdjustments: DamageAdjustments | undefined
@@ -162,7 +162,9 @@ export function buildDamageAdjustmentSummary(
 
   const resistance = highestMatchingValue(targetAdjustments?.resistances ?? [], normalizedType);
   const weakness = highestMatchingValue(targetAdjustments?.weaknesses ?? [], normalizedType);
-  const immune = (targetAdjustments?.immunities ?? []).some((type) => damageTypesMatch(type, normalizedType));
+  const immune = (targetAdjustments?.immunities ?? []).some((type) =>
+    damageTypesMatch(type, normalizedType)
+  );
 
   if (immune) {
     return {
@@ -183,7 +185,10 @@ export function buildDamageAdjustmentSummary(
     resistance,
     weakness,
     immune: false,
-    note: parts.length > 0 ? `Applied ${joinAdjustmentParts(parts)}.` : `No ${normalizedType} resistance, weakness, or immunity matched.`
+    note:
+      parts.length > 0
+        ? `Applied ${joinAdjustmentParts(parts)}.`
+        : `No ${normalizedType} resistance, weakness, or immunity matched.`
   };
 }
 
@@ -235,7 +240,11 @@ function damageTypesMatch(adjustmentType: string, damageType: string): boolean {
   if (normalizedAdjustment === normalizedDamage) return true;
   if (normalizedAdjustment === 'all') return true;
   if (normalizedAdjustment === 'physical') {
-    return normalizedDamage === 'bludgeoning' || normalizedDamage === 'piercing' || normalizedDamage === 'slashing';
+    return (
+      normalizedDamage === 'bludgeoning' ||
+      normalizedDamage === 'piercing' ||
+      normalizedDamage === 'slashing'
+    );
   }
   return false;
 }
@@ -266,7 +275,11 @@ function buildDyingSeverity({
     deathThreshold,
     normalDownDying,
     critDownDying,
-    immediateDeathFlag: describeImmediateDeathFlag({ normalDownDying, critDownDying, deathThreshold }),
+    immediateDeathFlag: describeImmediateDeathFlag({
+      normalDownDying,
+      critDownDying,
+      deathThreshold
+    }),
     heroPointNote: assumeHeroPointAvailable
       ? 'Hero Point prevention is assumed available; this can prevent death but is not modeled as a survival probability.'
       : 'No Hero Point death-prevention assumption is applied.'
@@ -324,7 +337,10 @@ function expandDamageStates(
   return nextStates;
 }
 
-function scaleOutcomes(outcomes: readonly DamageOutcome[], branchProbability: number): DamageBranch[] {
+function scaleOutcomes(
+  outcomes: readonly DamageOutcome[],
+  branchProbability: number
+): DamageBranch[] {
   if (branchProbability === 0) return [];
   return outcomes.map((outcome) => ({
     damage: outcome.damage,
@@ -345,7 +361,10 @@ export function doubleDistribution(distribution: DamageDistribution): DamageDist
 }
 
 function probabilityAtLeast(outcomes: readonly DamageOutcome[], threshold: number): number {
-  return outcomes.reduce((sum, outcome) => sum + (outcome.damage >= threshold ? outcome.probability : 0), 0);
+  return outcomes.reduce(
+    (sum, outcome) => sum + (outcome.damage >= threshold ? outcome.probability : 0),
+    0
+  );
 }
 
 function sumDownProbability(damageStates: Map<number, number>, hp: number): number {
@@ -381,20 +400,32 @@ function buildRiskDrivers({
   critDownProbability: number;
   highestCritChance: number;
 }): string[] {
-  if (downProbability === 0) return ['No exact supported hit or crit damage roll in the selected sequence downs the PC.'];
+  if (downProbability === 0)
+    return ['No exact supported hit or crit damage roll in the selected sequence downs the PC.'];
 
-  if (hitDownProbability === 0 && critDownProbability > 0 && critDownProbability < highestCritChance) {
-    return ['Only some crit damage rolls can down the PC; exact distribution reduces false precision from average damage.'];
+  if (
+    hitDownProbability === 0 &&
+    critDownProbability > 0 &&
+    critDownProbability < highestCritChance
+  ) {
+    return [
+      'Only some crit damage rolls can down the PC; exact distribution reduces false precision from average damage.'
+    ];
   }
 
   if (hitDownProbability === 0 && critDownProbability > 0) {
-    return [`Down risk is crit-driven; highest strike crit chance is ${Math.round(highestCritChance * 100)}%.`];
+    return [
+      `Down risk is crit-driven; highest strike crit chance is ${Math.round(highestCritChance * 100)}%.`
+    ];
   }
 
   return ['Cumulative exact hit and crit damage rolls can down the PC in the modeled sequence.'];
 }
 
-function buildDamageSummary(baseDamage: DamageDistribution, critDamage: DamageDistribution): DamageSummary {
+function buildDamageSummary(
+  baseDamage: DamageDistribution,
+  critDamage: DamageDistribution
+): DamageSummary {
   const average = baseDamage.mean.toFixed(1);
   return {
     min: baseDamage.min,
