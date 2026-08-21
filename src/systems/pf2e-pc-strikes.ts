@@ -59,18 +59,18 @@ function extractAttackFromPcAction(action: unknown, actor: Pf2eActorLike): Attac
     optionalNumberLike(asRecord(action.attack).totalModifier);
   if (attackBonus === undefined) return null;
 
+  const traits = strikeTraits(action);
   let damageFormula = extractActionDamageFormula(action);
   let damageType = extractActionDamageType(action);
   let assumption = PC_STRIKE_ASSUMPTION_ACTIONS;
   if (!damageFormula) {
-    const synthesized = synthesizeDamageFromStrikeItem(action, actor);
+    const synthesized = synthesizeDamageFromStrikeItem(action, actor, traits);
     if (!synthesized) return null;
     damageFormula = synthesized.formula;
     damageType = damageType ?? synthesized.damageType;
     assumption = PC_STRIKE_ASSUMPTION_SYNTHESIZED;
   }
 
-  const traits = toStringArray(action.traits);
   const item = asRecord(action.item);
   const id =
     (typeof action.slug === 'string' && action.slug) ||
@@ -95,6 +95,15 @@ function extractAttackFromPcAction(action: unknown, actor: Pf2eActorLike): Attac
   };
 }
 
+/** Strike traits live on the action and/or the backing weapon item; merge both, de-duplicated. */
+function strikeTraits(action: UnknownRecord): string[] {
+  const itemSystem = asRecord(asRecord(action.item ?? action.weapon).system);
+  const merged = toStringArray(action.traits).concat(
+    toStringArray(asRecord(itemSystem.traits).value)
+  );
+  return [...new Set(merged)];
+}
+
 interface SynthesizedDamage {
   formula: string;
   damageType?: string;
@@ -103,7 +112,8 @@ interface SynthesizedDamage {
 /** PF2e: dice count = base dice + striking rune value; die like "d8" or 8. */
 function synthesizeDamageFromStrikeItem(
   action: UnknownRecord,
-  actor: Pf2eActorLike
+  actor: Pf2eActorLike,
+  traits: string[]
 ): SynthesizedDamage | undefined {
   const item = asRecord(action.item ?? action.weapon);
   const system = asRecord(item.system);
@@ -113,7 +123,6 @@ function synthesizeDamageFromStrikeItem(
   if (baseDice === undefined || baseDice < 1 || die === undefined) return undefined;
   const striking = optionalNumberLike(asRecord(system.runes).striking) ?? 0;
   const dice = baseDice + Math.max(0, Math.floor(striking));
-  const traits = toStringArray(action.traits).concat(toStringArray(asRecord(system.traits).value));
   const abilityMod = abilityModifierFor(actor, traits, system);
   const flat = abilityMod + (optionalNumberLike(damage.modifier) ?? 0);
   const formula =
@@ -126,12 +135,19 @@ function parseDie(value: unknown): number | undefined {
   if (typeof value === 'number' && Number.isInteger(value) && value >= 2) return value;
   if (typeof value === 'string') {
     const match = value.trim().match(/^d?(\d+)$/);
-    if (match) return Number(match[1]);
+    if (match) {
+      const parsed = Number(match[1]);
+      if (parsed >= 2) return parsed;
+    }
   }
   return undefined;
 }
 
-/** STR by default; DEX for finesse when higher; ranged: 0 unless thrown (STR) or propulsive (half STR if positive). */
+/**
+ * STR for melee/thrown damage (finesse only affects the attack roll, not damage);
+ * DEX when the actor has the thief racket and DEX is higher; ranged: 0 unless
+ * thrown (STR) or propulsive (half STR if positive).
+ */
 function abilityModifierFor(
   actor: Pf2eActorLike,
   traits: string[],
@@ -147,8 +163,18 @@ function abilityModifierFor(
     if (traits.includes('propulsive')) return str > 0 ? Math.floor(str / 2) : str;
     return 0;
   }
-  if (traits.includes('finesse') && dex > str) return dex;
+  if (dex > str && hasThiefRacket(actor)) return dex;
   return str;
+}
+
+/** PF2e stores the rogue thief racket as a class-feature item (slug `thief-racket`). */
+function hasThiefRacket(actor: Pf2eActorLike): boolean {
+  return toItemLikes(actor.items).some((item) => {
+    const slug = asRecord(item.system).slug;
+    const normalized =
+      typeof slug === 'string' ? slug : item.name?.toLowerCase().replace(/\s+/g, '-');
+    return normalized === 'thief-racket' || normalized === 'thief';
+  });
 }
 
 function extractActionDamageFormula(action: UnknownRecord): string | undefined {

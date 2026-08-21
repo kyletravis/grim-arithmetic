@@ -303,14 +303,36 @@ describe('Pf2eAdapter.getAttacksFromToken: synthesized from strike item (live PF
     expect(attack.assumptions[0]).toContain('synthesized');
   });
 
-  it('uses DEX for finesse weapons when DEX > STR', () => {
+  it('uses STR for finesse weapons (finesse only applies to the attack roll)', () => {
     const token = pcTokenWith({
       actions: [liveStrike({ traits: [{ name: 'finesse' }, { name: 'agile' }] })],
       abilities: { str: { mod: 1 }, dex: { mod: 4 } }
     });
     const [attack] = adapter.getAttacksFromToken(token);
-    expect(attack.damageFormula).toBe('2d8+4');
+    expect(attack.damageFormula).toBe('2d8+1');
     expect(attack.mapType).toBe('agile');
+  });
+
+  it('thief racket uses DEX for damage when higher', () => {
+    const token = pcTokenWith({
+      actions: [liveStrike({ traits: [{ name: 'finesse' }] })],
+      abilities: { str: { mod: 1 }, dex: { mod: 4 } },
+      items: {
+        contents: [
+          { id: 'f1', name: 'Thief Racket', type: 'feat', system: { slug: 'thief-racket' } }
+        ]
+      }
+    });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8+4');
+  });
+
+  it('takes mapType from an agile trait that only lives on the weapon item', () => {
+    const strike = liveStrike({ traits: [] });
+    (strike.item.system as Record<string, unknown>).traits = { value: ['agile'] };
+    const token = pcTokenWith({ actions: [strike], abilities });
+    const [attack] = adapter.getAttacksFromToken(token);
+    expect(attack.mapType).toBe('agile');
+    expect(attack.traits).toContain('agile');
   });
 
   it('ranged non-thrown weapons get no ability modifier', () => {
