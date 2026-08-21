@@ -6,7 +6,7 @@ import {
   TACTICS_PROFILE_DESCRIPTIONS,
   type ForecastRunState,
   type SimulationControls
-} from '../src/ui/panel-data';
+} from '../src/ui/forecast-panel-data';
 import type { SimulationResult } from '../src/engine/simulation-types';
 
 function makeControls(overrides: Partial<SimulationControls> = {}): SimulationControls {

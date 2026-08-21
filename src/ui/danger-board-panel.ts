@@ -1,4 +1,5 @@
 import { computeEncounterRiskMatrix, MAX_PAIRS } from '../engine/encounter-risk';
+import { DEFAULT_PANEL_CONTROLS } from '../engine/risk-controls';
 import { getEncounterParticipants } from '../foundry/encounter-participants';
 import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
 import { getSystemAdapter } from '../systems/adapter-registry';
@@ -6,7 +7,6 @@ import { MODULE_ID, MODULE_VERSION } from '../constants';
 import { buildDangerBoardData, DangerBoardData, RISK_LEGEND } from './danger-board';
 import { debounce } from './debounce';
 import { ForecastPanel } from './forecast-panel';
-import { DEFAULT_PANEL_CONTROLS } from './panel-data';
 import { PairDetailPanel } from './pair-detail-panel';
 
 export interface DangerBoardPanelData {

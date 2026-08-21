@@ -14,7 +14,7 @@ import {
   type ForecastPanelData,
   type ForecastRunState,
   type SimulationControls
-} from './panel-data';
+} from './forecast-panel-data';
 
 interface ApplicationV2Like {
   render(force?: boolean | Record<string, unknown>): Promise<unknown>;
