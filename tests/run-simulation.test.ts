@@ -301,3 +301,39 @@ describe('runSimulation: round-cap rate (C6)', () => {
     expect(result.caveats.some((c) => c.includes('round cap'))).toBe(false);
   });
 });
+
+describe('runSimulation: down probability counts mid-fight knockouts (C4 follow-up)', () => {
+  it('counts a PC that was downed and healed back up as downed', () => {
+    // The medic always acts first (initiative bonus dwarfs the d20), heals the
+    // dying ally on round 1, and no enemy can deal damage.
+    const setup: EncounterSetup = {
+      pcs: [
+        makePc('medic', {
+          initiativeBonus: 100,
+          healing: {
+            medicineModifier: 8,
+            medicineDC: 15,
+            hasBattleMedicine: false,
+            battleMedicineUsedTargets: new Set<string>(),
+            healSpellSlotsRemaining: { 1: 1 }
+          }
+        }),
+        makePc('faller', {
+          initiativeBonus: -100,
+          hp: { current: 0, max: 24, temp: 0 },
+          dying: 1,
+          downed: true
+        })
+      ],
+      enemies: [makeEnemy('boss', [])],
+      caveats: []
+    };
+    const result = runSimulation(setup, makeConfig({ iterations: 20, maxRounds: 3, seed: 'ever' }));
+    const faller = result.perPc.find((p) => p.id === 'faller');
+    expect(faller?.downProbability).toBe(1);
+    expect(faller?.deathProbability).toBe(0);
+    expect(result.anyPcDownProbability).toBe(1);
+    // The party is standing at the end, so this is not a TPK.
+    expect(result.tpkProbability).toBe(0);
+  });
+});

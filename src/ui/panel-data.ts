@@ -465,11 +465,7 @@ export function buildForecastPanelData({
     result: buildForecastResultView(result),
     pessimismWarning: buildPessimismWarning(result),
     vitalAssumption,
-    otherAssumptions: [
-      enemyStrikesBullet,
-      ...otherAssumptions.slice(1),
-      ...result.caveats.map((c) => `Setup: ${c}`)
-    ]
+    otherAssumptions: [enemyStrikesBullet, ...otherAssumptions.slice(1), ...result.caveats]
   };
 }
 

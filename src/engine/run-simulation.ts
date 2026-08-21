@@ -133,11 +133,14 @@ function aggregate(
     for (const combatant of result.perCombatant) {
       if (combatant.side !== 'pc') continue;
       pcCount += 1;
-      const isDown = combatant.downed || combatant.dead;
-      if (isDown) {
+      // "Down" for risk reporting means "hit 0 HP at any point", matching the
+      // UI copy ("knocked out at least once"); a healed PC still counts.
+      if (combatant.everDowned || combatant.downed || combatant.dead) {
         anyDown = true;
         downByPc.set(combatant.id, (downByPc.get(combatant.id) ?? 0) + 1);
-      } else {
+      }
+      // TPK stays an end-state concept: everyone still down when it ended.
+      if (!combatant.downed && !combatant.dead) {
         allDown = false;
       }
       if (combatant.dead) {

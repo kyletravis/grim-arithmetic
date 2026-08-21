@@ -229,7 +229,7 @@ describe('buildForecastPanelData: done state', () => {
         result: makeResult({ caveats: ['unsupported actor X skipped'] })
       })
     });
-    expect(data.otherAssumptions.some((a) => a.includes('unsupported actor X skipped'))).toBe(true);
+    expect(data.otherAssumptions).toContain('unsupported actor X skipped');
   });
 
   it('shows a pessimism banner when any-PC-down >= 80%', () => {

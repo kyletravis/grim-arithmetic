@@ -254,10 +254,14 @@ describe('simulation fixtures: PCs act (v0.6.0-rc.3 regression net)', () => {
       setup,
       config({ tacticsProfile: 'focus-fire', seed: 'pcs-act-sanity', iterations: 500 })
     );
-    // anyPcDown should drop dramatically compared to a no-action baseline; we
-    // don't pin an exact number (snapshot tests cover that), but a sanity
-    // check below the 100% rc.2 baseline catches regressions.
-    expect(result.anyPcDownProbability).toBeLessThan(0.95);
+    // We don't pin exact numbers (the snapshots cover that): the fight should
+    // resolve on its own rather than being cut off, and the party should
+    // survive it far more often than the rc.2 baseline TPK. anyPcDown is not
+    // the right signal here — it counts every mid-fight knockout, healed or
+    // not — so assert on the cap rate and TPK instead.
+    expect(result.roundCapRate).toBeLessThan(0.05);
+    expect(result.tpkProbability).toBeLessThan(0.2);
+    expect(result.safetyNet.meanHealsPerIteration).toBeGreaterThan(0);
   });
 });
 

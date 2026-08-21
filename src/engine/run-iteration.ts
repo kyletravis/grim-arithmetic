@@ -32,6 +32,8 @@ export interface RunIterationOptions {
  *    then resolves each strike via the sample-strike + apply-damage path.
  *  - The plan is committed when the turn starts; a strike that lands on
  *    an already-downed (but not dead) target still increments dying.
+ *  - A PC that drops to 0 HP is recorded as everDowned for the whole
+ *    iteration, even if an ally heals them back up afterwards.
  *  - Termination: all PCs downed (TPK), all enemies dead, or maxRounds hit
  *    (the last case sets hitRoundCap so the aggregator can flag truncation).
  *
@@ -64,6 +66,11 @@ export function runIteration(
   const pcTactics: TacticsProfile = pcDefaultTactics;
   const damageByPair: Record<string, number> = {};
   const events: RoundEvent[] = [];
+  // Combatants that hit 0 HP at any point, even if healed back up later.
+  const everDowned = new Set<string>();
+  for (const combatant of allCombatants) {
+    if (combatant.downed) everDowned.add(combatant.id);
+  }
   let firstDownRound: number | null = null;
   let roundsElapsed = 0;
   let terminatedEarly = false;
@@ -136,6 +143,7 @@ export function runIteration(
               damage: result.collateralDamage,
               degree: 'success'
             });
+            if (applied.becameDowned) everDowned.add(target.id);
             finalTarget = applied.combatant;
           }
           combatants.set(target.id, finalTarget);
@@ -188,6 +196,8 @@ export function runIteration(
           damageByPair[pairKey] = (damageByPair[pairKey] ?? 0) + applied.damageAbsorbed;
         }
 
+        if (applied.becameDowned) everDowned.add(target.id);
+
         if (applied.becameDowned && target.side === 'pc' && firstDownRound === null) {
           firstDownRound = round;
         }
@@ -230,6 +240,7 @@ export function runIteration(
     doomed: c.doomed,
     downed: c.downed,
     dead: c.dead,
+    everDowned: everDowned.has(c.id) || c.downed,
     damageTaken: Math.max(0, (startingPool.get(c.id) ?? 0) - (c.hp.current + c.hp.temp))
   }));
 

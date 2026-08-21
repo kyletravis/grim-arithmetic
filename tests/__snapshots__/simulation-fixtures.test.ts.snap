@@ -28,7 +28,7 @@ exports[`simulation fixtures: 1 PC vs 1 enemy (parity with v0.5.0 pair detail) >
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1`] = `
 {
-  "anyPcDownProbability": 0.349,
+  "anyPcDownProbability": 0.937,
   "meanFirstDownRound": 1.3076923076923077,
   "medianFirstDownRound": 1,
   "perEnemy": [
@@ -42,7 +42,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1
   "perPc": [
     {
       "deathProbability": 0.013,
-      "downProbability": 0.179,
+      "downProbability": 0.524,
       "id": "mira",
       "meanEndingHp": 14.639,
       "name": "mira",
@@ -50,7 +50,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1
     },
     {
       "deathProbability": 0.008,
-      "downProbability": 0.107,
+      "downProbability": 0.317,
       "id": "seam",
       "meanEndingHp": 18.411,
       "name": "seam",
@@ -58,7 +58,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1
     },
     {
       "deathProbability": 0.011,
-      "downProbability": 0.14,
+      "downProbability": 0.72,
       "id": "jor",
       "meanEndingHp": 12.48,
       "name": "jor",
@@ -66,7 +66,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1
     },
     {
       "deathProbability": 0.01,
-      "downProbability": 0.16,
+      "downProbability": 0.777,
       "id": "elya",
       "meanEndingHp": 11.595,
       "name": "elya",
@@ -80,7 +80,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under focus-fire 1`] = `
 {
-  "anyPcDownProbability": 0.645,
+  "anyPcDownProbability": 0.957,
   "meanFirstDownRound": 1.3270637408568442,
   "medianFirstDownRound": 1,
   "perEnemy": [
@@ -94,7 +94,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under focus-fire 1`] =
   "perPc": [
     {
       "deathProbability": 0.011,
-      "downProbability": 0.092,
+      "downProbability": 0.103,
       "id": "mira",
       "meanEndingHp": 21.567,
       "name": "mira",
@@ -110,7 +110,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under focus-fire 1`] =
     },
     {
       "deathProbability": 0.037,
-      "downProbability": 0.208,
+      "downProbability": 0.355,
       "id": "jor",
       "meanEndingHp": 17.339,
       "name": "jor",
@@ -118,7 +118,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under focus-fire 1`] =
     },
     {
       "deathProbability": 0.11,
-      "downProbability": 0.645,
+      "downProbability": 0.957,
       "id": "elya",
       "meanEndingHp": 4.846,
       "name": "elya",
@@ -132,7 +132,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under focus-fire 1`] =
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under predator 1`] = `
 {
-  "anyPcDownProbability": 0.648,
+  "anyPcDownProbability": 0.964,
   "meanFirstDownRound": 1.3101659751037344,
   "medianFirstDownRound": 1,
   "perEnemy": [
@@ -146,7 +146,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under predator 1`] = `
   "perPc": [
     {
       "deathProbability": 0.003,
-      "downProbability": 0.096,
+      "downProbability": 0.102,
       "id": "mira",
       "meanEndingHp": 21.401,
       "name": "mira",
@@ -162,7 +162,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under predator 1`] = `
     },
     {
       "deathProbability": 0.038,
-      "downProbability": 0.201,
+      "downProbability": 0.351,
       "id": "jor",
       "meanEndingHp": 17.132,
       "name": "jor",
@@ -170,7 +170,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under predator 1`] = `
     },
     {
       "deathProbability": 0.107,
-      "downProbability": 0.648,
+      "downProbability": 0.964,
       "id": "elya",
       "meanEndingHp": 4.776,
       "name": "elya",
@@ -184,7 +184,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under predator 1`] = `
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`] = `
 {
-  "anyPcDownProbability": 0.465,
+  "anyPcDownProbability": 0.912,
   "meanFirstDownRound": 1.4531422271223815,
   "medianFirstDownRound": 1,
   "perEnemy": [
@@ -198,7 +198,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`]
   "perPc": [
     {
       "deathProbability": 0.017,
-      "downProbability": 0.3,
+      "downProbability": 0.55,
       "id": "mira",
       "meanEndingHp": 12.425,
       "name": "mira",
@@ -206,7 +206,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`]
     },
     {
       "deathProbability": 0.015,
-      "downProbability": 0.253,
+      "downProbability": 0.555,
       "id": "seam",
       "meanEndingHp": 12.841,
       "name": "seam",
@@ -214,7 +214,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`]
     },
     {
       "deathProbability": 0.023,
-      "downProbability": 0.27,
+      "downProbability": 0.556,
       "id": "jor",
       "meanEndingHp": 12.949,
       "name": "jor",
@@ -222,7 +222,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`]
     },
     {
       "deathProbability": 0.014,
-      "downProbability": 0.242,
+      "downProbability": 0.566,
       "id": "elya",
       "meanEndingHp": 13.05,
       "name": "elya",
@@ -236,7 +236,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`]
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`] = `
 {
-  "anyPcDownProbability": 0.401,
+  "anyPcDownProbability": 0.876,
   "meanFirstDownRound": 1.526376146788991,
   "medianFirstDownRound": 1,
   "perEnemy": [
@@ -250,7 +250,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`
   "perPc": [
     {
       "deathProbability": 0.011,
-      "downProbability": 0.267,
+      "downProbability": 0.512,
       "id": "mira",
       "meanEndingHp": 11.169,
       "name": "mira",
@@ -258,7 +258,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`
     },
     {
       "deathProbability": 0.009,
-      "downProbability": 0.228,
+      "downProbability": 0.447,
       "id": "seam",
       "meanEndingHp": 13.074,
       "name": "seam",
@@ -266,7 +266,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`
     },
     {
       "deathProbability": 0.013,
-      "downProbability": 0.248,
+      "downProbability": 0.577,
       "id": "jor",
       "meanEndingHp": 10.525,
       "name": "jor",
@@ -274,7 +274,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`
     },
     {
       "deathProbability": 0.016,
-      "downProbability": 0.255,
+      "downProbability": 0.663,
       "id": "elya",
       "meanEndingHp": 10.135,
       "name": "elya",
@@ -288,7 +288,7 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`
 
 exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under boss-cinematic 1`] = `
 {
-  "anyPcDownProbability": 0.037,
+  "anyPcDownProbability": 0.314,
   "perEnemy": [
     {
       "damageShare": 0.01689467419319345,
@@ -318,7 +318,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under boss-cinemati
   "perPc": [
     {
       "deathProbability": 0,
-      "downProbability": 0.018,
+      "downProbability": 0.119,
       "id": "mira",
       "meanEndingHp": 14.181,
       "name": "mira",
@@ -326,7 +326,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under boss-cinemati
     },
     {
       "deathProbability": 0,
-      "downProbability": 0.012,
+      "downProbability": 0.084,
       "id": "seam",
       "meanEndingHp": 15.117,
       "name": "seam",
@@ -334,7 +334,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under boss-cinemati
     },
     {
       "deathProbability": 0.003,
-      "downProbability": 0.016,
+      "downProbability": 0.118,
       "id": "jor",
       "meanEndingHp": 13.952,
       "name": "jor",
@@ -342,7 +342,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under boss-cinemati
     },
     {
       "deathProbability": 0,
-      "downProbability": 0.016,
+      "downProbability": 0.12,
       "id": "elya",
       "meanEndingHp": 13.912,
       "name": "elya",
@@ -356,7 +356,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under boss-cinemati
 
 exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under focus-fire 1`] = `
 {
-  "anyPcDownProbability": 0.349,
+  "anyPcDownProbability": 0.841,
   "perEnemy": [
     {
       "damageShare": 0.016474635140099524,
@@ -386,7 +386,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under focus-fire 1`
   "perPc": [
     {
       "deathProbability": 0.002,
-      "downProbability": 0.052,
+      "downProbability": 0.055,
       "id": "mira",
       "meanEndingHp": 22.34,
       "name": "mira",
@@ -402,7 +402,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under focus-fire 1`
     },
     {
       "deathProbability": 0.01,
-      "downProbability": 0.09,
+      "downProbability": 0.247,
       "id": "jor",
       "meanEndingHp": 18.319,
       "name": "jor",
@@ -410,7 +410,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under focus-fire 1`
     },
     {
       "deathProbability": 0.034,
-      "downProbability": 0.337,
+      "downProbability": 0.841,
       "id": "elya",
       "meanEndingHp": 9.489,
       "name": "elya",
@@ -424,7 +424,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under focus-fire 1`
 
 exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under predator 1`] = `
 {
-  "anyPcDownProbability": 0.357,
+  "anyPcDownProbability": 0.826,
   "perEnemy": [
     {
       "damageShare": 0.017137262396936685,
@@ -454,7 +454,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under predator 1`] 
   "perPc": [
     {
       "deathProbability": 0.003,
-      "downProbability": 0.04,
+      "downProbability": 0.044,
       "id": "mira",
       "meanEndingHp": 22.592,
       "name": "mira",
@@ -470,7 +470,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under predator 1`] 
     },
     {
       "deathProbability": 0.003,
-      "downProbability": 0.076,
+      "downProbability": 0.192,
       "id": "jor",
       "meanEndingHp": 18.457,
       "name": "jor",
@@ -478,7 +478,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under predator 1`] 
     },
     {
       "deathProbability": 0.05,
-      "downProbability": 0.354,
+      "downProbability": 0.826,
       "id": "elya",
       "meanEndingHp": 8.732,
       "name": "elya",
@@ -492,7 +492,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under predator 1`] 
 
 exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 1`] = `
 {
-  "anyPcDownProbability": 0.123,
+  "anyPcDownProbability": 0.457,
   "perEnemy": [
     {
       "damageShare": 0.017517842557009146,
@@ -522,7 +522,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 
   "perPc": [
     {
       "deathProbability": 0.005,
-      "downProbability": 0.078,
+      "downProbability": 0.177,
       "id": "mira",
       "meanEndingHp": 15.107,
       "name": "mira",
@@ -530,7 +530,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 
     },
     {
       "deathProbability": 0,
-      "downProbability": 0.042,
+      "downProbability": 0.167,
       "id": "seam",
       "meanEndingHp": 15.738,
       "name": "seam",
@@ -538,7 +538,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 
     },
     {
       "deathProbability": 0.001,
-      "downProbability": 0.04,
+      "downProbability": 0.148,
       "id": "jor",
       "meanEndingHp": 15.969,
       "name": "jor",
@@ -546,7 +546,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 
     },
     {
       "deathProbability": 0.004,
-      "downProbability": 0.048,
+      "downProbability": 0.159,
       "id": "elya",
       "meanEndingHp": 15.685,
       "name": "elya",
@@ -560,7 +560,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 
 
 exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage 1`] = `
 {
-  "anyPcDownProbability": 0.028,
+  "anyPcDownProbability": 0.226,
   "perEnemy": [
     {
       "damageShare": 0.01677863576141215,
@@ -590,7 +590,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage
   "perPc": [
     {
       "deathProbability": 0.002,
-      "downProbability": 0.019,
+      "downProbability": 0.077,
       "id": "mira",
       "meanEndingHp": 14.175,
       "name": "mira",
@@ -598,7 +598,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage
     },
     {
       "deathProbability": 0,
-      "downProbability": 0.01,
+      "downProbability": 0.061,
       "id": "seam",
       "meanEndingHp": 14.835,
       "name": "seam",
@@ -606,7 +606,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage
     },
     {
       "deathProbability": 0,
-      "downProbability": 0.011,
+      "downProbability": 0.079,
       "id": "jor",
       "meanEndingHp": 13.918,
       "name": "jor",
@@ -614,7 +614,7 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage
     },
     {
       "deathProbability": 0,
-      "downProbability": 0.01,
+      "downProbability": 0.084,
       "id": "elya",
       "meanEndingHp": 13.842,
       "name": "elya",

@@ -168,6 +168,8 @@ export interface PerCombatantOutcome {
   doomed: number;
   downed: boolean;
   dead: boolean;
+  /** True if the combatant was at 0 HP at any point this iteration, even if later healed. */
+  everDowned: boolean;
   /** Total damage taken across all rounds in this iteration. */
   damageTaken: number;
 }

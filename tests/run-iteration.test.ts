@@ -317,3 +317,31 @@ describe('runIteration: round cap (C6)', () => {
     expect(result.hitRoundCap).toBe(false);
   });
 });
+
+describe('runIteration: everDowned', () => {
+  it('marks a PC that was downed and then healed back up as everDowned', () => {
+    const medic = makePc('medic', {
+      healing: {
+        medicineModifier: 8,
+        medicineDC: 15,
+        hasBattleMedicine: false,
+        battleMedicineUsedTargets: new Set<string>(),
+        healSpellSlotsRemaining: { 1: 1 }
+      }
+    });
+    const faller = makePc('faller', {
+      hp: { current: 0, max: 24, temp: 0 },
+      dying: 1,
+      downed: true
+    });
+    const setup = makeSetup({ pcs: [medic, faller], enemies: [makeEnemy('boss', [])] });
+    // Fixed initiative keeps the medic ahead of the dying PC, so the heal
+    // lands before the fight ends.
+    const result = runIteration(setup, makeConfig({ maxRounds: 1 }), createRng('ever-downed'), 0, {
+      useFixedInitiative: true
+    });
+    const outcome = result.perCombatant.find((c) => c.id === 'faller');
+    expect(outcome).toMatchObject({ everDowned: true, downed: false, dying: 0 });
+    expect(outcome!.endingHp).toBeGreaterThan(0);
+  });
+});
