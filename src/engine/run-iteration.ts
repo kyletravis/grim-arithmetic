@@ -26,16 +26,20 @@ export interface RunIterationOptions {
  * Run a single encounter iteration to termination.
  *
  *  - Initiative is rolled once at the start using the seeded RNG.
- *  - Each round walks the initiative order. PCs take a no-op turn in v0.6.0
- *    (the conservative baseline; PC actions are deferred to v0.7.0+).
+ *  - Each round walks the initiative order. Each PC turn runs the PC tactics
+ *    decision tree: heal (Battle Medicine / Heal spell) an ally who is dying
+ *    or below 40% HP, or otherwise make 2 Strikes at the most-dangerous
+ *    standing enemy. Dying PCs roll a recovery check at the start of their
+ *    turn before acting.
  *  - Each enemy turn asks the configured tactics profile for a TurnPlan,
  *    then resolves each strike via the sample-strike + apply-damage path.
  *  - The plan is committed when the turn starts; a strike that lands on
  *    an already-downed (but not dead) target still increments dying.
  *  - A PC that drops to 0 HP is recorded as everDowned for the whole
  *    iteration, even if an ally heals them back up afterwards.
- *  - Termination: all PCs downed (TPK), all enemies dead, or maxRounds hit
- *    (the last case sets hitRoundCap so the aggregator can flag truncation).
+ *  - Termination: all PCs downed (TPK), all enemies dead, or the round cap
+ *    (DEFAULT_MAX_ROUNDS = 10) is hit (the last case sets hitRoundCap so the
+ *    aggregator can flag truncation).
  *
  * Same setup + same config + same seed -> byte-identical IterationResult.
  */

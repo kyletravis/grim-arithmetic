@@ -33,12 +33,6 @@ export const DEFAULT_MAX_ROUNDS = 10;
  * Distinct from CombatantSnapshot (the system adapter's read-only extraction)
  * because simulation state mutates round-to-round: HP drops, dying ticks up,
  * downed/dead flags flip. SimulationCombatant carries the engine's working state.
- *
- * Fields explicitly NOT modeled in v0.6.0 (deferred):
- *   - persistent damage values
- *   - recovery check state machine
- *   - hero point spend tracking
- *   - per-PC action plans
  */
 /**
  * Healing runtime state for a PC (v0.6.0-rc.4 Phase I-A).

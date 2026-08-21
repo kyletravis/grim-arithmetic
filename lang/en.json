@@ -78,7 +78,6 @@
       "HeroPointTooltip": "Share of runs where spending a Hero Point to avoid death changed a PC's outcome.",
       "MostLikelyToDrop": "Most likely to drop",
       "BiggestThreats": "Biggest threats",
-      "ModeledAssumptions": "Modeled assumptions",
       "MoreAssumptions": "Other modeling assumptions",
       "Table": {
         "Pc": "PC",

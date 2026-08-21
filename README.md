@@ -30,6 +30,7 @@ A GM-only Foundry VTT module for **Pathfinder 2e** that surfaces real, immediate
 
 - **Encounter Danger Board** — a sortable table of the most endangered PCs and the most dangerous enemies, with per-pair down chance and a one-click drilldown.
 - **Pair Detail panel** — exact dice-distribution math for a chosen PC vs enemy Strike: damage range, average, swinginess, down chance, dying severity, doomed-adjusted death threshold, and Hero Point notes.
+- **Deadly / fatal** crit traits modeled — extra dice after doubling for deadly, a swapped-and-added die for fatal.
 - **PF2e-aware extraction** — pulls Strikes, AC, HP, wounded, and doomed straight from the actor.
 - **Honest about scope** — explicitly flags what is and isn't modeled (no permanent-death probability, no reactions, no persistent damage — yet).
 
