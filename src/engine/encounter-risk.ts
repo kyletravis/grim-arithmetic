@@ -46,20 +46,28 @@ export function computeEncounterRiskMatrix<TokenLike>(
 ): EncounterRiskMatrix {
   const { adapter, controls, pairLimit } = options;
 
+  const caveats: string[] = [];
+
+  const activePcs = participants.pcs.filter((pc) => {
+    const pool = pc.snapshot.hp.current + (pc.snapshot.hp.temp ?? 0);
+    if (pool > 0) return true;
+    caveats.push(`${pc.snapshot.name} is already at 0 HP and was excluded from the danger board.`);
+    return false;
+  });
+
   const hostileAttackSets = participants.hostiles.map((hostile) => ({
     hostile,
     attacks: safeGetAttacks(adapter, hostile.token)
   }));
 
   const projectedPairCount =
-    participants.pcs.length * hostileAttackSets.reduce((sum, set) => sum + set.attacks.length, 0);
+    activePcs.length * hostileAttackSets.reduce((sum, set) => sum + set.attacks.length, 0);
 
   if (pairLimit !== undefined && projectedPairCount > pairLimit) {
     return { pairs: [], skipped: true, caveats: [GUARDRAIL_CAVEAT] };
   }
 
   const pairs: PairRisk[] = [];
-  const caveats: string[] = [];
 
   for (const { hostile, attacks } of hostileAttackSets) {
     if (attacks.length === 0) {
@@ -67,7 +75,7 @@ export function computeEncounterRiskMatrix<TokenLike>(
       continue;
     }
 
-    for (const pc of participants.pcs) {
+    for (const pc of activePcs) {
       for (const attack of attacks) {
         pairs.push(buildPairRisk(pc.snapshot, hostile.snapshot, attack, controls));
       }

@@ -29,11 +29,13 @@ Hooks.once('ready', () => {
 
   if (!game.user?.isGM) return;
 
+  DangerBoardPanel.registerAutoRefresh();
+
   const grimArithmeticModule = game.modules.get(MODULE_ID);
   if (!grimArithmeticModule) return;
 
   grimArithmeticModule.api = {
-    openPanel: () => new DangerBoardPanel().render(true),
+    openPanel: () => DangerBoardPanel.open(),
     openPairDetail: (pcId: string, enemyId: string, attackId?: string) =>
       PairDetailPanel.openForPair(pcId, enemyId, attackId),
     openPairDetailFromSelection: () => PairDetailPanel.openForSelection(),

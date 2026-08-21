@@ -20,7 +20,7 @@ type SceneControlsV13 = Record<string, SceneControlV13>;
 const TOOL_NAME = `${MODULE_ID}-open-panel`;
 
 function openDangerBoard(): void {
-  new DangerBoardPanel().render(true);
+  DangerBoardPanel.open();
 }
 
 export function registerTokenControls(): void {

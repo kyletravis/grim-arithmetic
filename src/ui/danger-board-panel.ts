@@ -4,6 +4,7 @@ import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import { buildDangerBoardData, DangerBoardData } from './danger-board';
+import { debounce } from './debounce';
 import { ForecastPanel } from './forecast-panel';
 import { DEFAULT_PANEL_CONTROLS } from './panel-data';
 import { PairDetailPanel } from './pair-detail-panel';
@@ -16,6 +17,7 @@ export interface DangerBoardPanelData {
 
 interface ApplicationV2Like {
   render(force?: boolean | Record<string, unknown>): Promise<unknown>;
+  rendered: boolean;
 }
 
 const ApplicationV2Api = foundry.applications.api;
@@ -24,6 +26,35 @@ const Base = ApplicationV2Api.HandlebarsApplicationMixin(
 ) as unknown as new (options?: unknown) => ApplicationV2Like;
 
 export class DangerBoardPanel extends Base {
+  private static singleton?: DangerBoardPanel;
+
+  static getInstance(): DangerBoardPanel {
+    return (DangerBoardPanel.singleton ??= new DangerBoardPanel());
+  }
+
+  static open(): void {
+    DangerBoardPanel.getInstance().render({ force: true });
+  }
+
+  /** GM-only: re-render the open board when the combat/actors change (debounced). */
+  static registerAutoRefresh(): void {
+    const refresh = debounce(() => {
+      const instance = DangerBoardPanel.singleton;
+      if (instance?.rendered) void instance.render();
+    }, 250);
+    for (const hook of [
+      'updateCombat',
+      'createCombatant',
+      'deleteCombatant',
+      'deleteCombat',
+      'updateActor',
+      'updateToken',
+      'deleteToken'
+    ]) {
+      Hooks.on(hook, refresh);
+    }
+  }
+
   static DEFAULT_OPTIONS = {
     id: `${MODULE_ID}-danger-board`,
     classes: ['grim-arithmetic-window'],
