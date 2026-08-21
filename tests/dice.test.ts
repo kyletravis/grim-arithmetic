@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { averageDamage, damageDistribution } from '../src/engine/dice';
+import { averageDamage, damageDistribution, combineDistributions, clearDistributionCache } from '../src/engine/dice';
 
 describe('averageDamage', () => {
   it('calculates average for a single die', () => {
@@ -90,5 +90,26 @@ describe('damageDistribution', () => {
 
   it('throws when total dice exceeds budget', () => {
     expect(() => damageDistribution('100d6+100d6+100d6+100d6+100d6+100d6+100d6+100d7')).toThrow('too many total dice');
+  });
+});
+
+describe('damageDistribution cache', () => {
+  it('returns the same object for the same normalized formula', () => {
+    clearDistributionCache();
+    const a = damageDistribution('1d8 + 4');
+    const b = damageDistribution('1d8+4');
+    expect(a).toBe(b);
+    expect(Object.isFrozen(a)).toBe(true);
+  });
+});
+
+describe('combineDistributions', () => {
+  it('convolves two PMFs (1d4 + 1d4 == 2d4)', () => {
+    const sum = combineDistributions(damageDistribution('1d4'), damageDistribution('1d4'));
+    const direct = damageDistribution('2d4');
+    expect(sum.min).toBe(2);
+    expect(sum.max).toBe(8);
+    expect(sum.mean).toBeCloseTo(5);
+    expect(sum.outcomes).toEqual(direct.outcomes.map((o) => ({ damage: o.damage, probability: expect.closeTo(o.probability, 10) })));
   });
 });

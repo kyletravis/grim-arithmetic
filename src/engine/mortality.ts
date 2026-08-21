@@ -324,7 +324,7 @@ function expandDamageStates(
   return nextStates;
 }
 
-function scaleOutcomes(outcomes: DamageOutcome[], branchProbability: number): DamageBranch[] {
+function scaleOutcomes(outcomes: readonly DamageOutcome[], branchProbability: number): DamageBranch[] {
   if (branchProbability === 0) return [];
   return outcomes.map((outcome) => ({
     damage: outcome.damage,
@@ -344,7 +344,7 @@ export function doubleDistribution(distribution: DamageDistribution): DamageDist
   };
 }
 
-function probabilityAtLeast(outcomes: DamageOutcome[], threshold: number): number {
+function probabilityAtLeast(outcomes: readonly DamageOutcome[], threshold: number): number {
   return outcomes.reduce((sum, outcome) => sum + (outcome.damage >= threshold ? outcome.probability : 0), 0);
 }
 
