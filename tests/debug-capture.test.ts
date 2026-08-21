@@ -73,4 +73,52 @@ describe('buildDebugCapture', () => {
       }
     });
   });
+  it('captures PC strike actions, abilities, perception, and medicine for characters', () => {
+    const capture = buildDebugCapture({
+      id: 'pc',
+      name: 'Mira',
+      document: { disposition: 1 },
+      actor: {
+        id: 'a',
+        name: 'Mira',
+        type: 'character',
+        system: {
+          attributes: { hp: { value: 20, max: 20 }, ac: { value: 18 } },
+          perception: { mod: 7 },
+          abilities: { str: { mod: 4 } },
+          skills: { medicine: { mod: 9, rank: 2 } },
+          actions: [
+            {
+              slug: 'longsword',
+              label: 'Longsword',
+              totalModifier: 14,
+              damage: () => null,
+              traits: [{ name: 'versatile-p' }],
+              item: {
+                id: 'i',
+                name: 'Longsword',
+                system: { damage: { dice: 1, die: 'd8' }, runes: { striking: 1 } }
+              }
+            }
+          ]
+        },
+        itemTypes: {},
+        items: []
+      }
+    }) as { actor: { pc: Record<string, unknown> } };
+
+    expect(capture.actor.pc).toMatchObject({
+      perception: { mod: 7 },
+      abilities: { str: { mod: 4 } },
+      medicine: { mod: 9, rank: 2 },
+      actions: [
+        {
+          slug: 'longsword',
+          totalModifier: 14,
+          damageType: 'function',
+          item: { system: { damage: { dice: 1, die: 'd8' }, runes: { striking: 1 } } }
+        }
+      ]
+    });
+  });
 });

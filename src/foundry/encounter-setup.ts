@@ -69,6 +69,8 @@ function materialize<TokenLike extends { name?: string }>(
         `${p.snapshot.name} has no supported Strike; will skip its turns in the simulation.`
       );
     }
+    const attackAssumptions = new Set(attacks.flatMap((attack) => attack.assumptions));
+    for (const assumption of attackAssumptions) caveats.push(`${p.snapshot.name}: ${assumption}`);
     const combatant = snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
     combatant.healing = buildHealingState(p.snapshot, caveats);
     if (debugLogging) {

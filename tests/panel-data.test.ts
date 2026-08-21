@@ -79,8 +79,16 @@ describe('buildMortalityPanelData', () => {
     ]);
     expect(data.attack).toMatchObject({ id: 'claw', name: 'Claw', mapType: 'agile' });
     expect(data.risk?.assumptions).toContain('agile strike assumption');
-    expect(data.risk?.damage).toMatchObject({ min: 2, max: 7, average: '4.5', critMin: 7, critMax: 17 });
-    expect(data.risk?.damageAdjustment.note).toBe('Applied slashing resistance 5 and slashing weakness 2.');
+    expect(data.risk?.damage).toMatchObject({
+      min: 2,
+      max: 7,
+      average: '4.5',
+      critMin: 7,
+      critMax: 17
+    });
+    expect(data.risk?.damageAdjustment.note).toBe(
+      'Applied slashing resistance 5 and slashing weakness 2.'
+    );
   });
 
   it('falls back to the first supported Strike when the previous selection no longer exists', () => {
@@ -99,7 +107,8 @@ describe('buildMortalityPanelData', () => {
     const badAdapter: SystemAdapter<object> = {
       ...adapter,
       getCombatantFromToken(token) {
-        if (token === pcToken) return { ...adapter.getCombatantFromToken(pcToken)!, disposition: 'neutral' };
+        if (token === pcToken)
+          return { ...adapter.getCombatantFromToken(pcToken)!, disposition: 'neutral' };
         return { ...adapter.getCombatantFromToken(enemyToken)!, disposition: 'pc' };
       },
       getAttacksFromToken() {
@@ -117,7 +126,7 @@ describe('buildMortalityPanelData', () => {
     expect(data.errors).toEqual([
       'Selected token is not recognized as a PC/character by the PF2e adapter.',
       'Targeted token is not recognized as an enemy/NPC by the PF2e adapter.',
-      'Targeted enemy has no supported melee Strike with a numeric attack bonus and supported damage formula.'
+      'Targeted enemy has no supported Strike with a numeric attack bonus and supported damage formula.'
     ]);
   });
 
@@ -142,6 +151,8 @@ describe('buildMortalityPanelData', () => {
       normalDownDying: 3,
       critDownDying: 4
     });
-    expect(data.risk?.dyingSeverity.heroPointNote).toContain('Hero Point prevention is assumed available');
+    expect(data.risk?.dyingSeverity.heroPointNote).toContain(
+      'Hero Point prevention is assumed available'
+    );
   });
 });

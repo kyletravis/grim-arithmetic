@@ -27,7 +27,7 @@ interface SpellcastingEntryFixture {
 }
 
 function pcToken(opts: {
-  medicine?: { totalModifier?: number; value?: number; rank?: number };
+  medicine?: { totalModifier?: number; mod?: number; value?: number; rank?: number };
   feats?: Array<{ slug?: string; name?: string }>;
   spells?: SpellItem[];
   spellcastingEntries?: SpellcastingEntryFixture[];
@@ -118,6 +118,11 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
   it('falls back to .value when .totalModifier is absent', () => {
     const snapshot = adapter.getCombatantFromToken(pcToken({ medicine: { value: 6, rank: 1 } }));
     expect(snapshot?.pcCapabilities?.medicineModifier).toBe(6);
+  });
+
+  it('falls back to skills.medicine.mod', () => {
+    const snapshot = adapter.getCombatantFromToken(pcToken({ medicine: { mod: 9, rank: 1 } }));
+    expect(snapshot?.pcCapabilities?.medicineModifier).toBe(9);
   });
 
   it('scales medicineDC by proficiency rank (expert -> 20)', () => {

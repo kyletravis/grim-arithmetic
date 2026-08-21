@@ -1,11 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import { Pf2eAdapter, type Pf2eTokenLike } from '../src/systems/pf2e-adapter';
+import {
+  PC_STRIKE_ASSUMPTION_ACTIONS,
+  PC_STRIKE_ASSUMPTION_FALLBACK,
+  PC_STRIKE_ASSUMPTION_SYNTHESIZED
+} from '../src/systems/pf2e-pc-strikes';
 
 const adapter = new Pf2eAdapter();
 
 function pcTokenWith(overrides: {
   actions?: unknown[];
   items?: { contents: unknown[] };
+  abilities?: Record<string, { mod: number }>;
 }): Pf2eTokenLike {
   return {
     id: 'pc-1',
@@ -16,7 +22,8 @@ function pcTokenWith(overrides: {
       name: 'Mira',
       type: 'character',
       system: {
-        actions: overrides.actions
+        actions: overrides.actions,
+        abilities: overrides.abilities
       },
       items: overrides.items
     }
@@ -47,9 +54,7 @@ describe('Pf2eAdapter.getAttacksFromToken: PC actions list (primary path)', () =
         damageType: 'slashing',
         traits: ['versatile-p'],
         mapType: 'normal',
-        assumptions: [
-          'PC Strike extracted from actor.system.actions; conditional modifiers (status, MAP-adjacent feats) may be missing.'
-        ]
+        assumptions: [PC_STRIKE_ASSUMPTION_ACTIONS]
       }
     ]);
   });
@@ -174,7 +179,7 @@ describe('Pf2eAdapter.getAttacksFromToken: PC weapon fallback', () => {
       damageType: 'bludgeoning',
       mapType: 'normal'
     });
-    expect(attacks[0].assumptions[0]).toMatch(/fallback/i);
+    expect(attacks[0].assumptions).toEqual([PC_STRIKE_ASSUMPTION_FALLBACK]);
   });
 
   it('skips unequipped weapons in the fallback path', () => {
@@ -258,5 +263,75 @@ describe('Pf2eAdapter.getAttacksFromToken: graceful empty cases', () => {
     expect(attacks).toHaveLength(1);
     expect(attacks[0].id).toBe('shortsword');
     expect(attacks[0].attackBonus).toBe(7);
+  });
+});
+
+describe('Pf2eAdapter.getAttacksFromToken: synthesized from strike item (live PF2e shape)', () => {
+  function liveStrike(overrides: Record<string, unknown> = {}) {
+    return {
+      slug: 'longsword',
+      label: 'Longsword',
+      totalModifier: 14,
+      damage: () => Promise.resolve(null), // PF2e StrikeData.damage is a roll function
+      traits: [{ name: 'versatile-p', label: 'Versatile P' }],
+      item: {
+        id: 'item-longsword',
+        name: 'Longsword',
+        system: {
+          damage: { dice: 1, die: 'd8', damageType: 'slashing', modifier: 0 },
+          runes: { striking: 1 },
+          traits: { value: ['versatile-p'] },
+          range: null
+        }
+      },
+      ...overrides
+    };
+  }
+  const abilities = { str: { mod: 4 }, dex: { mod: 2 } };
+
+  it('builds dice × striking + STR modifier when no formula string exists', () => {
+    const token = pcTokenWith({ actions: [liveStrike()], abilities });
+    const [attack] = adapter.getAttacksFromToken(token);
+    expect(attack).toMatchObject({
+      id: 'longsword',
+      attackBonus: 14,
+      damageFormula: '2d8+4',
+      damageType: 'slashing',
+      mapType: 'normal'
+    });
+    expect(attack.assumptions).toEqual([PC_STRIKE_ASSUMPTION_SYNTHESIZED]);
+    expect(attack.assumptions[0]).toContain('synthesized');
+  });
+
+  it('uses DEX for finesse weapons when DEX > STR', () => {
+    const token = pcTokenWith({
+      actions: [liveStrike({ traits: [{ name: 'finesse' }, { name: 'agile' }] })],
+      abilities: { str: { mod: 1 }, dex: { mod: 4 } }
+    });
+    const [attack] = adapter.getAttacksFromToken(token);
+    expect(attack.damageFormula).toBe('2d8+4');
+    expect(attack.mapType).toBe('agile');
+  });
+
+  it('ranged non-thrown weapons get no ability modifier', () => {
+    const strike = liveStrike({ traits: [] });
+    (strike.item.system as Record<string, unknown>).range = 60;
+    const token = pcTokenWith({ actions: [strike], abilities });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8');
+  });
+
+  it('propulsive ranged weapons add half STR (rounded down)', () => {
+    const strike = liveStrike({ traits: [{ name: 'propulsive' }] });
+    (strike.item.system as Record<string, unknown>).range = 60;
+    const token = pcTokenWith({
+      actions: [strike],
+      abilities: { str: { mod: 3 }, dex: { mod: 4 } }
+    });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8+1');
+  });
+
+  it('still prefers an explicit damageFormula string when present', () => {
+    const token = pcTokenWith({ actions: [liveStrike({ damageFormula: '1d8+7' })], abilities });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('1d8+7');
   });
 });

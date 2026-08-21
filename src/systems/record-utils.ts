@@ -49,3 +49,15 @@ export function getActorItems(items: unknown): UnknownRecord[] {
 
   return [];
 }
+
+export type ItemLike = {
+  id?: string;
+  name?: string;
+  type?: string;
+  system?: unknown;
+};
+
+/** Actor items as loosely-typed item records (Foundry collection or array). */
+export function toItemLikes(items: unknown): ItemLike[] {
+  return getActorItems(items).filter((item): item is ItemLike => isRecord(item));
+}

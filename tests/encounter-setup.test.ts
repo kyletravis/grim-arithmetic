@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildEncounterSetupFromSource } from '../src/foundry/encounter-setup';
-import type {
-  AttackSnapshot,
-  CombatantSnapshot,
-  SystemAdapter
-} from '../src/systems/base-adapter';
+import type { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../src/systems/base-adapter';
 
 interface MockToken {
   id: string;
@@ -60,6 +56,35 @@ function makeAttack(overrides: Partial<AttackSnapshot> = {}): AttackSnapshot {
 }
 
 describe('buildEncounterSetupFromSource', () => {
+  it('surfaces PC attack assumptions as caveats once per distinct assumption', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc', { name: 'Mira' }),
+            attacks: [
+              makeAttack({ id: 'longsword', assumptions: ['X'] }),
+              makeAttack({ id: 'dagger', assumptions: ['X'] })
+            ]
+          }
+        },
+        {
+          token: {
+            id: 'troll',
+            name: 'Troll',
+            snapshot: makeSnapshot('troll', 'enemy'),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.caveats.filter((c) => c === 'Mira: X')).toEqual(['Mira: X']);
+  });
+
   it('partitions PCs and enemies by disposition', () => {
     const source = {
       combatants: [

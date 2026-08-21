@@ -1,5 +1,5 @@
 import { isDebugLoggingEnabled } from './settings';
-import { asRecord, getActorItems, type UnknownRecord } from './systems/record-utils';
+import { asRecord, getActorItems, isRecord, type UnknownRecord } from './systems/record-utils';
 
 type DebugTokenLike = {
   id?: string;
@@ -33,6 +33,7 @@ export function buildDebugCapture(token: DebugTokenLike): unknown {
           name: actor.name,
           type: actor.type,
           system: buildActorSystemCapture(system),
+          pc: actor.type === 'character' ? buildPcCapture(system, actor) : undefined,
           itemTypes: pickItemTypes(actor.itemTypes),
           meleeItems: getActorItems(actor.items)
             .filter((item) => item.type === 'melee')
@@ -63,6 +64,47 @@ export function logDebugCapture(token?: DebugTokenLike): unknown | null {
   const capture = buildDebugCapture(token);
   console.log('Grim Arithmetic | Debug capture', capture);
   return capture;
+}
+
+function buildPcCapture(
+  system: UnknownRecord,
+  actor: NonNullable<DebugTokenLike['actor']>
+): UnknownRecord {
+  const actions = Array.isArray(system.actions) ? system.actions : [];
+  return withoutUndefined({
+    perception: system.perception,
+    abilities: system.abilities,
+    medicine: asRecord(system.skills).medicine,
+    level: asRecord(system.details).level,
+    heroPoints: asRecord(asRecord(system.resources).heroPoints).value,
+    actions: actions.filter(isRecord).map((action) => {
+      const item = asRecord(action.item);
+      const itemSystem = asRecord(item.system);
+      return withoutUndefined({
+        slug: action.slug,
+        label: action.label,
+        totalModifier: action.totalModifier,
+        damageType: typeof action.damage,
+        damageFormula: action.damageFormula,
+        traits: action.traits,
+        item: {
+          id: item.id,
+          name: item.name,
+          system: withoutUndefined({
+            damage: itemSystem.damage,
+            runes: itemSystem.runes,
+            traits: itemSystem.traits,
+            equipped: itemSystem.equipped,
+            range: itemSystem.range,
+            bonus: itemSystem.bonus
+          })
+        }
+      });
+    }),
+    weapons: getActorItems(actor.items)
+      .filter((item) => item.type === 'weapon')
+      .map((item) => ({ id: item.id, name: item.name, system: asRecord(item.system) }))
+  });
 }
 
 function buildActorSystemCapture(system: UnknownRecord): UnknownRecord {

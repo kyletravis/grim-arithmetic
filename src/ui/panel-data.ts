@@ -228,7 +228,7 @@ function buildExtractionErrors(
   }
   if (!attack) {
     errors.push(
-      'Targeted enemy has no supported melee Strike with a numeric attack bonus and supported damage formula.'
+      'Targeted enemy has no supported Strike with a numeric attack bonus and supported damage formula.'
     );
   }
   return errors;

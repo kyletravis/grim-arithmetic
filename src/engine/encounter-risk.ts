@@ -35,7 +35,7 @@ export interface ComputeMatrixOptions<TokenLike> {
 export const MAX_PAIRS = 200;
 
 const NO_ATTACKS_CAVEAT = (enemyName: string): string =>
-  `${enemyName} has no supported melee Strike with numeric attack bonus and damage formula.`;
+  `${enemyName} has no supported Strike with numeric attack bonus and damage formula.`;
 
 const GUARDRAIL_CAVEAT =
   'Encounter too large to compute pairwise risk safely. Reduce combatants or use the single-pair detail view.';
