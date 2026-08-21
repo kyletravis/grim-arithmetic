@@ -1,7 +1,12 @@
 import { EncounterParticipants } from '../foundry/encounter-participants';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
-import { PanelControls } from '../ui/panel-data';
-import { ImmediateDownRiskResult, immediateDownRisk, MapType } from './mortality';
+import { ImmediateDownRiskResult, immediateDownRisk } from './mortality';
+import {
+  type PanelControls,
+  resolveHeroPointAvailability,
+  resolveMapType,
+  resolveWounded
+} from './risk-controls';
 
 export interface PairRisk {
   pcId: string;
@@ -46,8 +51,8 @@ export function computeEncounterRiskMatrix<TokenLike>(
     attacks: safeGetAttacks(adapter, hostile.token)
   }));
 
-  const projectedPairCount = participants.pcs.length *
-    hostileAttackSets.reduce((sum, set) => sum + set.attacks.length, 0);
+  const projectedPairCount =
+    participants.pcs.length * hostileAttackSets.reduce((sum, set) => sum + set.attacks.length, 0);
 
   if (pairLimit !== undefined && projectedPairCount > pairLimit) {
     return { pairs: [], skipped: true, caveats: [GUARDRAIL_CAVEAT] };
@@ -133,23 +138,4 @@ function safeGetAttacks<TokenLike>(
   } catch {
     return [];
   }
-}
-
-function resolveMapType(mapMode: PanelControls['mapMode'], attackMapType: AttackSnapshot['mapType']): MapType {
-  if (mapMode !== 'auto') return mapMode;
-  return attackMapType === 'unknown' ? 'normal' : attackMapType;
-}
-
-function resolveWounded(pc: CombatantSnapshot, override: PanelControls['woundedOverride']): number {
-  if (override === 'current') return pc.deathState?.wounded ?? 0;
-  return Number(override);
-}
-
-function resolveHeroPointAvailability(
-  pc: CombatantSnapshot,
-  heroPointMode: PanelControls['heroPointMode']
-): boolean {
-  if (heroPointMode === 'available') return true;
-  if (heroPointMode === 'unavailable') return false;
-  return (pc.deathState?.heroPoints ?? 0) > 0;
 }

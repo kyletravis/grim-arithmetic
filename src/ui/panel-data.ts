@@ -1,22 +1,23 @@
-import { DyingSeverity, immediateDownRisk, MapType } from '../engine/mortality';
+import { DyingSeverity, immediateDownRisk } from '../engine/mortality';
+import {
+  PanelControls,
+  resolveHeroPointAvailability,
+  resolveMapType,
+  resolveWounded
+} from '../engine/risk-controls';
 import { riskClassFor, riskLabelFor } from '../engine/risk-bands';
 import type { SimulationResult, TacticsProfileId } from '../engine/simulation-types';
+import { proportionCIFromRate } from '../engine/statistics';
 import { TokenSelectionResult } from '../foundry/selection';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
+
+export { DEFAULT_PANEL_CONTROLS } from '../engine/risk-controls';
+export type { PanelControls } from '../engine/risk-controls';
 
 export interface StrikeChanceData {
   index: number;
   hitPercent: number;
   critPercent: number;
-}
-
-export interface PanelControls {
-  strikes: 1 | 2 | 3;
-  mapMode: 'auto' | MapType;
-  shieldBonus: 0 | 1 | 2;
-  woundedOverride: 'current' | '0' | '1' | '2' | '3';
-  heroPointMode: 'actor' | 'available' | 'unavailable';
-  attackId: string;
 }
 
 export interface SelectOption {
@@ -68,15 +69,6 @@ export interface MortalityPanelData {
     notModeled: string[];
   };
 }
-
-export const DEFAULT_PANEL_CONTROLS: PanelControls = {
-  strikes: 2,
-  mapMode: 'auto',
-  shieldBonus: 0,
-  woundedOverride: 'current',
-  heroPointMode: 'actor',
-  attackId: ''
-};
 
 export function buildMortalityPanelData<TokenLike>({
   selection,
@@ -249,14 +241,6 @@ function resolveSelectedAttack(
   return attacks.find((attack) => attack.id === selectedAttackId) ?? attacks[0];
 }
 
-function resolveMapType(
-  mapMode: PanelControls['mapMode'],
-  attackMapType: AttackSnapshot['mapType']
-): MapType {
-  if (mapMode !== 'auto') return mapMode;
-  return attackMapType === 'unknown' ? 'normal' : attackMapType;
-}
-
 function getWoundedNote(
   subject: CombatantSnapshot,
   override: PanelControls['woundedOverride']
@@ -264,23 +248,6 @@ function getWoundedNote(
   if (override === 'current')
     return `Current actor wounded value used for dying severity: ${subject.deathState?.wounded ?? 0}`;
   return `Override used for dying severity: Wounded ${override}`;
-}
-
-function resolveWounded(
-  subject: CombatantSnapshot,
-  override: PanelControls['woundedOverride']
-): number {
-  if (override === 'current') return subject.deathState?.wounded ?? 0;
-  return Number(override);
-}
-
-function resolveHeroPointAvailability(
-  subject: CombatantSnapshot,
-  heroPointMode: PanelControls['heroPointMode']
-): boolean {
-  if (heroPointMode === 'available') return true;
-  if (heroPointMode === 'unavailable') return false;
-  return (subject.deathState?.heroPoints ?? 0) > 0;
 }
 
 function toPercent(probability: number): number {
@@ -560,8 +527,14 @@ function buildForecastResultView(result: SimulationResult): ForecastResultView {
     heroPointSurvivalPercent: Math.round(result.safetyNet.heroPointSurvivalRate * 100),
     perPc: result.perPc
       .map((pc) => {
-        const downCi = proportionCI(pc.downProbability, result.iterationsCompleted);
-        const deathCi = proportionCI(pc.deathProbability, result.iterationsCompleted);
+        const downCi =
+          result.iterationsCompleted > 0
+            ? proportionCIFromRate(pc.downProbability, result.iterationsCompleted)
+            : null;
+        const deathCi =
+          result.iterationsCompleted > 0
+            ? proportionCIFromRate(pc.deathProbability, result.iterationsCompleted)
+            : null;
         return {
           id: pc.id,
           name: pc.name,
@@ -597,16 +570,5 @@ function buildForecastResultView(result: SimulationResult): ForecastResultView {
       // back to the alphabetical tie-break (raw-value sorting hid sub-percent gaps).
       .sort((a, b) => b.damageSharePercent - a.damageSharePercent || a.name.localeCompare(b.name)),
     caveats: result.caveats
-  };
-}
-
-function proportionCI(probability: number, total: number): { lower: number; upper: number } | null {
-  if (total === 0) return null;
-  const p = probability;
-  const se = Math.sqrt((p * (1 - p)) / total);
-  const margin = 1.959963984540054 * se;
-  return {
-    lower: Math.max(0, p - margin),
-    upper: Math.min(1, p + margin)
   };
 }
