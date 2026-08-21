@@ -84,10 +84,13 @@ export function runIteration(
         const recovery = sampleRecoveryCheck(actor, rng);
         recoveryChecksFired += 1;
         const threshold = deathThresholdFor(actor);
+        // PF2e: losing the dying condition (stabilizing) raises wounded by 1.
+        const stabilized = actor.dying > 0 && recovery.newDying === 0;
         const recovered: SimulationCombatant = {
           ...actor,
           dying: recovery.newDying,
-          downed: recovery.newDying > 0 || actor.hp.current === 0,
+          wounded: stabilized ? actor.wounded + 1 : actor.wounded,
+          downed: true, // still at 0 HP, unconscious until healed
           dead: recovery.newDying >= threshold
         };
         combatants.set(actor.id, recovered);
@@ -123,9 +126,7 @@ export function runIteration(
             },
             rng
           );
-          // Heal spell on a dying target clears dying (per PF2e).
-          const clearsDying = plan.heal.kind.startsWith('heal-spell') && target.dying > 0;
-          const healed = applyHeal(target, result.healedAmount, { clearsDying });
+          const healed = applyHeal(target, result.healedAmount);
           // Collateral damage from crit-failed Battle Medicine.
           let finalTarget = healed;
           if (result.collateralDamage && result.collateralDamage > 0) {

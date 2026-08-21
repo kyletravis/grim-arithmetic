@@ -120,6 +120,14 @@ describe('applyDamage', () => {
     expect(result.combatant.dying).toBe(3);
   });
 
+  it('a stabilized PC at 0 HP (dying 0, downed) hit again gets 1 + wounded dying', () => {
+    const r = applyDamage(
+      makePc({ hp: { current: 0, max: 20, temp: 0 }, dying: 0, downed: true, wounded: 1 }),
+      { damage: 3, degree: 'success' }
+    );
+    expect(r.combatant.dying).toBe(2);
+  });
+
   it('enemy at 0 HP is marked dead directly (no dying spiral)', () => {
     const enemy = makeEnemy({ hp: { current: 3, max: 30, temp: 0 } });
     const result = applyDamage(enemy, { damage: 10, degree: 'success' });

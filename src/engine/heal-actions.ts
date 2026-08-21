@@ -122,26 +122,20 @@ function withBonus(dice: string, bonus: number): string {
  * Apply a heal to a combatant. Returns a new immutable state with HP
  * raised by `amount`, clamped at max HP.
  *
- * Heal spells cast on a dying target also remove dying (per PF2e rules);
- * the caller signals this via `clearsDying = true` (set by the heal-spell
- * tactics path; Battle Medicine does NOT clear dying).
+ * PF2e: any healing that brings a dying creature to 1+ HP removes the dying
+ * condition and wakes them; losing the dying condition increases wounded by
+ * 1. A creature that is unconscious at 0 HP without dying (e.g. stabilized
+ * by a Hero Point) simply wakes, with no extra wounded.
  */
-export function applyHeal(
-  target: SimulationCombatant,
-  amount: number,
-  options: { clearsDying?: boolean } = {}
-): SimulationCombatant {
-  if (amount <= 0 && !options.clearsDying) return target;
-  const healed = Math.min(target.hp.max, target.hp.current + Math.max(0, amount));
-  const next: SimulationCombatant = {
-    ...target,
-    hp: { ...target.hp, current: healed }
-  };
-  if (options.clearsDying && next.dying > 0) {
+export function applyHeal(target: SimulationCombatant, amount: number): SimulationCombatant {
+  if (amount <= 0) return target;
+  const healed = Math.min(target.hp.max, target.hp.current + amount);
+  const next: SimulationCombatant = { ...target, hp: { ...target.hp, current: healed } };
+  if (healed > 0 && (target.dying > 0 || target.downed)) {
+    // PF2e: you lose dying and wake the moment you have 1+ HP; losing dying raises wounded.
+    if (target.dying > 0) next.wounded = target.wounded + 1;
     next.dying = 0;
-    // Dying gets cleared, but the PC may still be at 0 HP if the heal
-    // didn't restore HP. The orchestrator decides if downed flips back.
-    if (healed > 0) next.downed = false;
+    next.downed = false;
   }
   return next;
 }

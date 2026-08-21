@@ -35,19 +35,18 @@ export interface AppliedDamageResult {
  *
  * Rules (mirrors docs/ARITHMETIC.md v0.3.0 dying severity model):
  *   1. Temp HP absorbs first, then current HP, never below 0.
- *   2. PC at 0 HP not yet dying:
+ *   2. PC brought to 0 HP while not dying (including a PC already
+ *      unconscious at 0 HP but stabilized out of dying):
  *        normal hit -> dying = 1 + wounded
  *        crit hit   -> dying = 2 + wounded
  *      Sets downed = true.
- *   3. PC at 0 HP already dying:
+ *   3. PC already dying:
  *        normal hit -> dying += 1
  *        crit hit   -> dying += 2
  *   4. Death threshold = max(1, 4 - doomed). PC marked dead when
  *      dying >= threshold.
  *   5. Enemy at 0 HP is marked dead directly (no dying spiral in v0.6.0).
  *   6. Already-dead targets are a no-op.
- *
- * Recovery checks, healing, and persistent damage are deferred to v0.8.0+.
  */
 export function applyDamage(
   target: SimulationCombatant,
@@ -61,7 +60,7 @@ export function applyDamage(
     return { combatant: target, damageAbsorbed: 0, becameDowned: false, becameDead: false };
   }
 
-  const wasDying = target.dying > 0 || target.downed;
+  const wasDying = target.dying > 0;
   const wasDowned = target.downed;
 
   let remaining = application.damage;

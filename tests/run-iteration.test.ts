@@ -270,3 +270,24 @@ describe('runIteration: enemyStrikesPerTurn (A1)', () => {
     expect(enemyStrikes).toHaveLength(3);
   });
 });
+
+describe('runIteration: recovery checks (C4)', () => {
+  it('recovery-check stabilization increments wounded', () => {
+    // Find a seed whose first d20 is a nat 20 so the recovery check is a
+    // critical success (dying 1 -> 0). useFixedInitiative keeps the roll
+    // first in the RNG stream.
+    let seed = 0;
+    while (createRng(seed).nextInt(1, 20) !== 20) seed += 1;
+
+    const setup = makeSetup({
+      pcs: [
+        makePc('mira', { hp: { current: 0, max: 24, temp: 0 }, dying: 1, downed: true, wounded: 0 })
+      ],
+      enemies: [makeEnemy('boss', [])]
+    });
+    const result = runIteration(setup, makeConfig({ maxRounds: 1 }), createRng(seed), 0, {
+      useFixedInitiative: true
+    });
+    expect(result.perCombatant[0]).toMatchObject({ dying: 0, wounded: 1, downed: true });
+  });
+});

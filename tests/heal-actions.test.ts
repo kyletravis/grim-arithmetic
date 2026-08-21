@@ -132,7 +132,7 @@ describe('Heal spell', () => {
   });
 });
 
-describe('applyHeal', () => {
+describe('applyHeal (PF2e dying rules)', () => {
   it('restores HP up to max', () => {
     const result = applyHeal(pc({ hp: { current: 5, max: 24, temp: 0 } }), 10);
     expect(result.hp.current).toBe(15);
@@ -143,23 +143,24 @@ describe('applyHeal', () => {
     expect(result.hp.current).toBe(24);
   });
 
-  it('clears dying when clearsDying option is true and heal > 0', () => {
-    const target = pc({ hp: { current: 0, max: 24, temp: 0 }, dying: 2, downed: true });
-    const result = applyHeal(target, 5, { clearsDying: true });
-    expect(result.dying).toBe(0);
-    expect(result.downed).toBe(false);
-    expect(result.hp.current).toBe(5);
+  it('any heal to >= 1 HP clears dying, wakes the PC, and adds wounded', () => {
+    const healed = applyHeal(
+      pc({ hp: { current: 0, max: 24, temp: 0 }, dying: 2, downed: true, wounded: 0 }),
+      5
+    );
+    expect(healed).toMatchObject({ hp: { current: 5 }, dying: 0, downed: false, wounded: 1 });
   });
 
-  it('does not modify combatant when heal is 0 and clearsDying is false', () => {
-    const target = pc();
+  it('a hero-point-stabilized PC (dying 0, downed) wakes without extra wounded', () => {
+    const healed = applyHeal(
+      pc({ hp: { current: 0, max: 24, temp: 0 }, dying: 0, downed: true, wounded: 1 }),
+      3
+    );
+    expect(healed).toMatchObject({ dying: 0, downed: false, wounded: 1 });
+  });
+
+  it('zero heal is a no-op', () => {
+    const target = pc({ dying: 1, downed: true, hp: { current: 0, max: 24, temp: 0 } });
     expect(applyHeal(target, 0)).toBe(target);
-  });
-
-  it('does not affect dying when clearsDying option is omitted', () => {
-    const target = pc({ hp: { current: 0, max: 24, temp: 0 }, dying: 2 });
-    const result = applyHeal(target, 5);
-    expect(result.dying).toBe(2);
-    expect(result.hp.current).toBe(5);
   });
 });
