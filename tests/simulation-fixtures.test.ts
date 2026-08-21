@@ -235,10 +235,11 @@ describe('simulation fixtures: 1 PC vs 1 enemy (parity with v0.5.0 pair detail)'
 
 describe('simulation fixtures: PCs act (v0.6.0-rc.3 regression net)', () => {
   it('4 PCs vs 1 boss now resolves in fewer rounds than rc.2 stones-baseline', () => {
-    // In rc.2 (PCs do nothing), this scenario hit the 5-round maxRounds cap
-    // almost every iteration. With PC actions in rc.3, the boss takes damage
-    // and the encounter ends earlier. Assert the run terminates strictly
-    // before maxRounds on this seed.
+    // In rc.2 (PCs do nothing), this scenario hit the maxRounds cap almost
+    // every iteration. With PC actions in rc.3, the boss takes damage and the
+    // encounter ends earlier — under the 10-round cap essentially every run
+    // resolves on its own. Assert the down risk stays well below the rc.2
+    // baseline on this seed.
     const setup: EncounterSetup = {
       pcs: [pc('mira'), pc('seam'), pc('jor'), pc('elya')],
       enemies: [
