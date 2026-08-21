@@ -71,12 +71,12 @@ describe('sampleRecoveryCheck', () => {
     expect(found).toBe(true);
   });
 
-  it('failure leaves dying unchanged', () => {
+  it('failure increases dying by 1', () => {
     let found = false;
     for (let s = 0; s < 200; s += 1) {
       const r = sampleRecoveryCheck(dyingPc(1), createRng(s));
       if (r.degree === 'failure') {
-        expect(r.newDying).toBe(1);
+        expect(r.newDying).toBe(2);
         found = true;
         break;
       }
@@ -84,12 +84,12 @@ describe('sampleRecoveryCheck', () => {
     expect(found).toBe(true);
   });
 
-  it('crit-failure increases dying by 1', () => {
+  it('crit-failure increases dying by 2', () => {
     let found = false;
     for (let s = 0; s < 200; s += 1) {
       const r = sampleRecoveryCheck(dyingPc(1), createRng(s));
       if (r.degree === 'criticalFailure') {
-        expect(r.newDying).toBe(2);
+        expect(r.newDying).toBe(3);
         found = true;
         break;
       }

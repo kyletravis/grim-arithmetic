@@ -21,8 +21,10 @@ import type { TacticsProfile, TurnPlanHeal, TurnPlanStrike } from './tactics-typ
  * emergent (PC1 heals an ally; PC2 re-evaluates and doesn't double-heal).
  *
  * Heal priority within a single PC's choice:
- *   Emergency: Heal spell (2-action) > Heal spell (1-action) > Battle Medicine.
- *   Top-up:    Heal spell (1-action) > Battle Medicine > Heal spell (2-action).
+ *   Emergency: Heal spell (2-action) > Battle Medicine.
+ *   Top-up:    Heal spell (1-action) > Battle Medicine.
+ * (Both spell variants draw on the same slot pool, so only the one that fits
+ * the action budget is offered per mode.)
  * Battle Medicine cannot target a PC already healed by Battle Medicine
  * this iteration (per PF2e 1/target/day rule, approximated for the
  * single-encounter sim).
@@ -128,8 +130,8 @@ function planHeal(
   // last.
   const tryKinds: HealKind[] =
     mode === 'emergency'
-      ? ['heal-spell-2action', 'heal-spell-1action', 'battle-medicine']
-      : ['heal-spell-1action', 'battle-medicine', 'heal-spell-2action'];
+      ? ['heal-spell-2action', 'battle-medicine']
+      : ['heal-spell-1action', 'battle-medicine'];
 
   for (const kind of tryKinds) {
     if (kind === 'heal-spell-2action' || kind === 'heal-spell-1action') {

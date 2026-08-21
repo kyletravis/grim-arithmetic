@@ -341,9 +341,9 @@ export interface ForecastPanelData {
   result?: ForecastResultView;
   errorMessage?: string;
   /**
-   * Banner shown when any-PC-down probability is extreme (>=80%). Calls out
-   * the v0.6.0 conservative-baseline interpretation so GMs do not read the
-   * number as a campaign-death prophecy.
+   * Banner shown when TPK risk or any single PC's death risk reaches the
+   * Severe band (>=35%). Keyed to death, not knockouts: under everDowned
+   * semantics a party that wins comfortably still reports a high any-PC-down.
    */
   pessimismWarning?: string;
   /** Single critical caveat shown inline below the stats. */
@@ -389,7 +389,7 @@ export function buildForecastPanelData({
     'Enemies make the configured Default enemy Strike count of Strikes per turn (module setting).',
     'PCs Strike the most-dangerous standing enemy (2 strikes per turn by default).',
     'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP (Battle Medicine follows the Treat Wounds DC table).',
-    'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success / crit-failure step dying.',
+    'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success lower dying, failure / crit-failure raise it.',
     'Hero Points are spent to prevent death (once per iteration per PC).'
   ];
 
@@ -470,12 +470,16 @@ export function buildForecastPanelData({
 }
 
 function buildPessimismWarning(result: SimulationResult): string | undefined {
-  if (result.anyPcDownProbability < 0.8) return undefined;
+  // Knockouts are routine in PF2e and any-PC-down counts every one of them, so
+  // the banner keys off death risk: TPK or any single PC in the Severe band.
+  const worstPcDeath = Math.max(0, ...result.perPc.map((pc) => pc.deathProbability));
+  if (result.tpkProbability < 0.35 && worstPcDeath < 0.35) return undefined;
   // The bold "High-risk encounter." lead is rendered separately (PessimismLead),
   // so the body stays tight and avoids repeating it.
   return (
-    'Even with healing, recovery, and Hero Points, most runs end badly. Reactions and positioning are not modeled, ' +
-    'so real-table risk may be a bit lower — but the structural lethality is worth examining.'
+    'Even with healing, recovery, and Hero Points, a large share of runs end with a dead PC or a TPK. ' +
+    'Reactions and positioning are not modeled, so real-table risk may be a bit lower — but the structural ' +
+    'lethality is worth examining.'
   );
 }
 

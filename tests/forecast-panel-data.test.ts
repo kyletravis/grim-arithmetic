@@ -232,22 +232,59 @@ describe('buildForecastPanelData: done state', () => {
     expect(data.otherAssumptions).toContain('unsupported actor X skipped');
   });
 
-  it('shows a pessimism banner when any-PC-down >= 80%', () => {
+  it('shows a pessimism banner when TPK risk reaches the Severe band', () => {
     const data = buildForecastPanelData({
       ...baseArgs({
         kind: 'done',
-        result: makeResult({ anyPcDownProbability: 0.99 })
+        result: makeResult({ tpkProbability: 0.4 })
       })
     });
     expect(data.pessimismWarning).toBeDefined();
-    expect(data.pessimismWarning).toMatch(/high-risk|healing|Hero Points|structural lethality/i);
+    expect(data.pessimismWarning).toMatch(/dead PC or a TPK|structural lethality/i);
   });
 
-  it('omits the pessimism banner when any-PC-down is below the threshold', () => {
+  it('shows a pessimism banner when a single PC death risk reaches the Severe band', () => {
     const data = buildForecastPanelData({
       ...baseArgs({
         kind: 'done',
-        result: makeResult({ anyPcDownProbability: 0.4 })
+        result: makeResult({
+          tpkProbability: 0.02,
+          perPc: [
+            {
+              id: 'mira',
+              name: 'Mira',
+              downProbability: 0.9,
+              deathProbability: 0.4,
+              meanEndingHp: 3,
+              topContributingEnemyId: 'troll'
+            }
+          ]
+        })
+      })
+    });
+    expect(data.pessimismWarning).toBeDefined();
+  });
+
+  it('omits the pessimism banner when PCs are knocked out a lot but rarely die', () => {
+    // everDowned semantics: a party that wins ~95% of the time still reports a
+    // high any-PC-down. That is not a "high-risk encounter".
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          anyPcDownProbability: 0.95,
+          tpkProbability: 0.05,
+          perPc: [
+            {
+              id: 'mira',
+              name: 'Mira',
+              downProbability: 0.95,
+              deathProbability: 0.02,
+              meanEndingHp: 9,
+              topContributingEnemyId: 'troll'
+            }
+          ]
+        })
       })
     });
     expect(data.pessimismWarning).toBeUndefined();
