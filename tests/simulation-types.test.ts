@@ -144,7 +144,8 @@ describe('simulation-types shapes', () => {
         tpk: { lower: 0, upper: 0 },
         meanFirstDownRound: null
       },
-      caveats: []
+      caveats: [],
+      enemyStrikesPerTurn: 2
     };
     expect(result.aborted).toBe(false);
   });

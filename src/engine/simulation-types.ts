@@ -137,6 +137,11 @@ export interface SimulationConfig {
   wallClockBudgetMs?: number;
   /** Whether to capture per-strike events in IterationResult (memory cost). */
   captureEvents?: boolean;
+  /**
+   * Strikes each enemy makes per turn (defaultStrikes world setting).
+   * Defaults to DEFAULT_STRIKES_PER_TURN when omitted.
+   */
+  enemyStrikesPerTurn?: 1 | 2 | 3;
 }
 
 /**
@@ -251,6 +256,8 @@ export interface SimulationResult {
   confidenceIntervals: SimulationConfidenceIntervals;
   /** Caveats from setup builder plus engine-level notes. */
   caveats: string[];
+  /** Strikes each enemy made per turn in this run (config.enemyStrikesPerTurn or the default). */
+  enemyStrikesPerTurn: number;
 }
 
 /** 95% confidence interval for a proportion (e.g., down probability). */

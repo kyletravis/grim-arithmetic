@@ -252,3 +252,21 @@ describe('runIteration metrics', () => {
     expect(result.iterationIndex).toBe(42);
   });
 });
+
+describe('runIteration: enemyStrikesPerTurn (A1)', () => {
+  it('enemies make enemyStrikesPerTurn strikes per turn when configured', () => {
+    const setup = makeSetup({
+      pcs: [makePc('mira', { defenses: { ac: 10 }, hp: { current: 200, max: 200, temp: 0 } })],
+      enemies: [makeEnemy('boss', [makeAttack()])]
+    });
+    const config = makeConfig({
+      tacticsProfile: 'focus-fire',
+      maxRounds: 1,
+      enemyStrikesPerTurn: 3,
+      captureEvents: true
+    });
+    const result = runIteration(setup, config, createRng(1), 0, { useFixedInitiative: true });
+    const enemyStrikes = result.events!.filter((e) => e.attackerId === setup.enemies[0].id);
+    expect(enemyStrikes).toHaveLength(3);
+  });
+});

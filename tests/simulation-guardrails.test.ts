@@ -138,6 +138,23 @@ describe('validateSimulationConfig', () => {
   it('allows wallClockBudgetMs = 0 (disabled)', () => {
     expect(() => validateSimulationConfig(baseConfig({ wallClockBudgetMs: 0 }))).not.toThrow();
   });
+
+  it('accepts enemyStrikesPerTurn of 1, 2, or 3', () => {
+    for (const value of [1, 2, 3] as const) {
+      expect(() =>
+        validateSimulationConfig(baseConfig({ enemyStrikesPerTurn: value }))
+      ).not.toThrow();
+    }
+  });
+
+  it('rejects enemyStrikesPerTurn outside 1|2|3 (A1)', () => {
+    expect(() => validateSimulationConfig(baseConfig({ enemyStrikesPerTurn: 0 as never }))).toThrow(
+      /enemyStrikesPerTurn must be 1, 2, or 3/
+    );
+    expect(() => validateSimulationConfig(baseConfig({ enemyStrikesPerTurn: 4 as never }))).toThrow(
+      /enemyStrikesPerTurn must be 1, 2, or 3/
+    );
+  });
 });
 
 describe('runSimulation: validateSimulationConfig is enforced', () => {

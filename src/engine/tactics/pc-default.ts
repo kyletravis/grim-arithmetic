@@ -2,12 +2,7 @@ import { damageDistribution } from '../dice';
 import type { HealKind } from '../heal-actions';
 import type { HealingState, SimulationCombatant } from '../simulation-types';
 import { pickFirstAttack } from './shared';
-import {
-  DEFAULT_STRIKES_PER_TURN,
-  type TacticsProfile,
-  type TurnPlanHeal,
-  type TurnPlanStrike
-} from './tactics-types';
+import type { TacticsProfile, TurnPlanHeal, TurnPlanStrike } from './tactics-types';
 
 /**
  * Hardcoded PC tactics profile for v0.6.0-rc.4.
@@ -75,7 +70,8 @@ export const pcDefaultTactics: TacticsProfile = {
     if (!attack) return { strikes: [] };
     const target = [...standingEnemies].sort(comparePcTargetPriority)[0];
     const strikes: TurnPlanStrike[] = [];
-    for (let i = 0; i < DEFAULT_STRIKES_PER_TURN; i += 1) {
+    const strikeCount = Math.min(3, context.strikesPerTurn);
+    for (let i = 0; i < strikeCount; i += 1) {
       strikes.push({ attackId: attack.id, targetId: target.id, mapIndex: i as 0 | 1 | 2 });
     }
     return { strikes };
@@ -88,7 +84,9 @@ function canHeal(healing: HealingState | undefined): boolean {
   return hasSlot || healing.healCantripLevel !== null || healing.hasBattleMedicine;
 }
 
-function pickPriorityDyingAlly(pcs: readonly SimulationCombatant[]): SimulationCombatant | undefined {
+function pickPriorityDyingAlly(
+  pcs: readonly SimulationCombatant[]
+): SimulationCombatant | undefined {
   const dying = pcs.filter((c) => c.dying > 0 && !c.dead);
   if (dying.length === 0) return undefined;
   // Pick the ally closest to death threshold (highest dying value); ties by id.
@@ -131,11 +129,27 @@ function planHeal(
   // last.
   const tryKinds: HealKind[] =
     mode === 'emergency'
-      ? ['heal-spell-2action', 'heal-cantrip-2action', 'heal-spell-1action', 'heal-cantrip-1action', 'battle-medicine']
-      : ['heal-spell-1action', 'heal-cantrip-1action', 'heal-spell-2action', 'heal-cantrip-2action', 'battle-medicine'];
+      ? [
+          'heal-spell-2action',
+          'heal-cantrip-2action',
+          'heal-spell-1action',
+          'heal-cantrip-1action',
+          'battle-medicine'
+        ]
+      : [
+          'heal-spell-1action',
+          'heal-cantrip-1action',
+          'heal-spell-2action',
+          'heal-cantrip-2action',
+          'battle-medicine'
+        ];
 
   for (const kind of tryKinds) {
-    if (kind === 'heal-spell-2action' || kind === 'heal-spell-1action' || kind === 'heal-spell-3action') {
+    if (
+      kind === 'heal-spell-2action' ||
+      kind === 'heal-spell-1action' ||
+      kind === 'heal-spell-3action'
+    ) {
       const rank = pickLowestSlotRank(healing.healSpellSlotsRemaining);
       if (rank !== undefined) {
         return { kind, healerId: healer.id, targetId: target.id, spellRank: rank };
@@ -149,10 +163,7 @@ function planHeal(
       continue;
     }
     if (kind === 'battle-medicine') {
-      if (
-        healing.hasBattleMedicine &&
-        !healing.battleMedicineUsedTargets.has(target.id)
-      ) {
+      if (healing.hasBattleMedicine && !healing.battleMedicineUsedTargets.has(target.id)) {
         return { kind, healerId: healer.id, targetId: target.id };
       }
       continue;

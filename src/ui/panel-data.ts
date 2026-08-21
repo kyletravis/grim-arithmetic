@@ -386,6 +386,7 @@ export function buildForecastPanelData({
   const vitalAssumption =
     'Not modeled: reactions (Shield Block, Champion), spells beyond Heal, persistent damage, attacks of opportunity, movement / reach / line of sight.';
   const otherAssumptions = [
+    'Enemies make the configured Default enemy Strike count of Strikes per turn (module setting).',
     'PCs Strike the most-dangerous standing enemy (2 strikes per turn by default).',
     'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP.',
     'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success / crit-failure step dying.',
@@ -452,6 +453,8 @@ export function buildForecastPanelData({
   }
   // done
   const result = state.result;
+  const n = result.enemyStrikesPerTurn;
+  const enemyStrikesBullet = `Enemies make ${n} Strike${n === 1 ? '' : 's'} per turn (module setting "Default enemy Strike count").`;
   return {
     moduleVersion,
     enabled: true,
@@ -462,7 +465,11 @@ export function buildForecastPanelData({
     result: buildForecastResultView(result),
     pessimismWarning: buildPessimismWarning(result),
     vitalAssumption,
-    otherAssumptions: [...otherAssumptions, ...result.caveats.map((c) => `Setup: ${c}`)]
+    otherAssumptions: [
+      enemyStrikesBullet,
+      ...otherAssumptions.slice(1),
+      ...result.caveats.map((c) => `Setup: ${c}`)
+    ]
   };
 }
 

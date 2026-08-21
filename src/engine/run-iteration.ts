@@ -15,7 +15,7 @@ import type {
 } from './simulation-types';
 import { TACTICS_PROFILES } from './tactics';
 import { pcDefaultTactics } from './tactics/pc-default';
-import type { TacticsProfile } from './tactics/tactics-types';
+import { DEFAULT_STRIKES_PER_TURN, type TacticsProfile } from './tactics/tactics-types';
 
 export interface RunIterationOptions {
   /** When true, initiative is taken in input order (no RNG consumed). */
@@ -101,7 +101,14 @@ export function runIteration(
       const pcs = liveSideMembers(combatants, 'pc');
       const enemies = liveSideMembers(combatants, 'enemy');
       const tactics = actor.side === 'pc' ? pcTactics : enemyTactics;
-      const plan = tactics.chooseTurn({ attacker: actor, pcs, enemies, round }, rng);
+      const strikesPerTurn =
+        actor.side === 'pc'
+          ? DEFAULT_STRIKES_PER_TURN
+          : (config.enemyStrikesPerTurn ?? DEFAULT_STRIKES_PER_TURN);
+      const plan = tactics.chooseTurn(
+        { attacker: actor, pcs, enemies, round, strikesPerTurn },
+        rng
+      );
 
       // Heal action (PC tactics only) runs before strikes.
       if (plan.heal) {

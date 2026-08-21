@@ -3,7 +3,7 @@
     "Settings": {
       "DefaultStrikes": {
         "Name": "Default enemy Strike count",
-        "Hint": "How many Strikes each enemy is assumed to make per round when estimating immediate knock-out threat on the Encounter Danger Board.",
+        "Hint": "How many Strikes each enemy is assumed to make per turn — used by the Encounter Danger Board, as the Pair Detail starting value, and by simulated enemies in the Encounter Forecast.",
         "Choices": {
           "1": "1 Strike",
           "2": "2 Strikes",

@@ -32,6 +32,11 @@ export interface TacticsContext {
   pcs: readonly SimulationCombatant[];
   enemies: readonly SimulationCombatant[];
   round: number;
+  /**
+   * Strikes this actor takes this turn; enemies from
+   * SimulationConfig.enemyStrikesPerTurn, PCs DEFAULT_STRIKES_PER_TURN.
+   */
+  strikesPerTurn: number;
 }
 
 /** Pluggable enemy decision policy. */

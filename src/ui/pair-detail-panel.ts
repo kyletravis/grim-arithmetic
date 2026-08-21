@@ -1,4 +1,5 @@
 import { getCurrentTokenSelection, TokenSelectionResult } from '../foundry/selection';
+import { getDefaultStrikes } from '../settings';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
@@ -26,7 +27,7 @@ const PAIR_DETAIL_ID = `${MODULE_ID}-pair-detail`;
 export class PairDetailPanel extends Base {
   private static singleton?: PairDetailPanel;
 
-  private controls: PanelControls = { ...DEFAULT_PANEL_CONTROLS };
+  private controls: PanelControls = { ...DEFAULT_PANEL_CONTROLS, strikes: getDefaultStrikes() };
   private explicitSelection?: TokenSelectionResult<unknown>;
 
   static DEFAULT_OPTIONS = {

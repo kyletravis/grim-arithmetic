@@ -1,4 +1,4 @@
-import { DEFAULT_STRIKES_PER_TURN, type TacticsProfile, type TurnPlanStrike } from './tactics-types';
+import type { TacticsProfile, TurnPlanStrike } from './tactics-types';
 import { getStandingPcs, pickFirstAttack } from './shared';
 
 /**
@@ -21,7 +21,8 @@ export const spreadDamageTactics: TacticsProfile = {
       return a.id < b.id ? -1 : 1;
     });
     const strikes: TurnPlanStrike[] = [];
-    for (let i = 0; i < DEFAULT_STRIKES_PER_TURN; i += 1) {
+    const strikeCount = Math.min(3, context.strikesPerTurn);
+    for (let i = 0; i < strikeCount; i += 1) {
       const target = sorted[i % sorted.length];
       strikes.push({ attackId: attack.id, targetId: target.id, mapIndex: i as 0 | 1 | 2 });
     }

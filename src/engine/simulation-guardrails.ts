@@ -40,6 +40,14 @@ export function validateSimulationConfig(config: SimulationConfig): void {
       );
     }
   }
+  if (
+    config.enemyStrikesPerTurn !== undefined &&
+    config.enemyStrikesPerTurn !== 1 &&
+    config.enemyStrikesPerTurn !== 2 &&
+    config.enemyStrikesPerTurn !== 3
+  ) {
+    throw new Error(`enemyStrikesPerTurn must be 1, 2, or 3, got ${config.enemyStrikesPerTurn}`);
+  }
 }
 
 /**

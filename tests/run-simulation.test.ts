@@ -218,6 +218,19 @@ describe('runSimulation aggregates', () => {
     const result = runSimulation(setup, makeConfig({ iterations: 50 }));
     expect(result.caveats).toContain('unsupported actor X skipped');
   });
+
+  it('enemyStrikesPerTurn defaults to 2 when omitted from config (A1)', () => {
+    const result = runSimulation(makeSetup(), makeConfig({ iterations: 50 }));
+    expect(result.enemyStrikesPerTurn).toBe(2);
+  });
+
+  it('enemyStrikesPerTurn reflects the configured value (A1)', () => {
+    const result = runSimulation(
+      makeSetup(),
+      makeConfig({ iterations: 50, enemyStrikesPerTurn: 3 })
+    );
+    expect(result.enemyStrikesPerTurn).toBe(3);
+  });
 });
 
 describe('runSimulation progress and abort', () => {

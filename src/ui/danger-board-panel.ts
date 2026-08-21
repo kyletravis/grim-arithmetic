@@ -1,6 +1,6 @@
 import { computeEncounterRiskMatrix, MAX_PAIRS } from '../engine/encounter-risk';
 import { getEncounterParticipants } from '../foundry/encounter-participants';
-import { isMonteCarloEnabled } from '../settings';
+import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import { buildDangerBoardData, DangerBoardData } from './danger-board';
@@ -68,7 +68,7 @@ export class DangerBoardPanel extends Base {
     const participants = getEncounterParticipants(adapter);
     const matrix = computeEncounterRiskMatrix(participants, {
       adapter,
-      controls: DEFAULT_PANEL_CONTROLS,
+      controls: { ...DEFAULT_PANEL_CONTROLS, strikes: getDefaultStrikes() },
       pairLimit: MAX_PAIRS
     });
     const dangerBoard = buildDangerBoardData(matrix);

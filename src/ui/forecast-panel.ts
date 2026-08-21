@@ -5,7 +5,7 @@ import {
 import type { SimulationConfig, SimulationResult } from '../engine/simulation-types';
 import { DEFAULT_MAX_ROUNDS } from '../engine/simulation-types';
 import { buildEncounterSetup } from '../foundry/encounter-setup';
-import { isMonteCarloEnabled } from '../settings';
+import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
 import { Pf2eAdapter } from '../systems/pf2e-adapter';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
@@ -137,7 +137,8 @@ export class ForecastPanel extends Base {
     const config: SimulationConfig = {
       iterations: 5000,
       tacticsProfile: this.controls.tacticsProfile,
-      maxRounds: DEFAULT_MAX_ROUNDS
+      maxRounds: DEFAULT_MAX_ROUNDS,
+      enemyStrikesPerTurn: getDefaultStrikes()
     };
 
     this.runState = { kind: 'running', completed: 0, total: 5000 };

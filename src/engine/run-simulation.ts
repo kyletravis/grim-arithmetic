@@ -1,6 +1,7 @@
 import { createRng, deriveChildSeed } from './prng';
 import { runIteration } from './run-iteration';
 import { validateSimulationConfig } from './simulation-guardrails';
+import { DEFAULT_STRIKES_PER_TURN } from './tactics/tactics-types';
 import type {
   EncounterSetup,
   IterationResult,
@@ -74,6 +75,7 @@ function aggregate(
   aborted: boolean
 ): SimulationResult {
   const completedCount = results.length;
+  const enemyStrikesPerTurn = config.enemyStrikesPerTurn ?? DEFAULT_STRIKES_PER_TURN;
   if (completedCount === 0) {
     return {
       iterationsRequested: config.iterations,
@@ -109,7 +111,8 @@ function aggregate(
         tpk: { lower: 0, upper: 0 },
         meanFirstDownRound: null
       },
-      caveats: [...setup.caveats, 'No iterations completed.']
+      caveats: [...setup.caveats, 'No iterations completed.'],
+      enemyStrikesPerTurn
     };
   }
 
@@ -243,7 +246,8 @@ function aggregate(
       heroPointSurvivalRate: hpSurvivalIterations / completedCount
     },
     confidenceIntervals,
-    caveats: [...setup.caveats]
+    caveats: [...setup.caveats],
+    enemyStrikesPerTurn
   };
 }
 

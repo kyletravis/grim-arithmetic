@@ -1,5 +1,5 @@
 import type { SimulationCombatant } from '../simulation-types';
-import { DEFAULT_STRIKES_PER_TURN, type TacticsProfile, type TurnPlanStrike } from './tactics-types';
+import type { TacticsProfile, TurnPlanStrike } from './tactics-types';
 import { getNonDeadPcs, getStandingPcs, pickFirstAttack } from './shared';
 
 /**
@@ -14,7 +14,8 @@ import { getNonDeadPcs, getStandingPcs, pickFirstAttack } from './shared';
  */
 export const predatorTactics: TacticsProfile = {
   id: 'predator',
-  description: 'Prioritize wounded > low-HP > full-HP PCs; attack downed only if no standing PCs remain.',
+  description:
+    'Prioritize wounded > low-HP > full-HP PCs; attack downed only if no standing PCs remain.',
   chooseTurn(context) {
     const standing = getStandingPcs(context.pcs);
     let pool: readonly SimulationCombatant[];
@@ -28,7 +29,8 @@ export const predatorTactics: TacticsProfile = {
     if (!attack) return { strikes: [] };
     const target = pool[0];
     const strikes: TurnPlanStrike[] = [];
-    for (let i = 0; i < DEFAULT_STRIKES_PER_TURN; i += 1) {
+    const strikeCount = Math.min(3, context.strikesPerTurn);
+    for (let i = 0; i < strikeCount; i += 1) {
       strikes.push({ attackId: attack.id, targetId: target.id, mapIndex: i as 0 | 1 | 2 });
     }
     return { strikes };

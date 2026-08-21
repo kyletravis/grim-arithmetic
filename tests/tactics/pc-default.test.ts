@@ -68,7 +68,7 @@ function makeContext(
   attacker: SimulationCombatant,
   enemies: SimulationCombatant[]
 ): TacticsContext {
-  return { attacker, pcs: [attacker], enemies, round: 1 };
+  return { attacker, pcs: [attacker], enemies, round: 1, strikesPerTurn: 2 };
 }
 
 describe('pcDefaultTactics: target selection', () => {

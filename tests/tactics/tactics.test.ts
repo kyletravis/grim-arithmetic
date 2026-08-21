@@ -65,7 +65,7 @@ function makeEnemy(
 }
 
 function makeContext(attacker: SimulationCombatant, pcs: SimulationCombatant[]): TacticsContext {
-  return { attacker, pcs, enemies: [attacker], round: 1 };
+  return { attacker, pcs, enemies: [attacker], round: 1, strikesPerTurn: 2 };
 }
 
 describe('TACTICS_PROFILES registry', () => {
@@ -168,6 +168,14 @@ describe('spread-damage tactics', () => {
 describe('focus-fire tactics', () => {
   const profile = TACTICS_PROFILES['focus-fire'];
   const enemy = makeEnemy('boss', [makeAttack()]);
+
+  it('produces strikesPerTurn strikes with sequential mapIndex (A1)', () => {
+    const pcs = [makePc('mira'), makePc('seam')];
+    const context = { ...makeContext(enemy, pcs), strikesPerTurn: 3 };
+    const plan = profile.chooseTurn(context, createRng('seed'));
+    expect(plan.strikes).toHaveLength(3);
+    expect(plan.strikes.map((s) => s.mapIndex)).toEqual([0, 1, 2]);
+  });
 
   it('targets the lowest-HP standing PC for every strike', () => {
     const pcs = [

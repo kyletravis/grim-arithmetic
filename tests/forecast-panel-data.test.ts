@@ -75,8 +75,12 @@ describe('buildForecastPanelData: idle state', () => {
     const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
     // The "not modeled" caveat is surfaced inline; the rest collapse (KHT-129).
     expect(data.vitalAssumption).toContain('Not modeled:');
-    expect(data.otherAssumptions.find((a) => a.includes('PCs Strike the most-dangerous'))).toBeDefined();
-    expect(data.otherAssumptions.find((a) => a.includes('Heal spells / Battle Medicine'))).toBeDefined();
+    expect(
+      data.otherAssumptions.find((a) => a.includes('PCs Strike the most-dangerous'))
+    ).toBeDefined();
+    expect(
+      data.otherAssumptions.find((a) => a.includes('Heal spells / Battle Medicine'))
+    ).toBeDefined();
     expect(data.otherAssumptions.find((a) => a.includes('recovery checks'))).toBeDefined();
     expect(data.otherAssumptions.find((a) => a.includes('Hero Points'))).toBeDefined();
   });
@@ -163,6 +167,7 @@ function makeResult(overrides: Partial<SimulationResult> = {}): SimulationResult
       meanFirstDownRound: { lower: 2.0, upper: 2.2 }
     },
     caveats: [],
+    enemyStrikesPerTurn: 2,
     ...overrides
   };
 }
