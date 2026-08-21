@@ -13,10 +13,9 @@ import {
   isRecord,
   optionalNumber,
   optionalNumberLike,
-  toStringArray
+  toStringArray,
+  type UnknownRecord
 } from './record-utils';
-
-type UnknownRecord = Record<string, unknown>;
 
 export type Pf2eTokenLike = {
   id?: string;

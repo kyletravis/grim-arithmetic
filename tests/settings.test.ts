@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   ENABLE_MONTE_CARLO_SETTING,
-  isMonteCarloEnabled,
-  applyPlayerSettingsVisibility
+  applyPlayerSettingsVisibility,
+  getDefaultStrikes,
+  getModuleSetting,
+  isDebugLoggingEnabled,
+  isMonteCarloEnabled
 } from '../src/settings';
 
 describe('settings: enableMonteCarlo', () => {
@@ -59,8 +62,6 @@ describe('settings: applyPlayerSettingsVisibility (KHT-118)', () => {
     expect(() => applyPlayerSettingsVisibility(null, false)).not.toThrow();
   });
 });
-
-import { getDefaultStrikes, getModuleSetting, isDebugLoggingEnabled } from '../src/settings';
 
 describe('settings: helpers outside Foundry', () => {
   it('getModuleSetting returns the fallback when game is undefined', () => {
