@@ -6,7 +6,7 @@ import type { SimulationConfig, SimulationResult } from '../engine/simulation-ty
 import { DEFAULT_MAX_ROUNDS } from '../engine/simulation-types';
 import { buildEncounterSetup } from '../foundry/encounter-setup';
 import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
-import { Pf2eAdapter } from '../systems/pf2e-adapter';
+import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
   buildForecastPanelData,
@@ -117,7 +117,13 @@ export class ForecastPanel extends Base {
     this.currentHandle?.cancel();
     this.currentHandle = undefined;
 
-    const adapter = new Pf2eAdapter();
+    const adapter = getSystemAdapter();
+    if (!adapter) {
+      this.runState = { kind: 'error', message: 'Unsupported game system.' };
+      this.render();
+      return;
+    }
+
     let setup;
     try {
       setup = buildEncounterSetup(adapter);

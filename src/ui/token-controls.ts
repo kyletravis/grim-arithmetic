@@ -1,3 +1,4 @@
+import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID } from '../constants';
 import { DangerBoardPanel } from './danger-board-panel';
 
@@ -34,7 +35,7 @@ export function registerTokenControls(): void {
       icon: 'fa-solid fa-skull',
       order: Object.keys(tokenControls.tools).length,
       button: true,
-      visible: Boolean(game.user?.isGM),
+      visible: Boolean(game.user?.isGM) && getSystemAdapter() !== null,
       onChange: openDangerBoard
     };
   });

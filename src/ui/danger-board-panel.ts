@@ -1,9 +1,9 @@
 import { computeEncounterRiskMatrix, MAX_PAIRS } from '../engine/encounter-risk';
 import { getEncounterParticipants } from '../foundry/encounter-participants';
 import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
-import { Pf2eAdapter } from '../systems/pf2e-adapter';
+import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
-import { buildDangerBoardData, DangerBoardData } from './danger-board';
+import { buildDangerBoardData, DangerBoardData, RISK_LEGEND } from './danger-board';
 import { debounce } from './debounce';
 import { ForecastPanel } from './forecast-panel';
 import { DEFAULT_PANEL_CONTROLS } from './panel-data';
@@ -95,7 +95,21 @@ export class DangerBoardPanel extends Base {
   };
 
   async _prepareContext(): Promise<DangerBoardPanelData> {
-    const adapter = new Pf2eAdapter();
+    const adapter = getSystemAdapter();
+    if (!adapter) {
+      return {
+        moduleVersion: MODULE_VERSION,
+        dangerBoard: {
+          topEndangeredPcs: [],
+          topDangerousEnemies: [],
+          legend: RISK_LEGEND,
+          caveats: ['Unsupported game system.'],
+          empty: true,
+          skipped: true
+        },
+        forecastEnabled: isMonteCarloEnabled()
+      };
+    }
     const participants = getEncounterParticipants(adapter);
     const matrix = computeEncounterRiskMatrix(participants, {
       adapter,

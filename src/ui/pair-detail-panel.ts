@@ -1,8 +1,9 @@
 import { getCurrentTokenSelection, TokenSelectionResult } from '../foundry/selection';
 import { getDefaultStrikes } from '../settings';
-import { Pf2eAdapter } from '../systems/pf2e-adapter';
+import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
+  buildControlOptions,
   buildMortalityPanelData,
   DEFAULT_PANEL_CONTROLS,
   MortalityPanelData,
@@ -80,10 +81,19 @@ export class PairDetailPanel extends Base {
   }
 
   async _prepareContext(): Promise<MortalityPanelData> {
+    const adapter = getSystemAdapter();
+    if (!adapter) {
+      return {
+        moduleVersion: MODULE_VERSION,
+        message: 'Grim Arithmetic does not support this game system.',
+        errors: ['Unsupported game system.'],
+        controls: buildControlOptions(this.controls, [])
+      };
+    }
     const selection = this.explicitSelection ?? getCurrentTokenSelection();
     return buildMortalityPanelData({
       selection,
-      adapter: new Pf2eAdapter(),
+      adapter,
       controls: this.controls,
       moduleVersion: MODULE_VERSION
     });

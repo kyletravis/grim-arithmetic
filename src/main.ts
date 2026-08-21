@@ -1,6 +1,7 @@
 import { MODULE_ID, MODULE_TITLE } from './constants';
 import { logDebugCapture } from './debug-capture';
 import { registerSettings, applyPlayerSettingsVisibility } from './settings';
+import { getSystemAdapter } from './systems/adapter-registry';
 import { DangerBoardPanel } from './ui/danger-board-panel';
 import { ForecastPanel } from './ui/forecast-panel';
 import { PairDetailPanel } from './ui/pair-detail-panel';
@@ -27,6 +28,13 @@ Hooks.once('ready', () => {
   applyPlayerSettingsVisibility(game.settings.settings, game.user?.isGM === true);
 
   if (!game.user?.isGM) return;
+
+  if (!getSystemAdapter()) {
+    console.warn(
+      `${MODULE_TITLE} | Unsupported game system "${game.system?.id}"; Grim Arithmetic is disabled.`
+    );
+    return;
+  }
 
   DangerBoardPanel.registerAutoRefresh();
   installScopedTooltipDelay(750);
