@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { createRng } from '../src/engine/prng';
+import { runIteration } from '../src/engine/run-iteration';
+import { DEFAULT_MAX_ROUNDS } from '../src/engine/simulation-types';
 import { buildEncounterSetupFromSource } from '../src/foundry/encounter-setup';
 import type { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../src/systems/base-adapter';
 
@@ -130,7 +133,7 @@ describe('buildEncounterSetupFromSource', () => {
     );
   });
 
-  it('does not add the 0-HP caveat for a PC kept up by temporary HP', () => {
+  it('treats a PC kept up by temporary HP as standing, with no 0-HP caveat', () => {
     const source = {
       combatants: [
         {
@@ -148,7 +151,88 @@ describe('buildEncounterSetupFromSource', () => {
     };
 
     const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    // downed and the caveat must agree on what "at 0 HP" means: current + temp.
+    expect(setup.pcs[0].downed).toBe(false);
     expect(setup.caveats.some((c) => c.includes('starts this run at 0 HP'))).toBe(false);
+  });
+
+  it('treats a hostile already at 0 HP as defeated rather than merely downed', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc', { name: 'Mira' }),
+            attacks: [makeAttack()]
+          }
+        },
+        {
+          token: {
+            id: 'troll',
+            name: 'Troll',
+            snapshot: makeSnapshot('troll', 'enemy', {
+              name: 'Troll',
+              hp: { current: 0, max: 60, temp: 0 }
+            }),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    // dead (not just downed) so allEnemiesDead() can terminate the iteration;
+    // applyDamage uses the same rule when an enemy is dropped mid-fight.
+    expect(setup.enemies[0].downed).toBe(true);
+    expect(setup.enemies[0].dead).toBe(true);
+    expect(setup.caveats).toContain('Troll is already at 0 HP and is treated as defeated.');
+  });
+
+  it('does not mark a hostile kept up by temporary HP as defeated', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'troll',
+            name: 'Troll',
+            snapshot: makeSnapshot('troll', 'enemy', {
+              name: 'Troll',
+              hp: { current: 0, max: 60, temp: 4 }
+            }),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.enemies[0].dead).toBe(false);
+    expect(setup.enemies[0].downed).toBe(false);
+    expect(setup.caveats.some((c) => c.includes('treated as defeated'))).toBe(false);
+  });
+
+  it('never marks a PC dead at setup, even at 0 HP', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc', {
+              name: 'Mira',
+              hp: { current: 0, max: 24, temp: 0 }
+            }),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.pcs[0].downed).toBe(true);
+    expect(setup.pcs[0].dead).toBe(false);
+    expect(setup.caveats.some((c) => c.includes('treated as defeated'))).toBe(false);
   });
 
   it('partitions PCs and enemies by disposition', () => {
@@ -404,5 +488,56 @@ describe('buildEncounterSetupFromSource', () => {
     expect(setup.pcs).toHaveLength(0);
     expect(setup.enemies).toHaveLength(0);
     expect(setup.caveats.some((c) => c.toLowerCase().includes('no active combat'))).toBe(true);
+  });
+});
+
+/**
+ * The setup builder and the engine have to agree on what "out of the fight"
+ * means for a hostile: the engine only ends an iteration via allEnemiesDead(),
+ * which reads `dead`, and it only ever sets `dead` inside applyDamage. A
+ * hostile that starts at 0 HP is never targeted (tactics skip downed enemies),
+ * so if the builder hands the engine `downed: true, dead: false` that enemy is
+ * immortal and every iteration burns to the round cap.
+ */
+describe('buildEncounterSetupFromSource: engine hand-off for 0-HP hostiles', () => {
+  it('produces a setup that terminates in round 1 instead of running to the cap', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc', { name: 'Mira' }),
+            attacks: [makeAttack()]
+          }
+        },
+        {
+          token: {
+            id: 'troll',
+            name: 'Troll',
+            snapshot: makeSnapshot('troll', 'enemy', {
+              name: 'Troll',
+              hp: { current: 0, max: 60, temp: 0 }
+            }),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    const result = runIteration(
+      setup,
+      {
+        iterations: 1000,
+        tacticsProfile: 'focus-fire',
+        maxRounds: DEFAULT_MAX_ROUNDS,
+        seed: 'zero-hp-hostile'
+      },
+      createRng('zero-hp-hostile')
+    );
+
+    expect(result.hitRoundCap).toBe(false);
+    expect(result.roundsElapsed).toBe(1);
   });
 });
