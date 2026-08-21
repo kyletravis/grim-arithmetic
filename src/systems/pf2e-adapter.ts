@@ -1,3 +1,4 @@
+import { isDebugLoggingEnabled } from '../settings';
 import {
   AttackSnapshot,
   CombatantSnapshot,
@@ -5,6 +6,15 @@ import {
   PcCapabilities,
   SystemAdapter
 } from './base-adapter';
+import {
+  asRecord,
+  getActorItems as getRawActorItems,
+  isNumber,
+  isRecord,
+  optionalNumber,
+  optionalNumberLike,
+  toStringArray
+} from './record-utils';
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -305,7 +315,7 @@ function extractPcCapabilities(actor: ActorLike): PcCapabilities | undefined {
   const hasBattleMedicine = detectBattleMedicineFeat(actor);
   const { healSpellSlots, healCantripLevel } = extractHealCapability(actor);
 
-  if (isAdapterDebugLoggingEnabled()) {
+  if (isDebugLoggingEnabled()) {
     logHealingExtractionDebug(actor, healSpellSlots, healCantripLevel);
   }
 
@@ -497,15 +507,6 @@ function detectBattleMedicineFeat(actor: ActorLike): boolean {
   return false;
 }
 
-function isAdapterDebugLoggingEnabled(): boolean {
-  if (typeof game === 'undefined') return false;
-  try {
-    return Boolean(game.settings.get('grim-arithmetic', 'debugLogging') ?? false);
-  } catch {
-    return false;
-  }
-}
-
 function logHealingExtractionDebug(
   actor: ActorLike,
   extractedSlots: Record<number, number>,
@@ -597,20 +598,7 @@ function getConditionValue(actor: ActorLike, slug: string): number {
 }
 
 function getActorItems(actor: ActorLike | undefined): ItemLike[] {
-  const items = actor?.items;
-  if (Array.isArray(items)) return items.filter(isItemLike);
-
-  const contents = asRecord(items).contents;
-  if (Array.isArray(contents)) return contents.filter(isItemLike);
-
-  if (isRecord(items) && typeof items.filter === 'function') {
-    const filtered = (items.filter as (predicate: (item: ItemLike) => boolean) => unknown)(
-      isItemLike
-    );
-    return Array.isArray(filtered) ? filtered : [];
-  }
-
-  return [];
+  return getRawActorItems(actor?.items).filter(isItemLike);
 }
 
 function isItemLike(value: unknown): value is ItemLike {
@@ -668,40 +656,6 @@ function getImmunities(value: unknown): string[] {
       const record = asRecord(entry);
       const type = record.type ?? record.slug ?? record.label;
       return typeof type === 'string' ? type : null;
-    })
-    .filter((entry): entry is string => typeof entry === 'string');
-}
-
-function asRecord(value: unknown): UnknownRecord {
-  return isRecord(value) ? value : {};
-}
-
-function isRecord(value: unknown): value is UnknownRecord {
-  return typeof value === 'object' && value !== null;
-}
-
-function isNumber(value: unknown): value is number {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
-function optionalNumber(value: unknown): number | undefined {
-  return isNumber(value) ? value : undefined;
-}
-
-function optionalNumberLike(value: unknown): number | undefined {
-  if (isNumber(value)) return value;
-  if (typeof value !== 'string') return undefined;
-  const parsed = Number(value.trim().replace(/^\+/, ''));
-  return isNumber(parsed) ? parsed : undefined;
-}
-
-function toStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((entry) => {
-      if (typeof entry === 'string') return entry;
-      const slug = asRecord(entry).slug;
-      return typeof slug === 'string' ? slug : null;
     })
     .filter((entry): entry is string => typeof entry === 'string');
 }

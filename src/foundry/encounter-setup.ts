@@ -1,5 +1,5 @@
-import { MODULE_ID } from '../constants';
 import type { EncounterSetup, HealingState, SimulationCombatant } from '../engine/simulation-types';
+import { isDebugLoggingEnabled } from '../settings';
 import type { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 import {
   getEncounterParticipants,
@@ -130,15 +130,6 @@ function buildHealingState(snapshot: CombatantSnapshot, caveats: string[]): Heal
     healSpellSlotsRemaining: { ...slots },
     healCantripLevel: cantrip
   };
-}
-
-function isDebugLoggingEnabled(): boolean {
-  if (typeof game === 'undefined') return false;
-  try {
-    return Boolean(game.settings.get(MODULE_ID, 'debugLogging') ?? false);
-  } catch {
-    return false;
-  }
 }
 
 function logHealingCapability(snapshot: CombatantSnapshot, healing: HealingState): void {
