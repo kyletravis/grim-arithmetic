@@ -17,7 +17,7 @@ Hooks.once('init', () => {
 function registerHandlebarsHelpers(): void {
   const handlebars = typeof Handlebars === 'undefined' ? undefined : Handlebars;
   if (!handlebars) return;
-  handlebars.registerHelper('eq', function (a: unknown, b: unknown): boolean {
+  handlebars.registerHelper('grimEq', function (a: unknown, b: unknown): boolean {
     return a === b;
   });
 }

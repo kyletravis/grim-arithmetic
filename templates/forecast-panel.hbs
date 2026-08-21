@@ -7,14 +7,14 @@
   {{#unless enabled}}
     <p class="grim-arithmetic-forecast__disabled">{{disabledMessage}}</p>
   {{else}}
-    {{#unless (eq state "done")}}
+    {{#unless (grimEq state "done")}}
       <p class="grim-arithmetic-panel__hint">{{message}}</p>
     {{/unless}}
 
     <form class="grim-arithmetic-forecast__controls">
       <label>
         <span data-tooltip="{{localize "GrimArithmetic.Forecast.TacticsTooltip"}}">{{localize "GrimArithmetic.Forecast.TacticsLabel"}}</span>
-        <select data-grim-forecast-control="tacticsProfile" {{#if (eq state "running")}}disabled{{/if}}>
+        <select data-grim-forecast-control="tacticsProfile" {{#if (grimEq state "running")}}disabled{{/if}}>
           {{#each controls.tacticsProfile}}
             <option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}}</option>
           {{/each}}
@@ -22,7 +22,7 @@
       </label>
 
       <div class="grim-arithmetic-forecast__buttons">
-        {{#if (eq state "running")}}
+        {{#if (grimEq state "running")}}
           <button type="button" data-action="cancel">{{localize "GrimArithmetic.Forecast.CancelButton"}}</button>
         {{else}}
           <button type="button" data-action="run">{{localize "GrimArithmetic.Forecast.RunButton"}}</button>
@@ -32,20 +32,20 @@
       <small class="grim-arithmetic-forecast__control-hint">{{controls.selectedTacticsDescription}}</small>
     </form>
 
-    {{#if (eq state "running")}}
+    {{#if (grimEq state "running")}}
       <section class="grim-arithmetic-forecast__progress">
         <p data-grim-progress>{{localize "GrimArithmetic.Forecast.Progress" completed=progress.completed total=progress.total percent=progress.percent}}</p>
       </section>
     {{/if}}
 
-    {{#if (eq state "error")}}
+    {{#if (grimEq state "error")}}
       <section class="grim-arithmetic-forecast__error">
         <h3>{{localize "GrimArithmetic.Forecast.FailedHeading"}}</h3>
         <p>{{errorMessage}}</p>
       </section>
     {{/if}}
 
-    {{#if (eq state "done")}}
+    {{#if (grimEq state "done")}}
       <section class="grim-arithmetic-forecast__result">
         <div class="grim-arithmetic-forecast__result-head">
           <p class="grim-arithmetic-forecast__profile">
