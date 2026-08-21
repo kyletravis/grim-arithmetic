@@ -29,11 +29,11 @@ exports[`simulation fixtures: 1 PC vs 1 enemy (parity with v0.5.0 pair detail) >
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1`] = `
 {
   "anyPcDownProbability": 0.937,
-  "meanFirstDownRound": 1.3076923076923077,
+  "meanFirstDownRound": 1.295624332977588,
   "medianFirstDownRound": 1,
   "perEnemy": [
     {
-      "damageShare": 0.38649319745486527,
+      "damageShare": 0.3811055349253948,
       "id": "boss",
       "name": "boss",
       "topTargetId": "elya",
@@ -41,51 +41,51 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under boss-cinematic 1
   ],
   "perPc": [
     {
-      "deathProbability": 0.056,
-      "downProbability": 0.53,
+      "deathProbability": 0.049,
+      "downProbability": 0.519,
       "id": "mira",
-      "meanEndingHp": 14.209,
+      "meanEndingHp": 15.778,
       "name": "mira",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.047,
-      "downProbability": 0.321,
+      "deathProbability": 0.039,
+      "downProbability": 0.28,
       "id": "seam",
-      "meanEndingHp": 17.949,
+      "meanEndingHp": 19.397,
       "name": "seam",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.058,
-      "downProbability": 0.714,
+      "deathProbability": 0.051,
+      "downProbability": 0.71,
       "id": "jor",
-      "meanEndingHp": 11.819,
+      "meanEndingHp": 13.424,
       "name": "jor",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.067,
-      "downProbability": 0.777,
+      "deathProbability": 0.07,
+      "downProbability": 0.773,
       "id": "elya",
-      "meanEndingHp": 10.857,
+      "meanEndingHp": 12.543,
       "name": "elya",
       "topContributingEnemyId": "boss",
     },
   ],
   "profile": "boss-cinematic",
-  "tpkProbability": 0.06,
+  "tpkProbability": 0.021,
 }
 `;
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under focus-fire 1`] = `
 {
   "anyPcDownProbability": 0.957,
-  "meanFirstDownRound": 1.3270637408568442,
+  "meanFirstDownRound": 1.3197492163009403,
   "medianFirstDownRound": 1,
   "perEnemy": [
     {
-      "damageShare": 0.341698216459499,
+      "damageShare": 0.32249217858379847,
       "id": "boss",
       "name": "boss",
       "topTargetId": "elya",
@@ -93,51 +93,51 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under focus-fire 1`] =
   ],
   "perPc": [
     {
-      "deathProbability": 0.031,
-      "downProbability": 0.128,
+      "deathProbability": 0.014,
+      "downProbability": 0.043,
       "id": "mira",
-      "meanEndingHp": 20.979,
+      "meanEndingHp": 23.034,
       "name": "mira",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.006,
-      "downProbability": 0.087,
+      "deathProbability": 0.003,
+      "downProbability": 0.027,
       "id": "seam",
-      "meanEndingHp": 21.824,
+      "meanEndingHp": 23.312,
       "name": "seam",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.076,
-      "downProbability": 0.402,
+      "deathProbability": 0.082,
+      "downProbability": 0.217,
       "id": "jor",
-      "meanEndingHp": 16.257,
+      "meanEndingHp": 20.509,
       "name": "jor",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.215,
+      "deathProbability": 0.446,
       "downProbability": 0.957,
       "id": "elya",
-      "meanEndingHp": 4.332,
+      "meanEndingHp": 7.149,
       "name": "elya",
       "topContributingEnemyId": "boss",
     },
   ],
   "profile": "focus-fire",
-  "tpkProbability": 0.087,
+  "tpkProbability": 0.027,
 }
 `;
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under predator 1`] = `
 {
   "anyPcDownProbability": 0.964,
-  "meanFirstDownRound": 1.3101659751037344,
+  "meanFirstDownRound": 1.303941908713693,
   "medianFirstDownRound": 1,
   "perEnemy": [
     {
-      "damageShare": 0.34193562789867005,
+      "damageShare": 0.3268705548453945,
       "id": "boss",
       "name": "boss",
       "topTargetId": "elya",
@@ -145,51 +145,51 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under predator 1`] = `
   ],
   "perPc": [
     {
-      "deathProbability": 0.041,
-      "downProbability": 0.13,
+      "deathProbability": 0.012,
+      "downProbability": 0.041,
       "id": "mira",
-      "meanEndingHp": 20.792,
+      "meanEndingHp": 22.973,
       "name": "mira",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.011,
-      "downProbability": 0.081,
+      "deathProbability": 0.004,
+      "downProbability": 0.025,
       "id": "seam",
-      "meanEndingHp": 21.876,
+      "meanEndingHp": 23.331,
       "name": "seam",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.09,
-      "downProbability": 0.386,
+      "deathProbability": 0.084,
+      "downProbability": 0.206,
       "id": "jor",
-      "meanEndingHp": 16.044,
+      "meanEndingHp": 20.4,
       "name": "jor",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.193,
+      "deathProbability": 0.444,
       "downProbability": 0.964,
       "id": "elya",
-      "meanEndingHp": 4.293,
+      "meanEndingHp": 7.445,
       "name": "elya",
       "topContributingEnemyId": "boss",
     },
   ],
   "profile": "predator",
-  "tpkProbability": 0.081,
+  "tpkProbability": 0.025,
 }
 `;
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`] = `
 {
   "anyPcDownProbability": 0.912,
-  "meanFirstDownRound": 1.4531422271223815,
+  "meanFirstDownRound": 1.4418859649122806,
   "medianFirstDownRound": 1,
   "perEnemy": [
     {
-      "damageShare": 0.4389907920767897,
+      "damageShare": 0.4366575128258341,
       "id": "boss",
       "name": "boss",
       "topTargetId": "seam",
@@ -197,51 +197,51 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under random-legal 1`]
   ],
   "perPc": [
     {
-      "deathProbability": 0.081,
-      "downProbability": 0.548,
+      "deathProbability": 0.078,
+      "downProbability": 0.533,
       "id": "mira",
-      "meanEndingHp": 12.258,
+      "meanEndingHp": 13.36,
       "name": "mira",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.082,
-      "downProbability": 0.569,
+      "deathProbability": 0.083,
+      "downProbability": 0.549,
       "id": "seam",
-      "meanEndingHp": 12.369,
+      "meanEndingHp": 13.945,
       "name": "seam",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.08,
-      "downProbability": 0.56,
+      "deathProbability": 0.079,
+      "downProbability": 0.547,
       "id": "jor",
-      "meanEndingHp": 12.617,
+      "meanEndingHp": 14.203,
       "name": "jor",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.078,
-      "downProbability": 0.57,
+      "deathProbability": 0.093,
+      "downProbability": 0.552,
       "id": "elya",
-      "meanEndingHp": 12.496,
+      "meanEndingHp": 14.026,
       "name": "elya",
       "topContributingEnemyId": "boss",
     },
   ],
   "profile": "random-legal",
-  "tpkProbability": 0.17,
+  "tpkProbability": 0.11,
 }
 `;
 
 exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`] = `
 {
   "anyPcDownProbability": 0.876,
-  "meanFirstDownRound": 1.526376146788991,
+  "meanFirstDownRound": 1.5216894977168949,
   "medianFirstDownRound": 1,
   "perEnemy": [
     {
-      "damageShare": 0.4673041996667228,
+      "damageShare": 0.47144192385433886,
       "id": "boss",
       "name": "boss",
       "topTargetId": "elya",
@@ -249,40 +249,40 @@ exports[`simulation fixtures: 4 PCs vs 1 boss > is stable under spread-damage 1`
   ],
   "perPc": [
     {
-      "deathProbability": 0.083,
-      "downProbability": 0.516,
+      "deathProbability": 0.086,
+      "downProbability": 0.51,
       "id": "mira",
-      "meanEndingHp": 10.937,
+      "meanEndingHp": 11.54,
       "name": "mira",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.039,
-      "downProbability": 0.453,
+      "deathProbability": 0.042,
+      "downProbability": 0.44,
       "id": "seam",
-      "meanEndingHp": 12.864,
+      "meanEndingHp": 13.606,
       "name": "seam",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.061,
-      "downProbability": 0.586,
+      "deathProbability": 0.07,
+      "downProbability": 0.577,
       "id": "jor",
-      "meanEndingHp": 10.076,
+      "meanEndingHp": 10.73,
       "name": "jor",
       "topContributingEnemyId": "boss",
     },
     {
-      "deathProbability": 0.07,
-      "downProbability": 0.665,
+      "deathProbability": 0.092,
+      "downProbability": 0.663,
       "id": "elya",
-      "meanEndingHp": 9.825,
+      "meanEndingHp": 10.577,
       "name": "elya",
       "topContributingEnemyId": "boss",
     },
   ],
   "profile": "spread-damage",
-  "tpkProbability": 0.189,
+  "tpkProbability": 0.158,
 }
 `;
 
@@ -291,66 +291,66 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under boss-cinemati
   "anyPcDownProbability": 0.314,
   "perEnemy": [
     {
-      "damageShare": 0.01690673767029359,
+      "damageShare": 0.016933656768958187,
       "id": "mook-1",
       "name": "mook-1",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.03910871763045415,
+      "damageShare": 0.03909255619805205,
       "id": "mook-2",
       "name": "mook-2",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.061187242036282584,
+      "damageShare": 0.06091778751347185,
       "id": "mook-3",
       "name": "mook-3",
       "topTargetId": "mira",
     },
     {
-      "damageShare": 0.08491406492427503,
+      "damageShare": 0.0846315803522868,
       "id": "mook-4",
       "name": "mook-4",
-      "topTargetId": "seam",
+      "topTargetId": "jor",
     },
   ],
   "perPc": [
     {
-      "deathProbability": 0.009,
-      "downProbability": 0.119,
+      "deathProbability": 0.008,
+      "downProbability": 0.115,
       "id": "mira",
-      "meanEndingHp": 14.142,
+      "meanEndingHp": 14.238,
       "name": "mira",
       "topContributingEnemyId": "mook-4",
     },
     {
       "deathProbability": 0.003,
-      "downProbability": 0.084,
+      "downProbability": 0.082,
       "id": "seam",
-      "meanEndingHp": 15.087,
+      "meanEndingHp": 15.111,
       "name": "seam",
       "topContributingEnemyId": "mook-4",
     },
     {
-      "deathProbability": 0.011,
-      "downProbability": 0.119,
+      "deathProbability": 0.009,
+      "downProbability": 0.117,
       "id": "jor",
-      "meanEndingHp": 13.879,
+      "meanEndingHp": 13.987,
       "name": "jor",
       "topContributingEnemyId": "mook-4",
     },
     {
-      "deathProbability": 0.002,
-      "downProbability": 0.121,
+      "deathProbability": 0.003,
+      "downProbability": 0.12,
       "id": "elya",
-      "meanEndingHp": 13.832,
+      "meanEndingHp": 13.967,
       "name": "elya",
       "topContributingEnemyId": "mook-4",
     },
   ],
   "profile": "boss-cinematic",
-  "tpkProbability": 0.008,
+  "tpkProbability": 0.007,
 }
 `;
 
@@ -359,25 +359,25 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under focus-fire 1`
   "anyPcDownProbability": 0.841,
   "perEnemy": [
     {
-      "damageShare": 0.016525884419168687,
+      "damageShare": 0.01667702885564861,
       "id": "mook-1",
       "name": "mook-1",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.04168938696997575,
+      "damageShare": 0.042084894588277535,
       "id": "mook-2",
       "name": "mook-2",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.06421343146274149,
+      "damageShare": 0.06395853351198412,
       "id": "mook-3",
       "name": "mook-3",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.085168520531906,
+      "damageShare": 0.0835646816702297,
       "id": "mook-4",
       "name": "mook-4",
       "topTargetId": "elya",
@@ -385,40 +385,40 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under focus-fire 1`
   ],
   "perPc": [
     {
-      "deathProbability": 0.011,
-      "downProbability": 0.058,
+      "deathProbability": 0.005,
+      "downProbability": 0.027,
       "id": "mira",
-      "meanEndingHp": 22.111,
+      "meanEndingHp": 23.149,
       "name": "mira",
       "topContributingEnemyId": "mook-4",
     },
     {
       "deathProbability": 0.001,
-      "downProbability": 0.027,
+      "downProbability": 0.01,
       "id": "seam",
-      "meanEndingHp": 23.131,
+      "meanEndingHp": 23.703,
       "name": "seam",
       "topContributingEnemyId": "mook-4",
     },
     {
-      "deathProbability": 0.044,
-      "downProbability": 0.264,
+      "deathProbability": 0.048,
+      "downProbability": 0.209,
       "id": "jor",
-      "meanEndingHp": 17.826,
+      "meanEndingHp": 19.36,
       "name": "jor",
       "topContributingEnemyId": "mook-4",
     },
     {
-      "deathProbability": 0.116,
+      "deathProbability": 0.184,
       "downProbability": 0.841,
       "id": "elya",
-      "meanEndingHp": 8.776,
+      "meanEndingHp": 11.903,
       "name": "elya",
       "topContributingEnemyId": "mook-4",
     },
   ],
   "profile": "focus-fire",
-  "tpkProbability": 0.027,
+  "tpkProbability": 0.009,
 }
 `;
 
@@ -427,161 +427,25 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under predator 1`] 
   "anyPcDownProbability": 0.826,
   "perEnemy": [
     {
-      "damageShare": 0.016948525454741147,
+      "damageShare": 0.017324775903420738,
       "id": "mook-1",
       "name": "mook-1",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.041246232913572274,
+      "damageShare": 0.041164766256213736,
       "id": "mook-2",
       "name": "mook-2",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.06195848132601442,
+      "damageShare": 0.06117602133104659,
       "id": "mook-3",
       "name": "mook-3",
       "topTargetId": "elya",
     },
     {
-      "damageShare": 0.08585257238187494,
-      "id": "mook-4",
-      "name": "mook-4",
-      "topTargetId": "elya",
-    },
-  ],
-  "perPc": [
-    {
-      "deathProbability": 0.018,
-      "downProbability": 0.055,
-      "id": "mira",
-      "meanEndingHp": 22.223,
-      "name": "mira",
-      "topContributingEnemyId": "mook-4",
-    },
-    {
-      "deathProbability": 0.004,
-      "downProbability": 0.031,
-      "id": "seam",
-      "meanEndingHp": 23.014,
-      "name": "seam",
-      "topContributingEnemyId": "mook-4",
-    },
-    {
-      "deathProbability": 0.037,
-      "downProbability": 0.232,
-      "id": "jor",
-      "meanEndingHp": 18.022,
-      "name": "jor",
-      "topContributingEnemyId": "mook-4",
-    },
-    {
-      "deathProbability": 0.145,
-      "downProbability": 0.826,
-      "id": "elya",
-      "meanEndingHp": 8.038,
-      "name": "elya",
-      "topContributingEnemyId": "mook-4",
-    },
-  ],
-  "profile": "predator",
-  "tpkProbability": 0.031,
-}
-`;
-
-exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 1`] = `
-{
-  "anyPcDownProbability": 0.457,
-  "perEnemy": [
-    {
-      "damageShare": 0.017484693365452175,
-      "id": "mook-1",
-      "name": "mook-1",
-      "topTargetId": "seam",
-    },
-    {
-      "damageShare": 0.03982401552410586,
-      "id": "mook-2",
-      "name": "mook-2",
-      "topTargetId": "seam",
-    },
-    {
-      "damageShare": 0.06258824316638228,
-      "id": "mook-3",
-      "name": "mook-3",
-      "topTargetId": "mira",
-    },
-    {
-      "damageShare": 0.08391381444678644,
-      "id": "mook-4",
-      "name": "mook-4",
-      "topTargetId": "elya",
-    },
-  ],
-  "perPc": [
-    {
-      "deathProbability": 0.029,
-      "downProbability": 0.178,
-      "id": "mira",
-      "meanEndingHp": 15.02,
-      "name": "mira",
-      "topContributingEnemyId": "mook-4",
-    },
-    {
-      "deathProbability": 0.007,
-      "downProbability": 0.169,
-      "id": "seam",
-      "meanEndingHp": 15.647,
-      "name": "seam",
-      "topContributingEnemyId": "mook-4",
-    },
-    {
-      "deathProbability": 0.007,
-      "downProbability": 0.15,
-      "id": "jor",
-      "meanEndingHp": 15.943,
-      "name": "jor",
-      "topContributingEnemyId": "mook-4",
-    },
-    {
-      "deathProbability": 0.011,
-      "downProbability": 0.158,
-      "id": "elya",
-      "meanEndingHp": 15.652,
-      "name": "elya",
-      "topContributingEnemyId": "mook-4",
-    },
-  ],
-  "profile": "random-legal",
-  "tpkProbability": 0.019,
-}
-`;
-
-exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage 1`] = `
-{
-  "anyPcDownProbability": 0.226,
-  "perEnemy": [
-    {
-      "damageShare": 0.016778130551587316,
-      "id": "mook-1",
-      "name": "mook-1",
-      "topTargetId": "elya",
-    },
-    {
-      "damageShare": 0.03902295408847745,
-      "id": "mook-2",
-      "name": "mook-2",
-      "topTargetId": "elya",
-    },
-    {
-      "damageShare": 0.059548144703430235,
-      "id": "mook-3",
-      "name": "mook-3",
-      "topTargetId": "jor",
-    },
-    {
-      "damageShare": 0.0833854687672507,
+      "damageShare": 0.08318706202350167,
       "id": "mook-4",
       "name": "mook-4",
       "topTargetId": "elya",
@@ -590,25 +454,161 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage
   "perPc": [
     {
       "deathProbability": 0.009,
-      "downProbability": 0.076,
+      "downProbability": 0.024,
       "id": "mira",
-      "meanEndingHp": 14.182,
+      "meanEndingHp": 23.152,
+      "name": "mira",
+      "topContributingEnemyId": "mook-4",
+    },
+    {
+      "deathProbability": 0,
+      "downProbability": 0.015,
+      "id": "seam",
+      "meanEndingHp": 23.578,
+      "name": "seam",
+      "topContributingEnemyId": "mook-4",
+    },
+    {
+      "deathProbability": 0.029,
+      "downProbability": 0.152,
+      "id": "jor",
+      "meanEndingHp": 19.45,
+      "name": "jor",
+      "topContributingEnemyId": "mook-4",
+    },
+    {
+      "deathProbability": 0.207,
+      "downProbability": 0.826,
+      "id": "elya",
+      "meanEndingHp": 10.672,
+      "name": "elya",
+      "topContributingEnemyId": "mook-4",
+    },
+  ],
+  "profile": "predator",
+  "tpkProbability": 0.015,
+}
+`;
+
+exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under random-legal 1`] = `
+{
+  "anyPcDownProbability": 0.457,
+  "perEnemy": [
+    {
+      "damageShare": 0.017404402702675622,
+      "id": "mook-1",
+      "name": "mook-1",
+      "topTargetId": "seam",
+    },
+    {
+      "damageShare": 0.03971183038472714,
+      "id": "mook-2",
+      "name": "mook-2",
+      "topTargetId": "seam",
+    },
+    {
+      "damageShare": 0.062336551917623835,
+      "id": "mook-3",
+      "name": "mook-3",
+      "topTargetId": "mira",
+    },
+    {
+      "damageShare": 0.08342156329010343,
+      "id": "mook-4",
+      "name": "mook-4",
+      "topTargetId": "elya",
+    },
+  ],
+  "perPc": [
+    {
+      "deathProbability": 0.027,
+      "downProbability": 0.168,
+      "id": "mira",
+      "meanEndingHp": 15.341,
+      "name": "mira",
+      "topContributingEnemyId": "mook-4",
+    },
+    {
+      "deathProbability": 0.008,
+      "downProbability": 0.168,
+      "id": "seam",
+      "meanEndingHp": 15.967,
+      "name": "seam",
+      "topContributingEnemyId": "mook-4",
+    },
+    {
+      "deathProbability": 0.006,
+      "downProbability": 0.14,
+      "id": "jor",
+      "meanEndingHp": 16.371,
+      "name": "jor",
+      "topContributingEnemyId": "mook-4",
+    },
+    {
+      "deathProbability": 0.011,
+      "downProbability": 0.15,
+      "id": "elya",
+      "meanEndingHp": 15.977,
+      "name": "elya",
+      "topContributingEnemyId": "mook-4",
+    },
+  ],
+  "profile": "random-legal",
+  "tpkProbability": 0.01,
+}
+`;
+
+exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage 1`] = `
+{
+  "anyPcDownProbability": 0.226,
+  "perEnemy": [
+    {
+      "damageShare": 0.016759235123881326,
+      "id": "mook-1",
+      "name": "mook-1",
+      "topTargetId": "elya",
+    },
+    {
+      "damageShare": 0.03903581764348111,
+      "id": "mook-2",
+      "name": "mook-2",
+      "topTargetId": "elya",
+    },
+    {
+      "damageShare": 0.059771820423876645,
+      "id": "mook-3",
+      "name": "mook-3",
+      "topTargetId": "jor",
+    },
+    {
+      "damageShare": 0.08353551353771914,
+      "id": "mook-4",
+      "name": "mook-4",
+      "topTargetId": "elya",
+    },
+  ],
+  "perPc": [
+    {
+      "deathProbability": 0.009,
+      "downProbability": 0.075,
+      "id": "mira",
+      "meanEndingHp": 14.218,
       "name": "mira",
       "topContributingEnemyId": "mook-4",
     },
     {
       "deathProbability": 0.003,
-      "downProbability": 0.057,
+      "downProbability": 0.058,
       "id": "seam",
-      "meanEndingHp": 14.849,
+      "meanEndingHp": 14.921,
       "name": "seam",
       "topContributingEnemyId": "mook-4",
     },
     {
-      "deathProbability": 0.007,
-      "downProbability": 0.078,
+      "deathProbability": 0.004,
+      "downProbability": 0.075,
       "id": "jor",
-      "meanEndingHp": 13.899,
+      "meanEndingHp": 13.96,
       "name": "jor",
       "topContributingEnemyId": "mook-4",
     },
@@ -616,13 +616,13 @@ exports[`simulation fixtures: 4 PCs vs 4 minions > is stable under spread-damage
       "deathProbability": 0.006,
       "downProbability": 0.086,
       "id": "elya",
-      "meanEndingHp": 13.778,
+      "meanEndingHp": 13.839,
       "name": "elya",
       "topContributingEnemyId": "mook-4",
     },
   ],
   "profile": "spread-damage",
-  "tpkProbability": 0.004,
+  "tpkProbability": 0.003,
 }
 `;
 
