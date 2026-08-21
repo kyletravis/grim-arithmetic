@@ -4,7 +4,7 @@ import { getEncounterParticipants } from '../foundry/encounter-participants';
 import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
 import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
-import { buildDangerBoardData, DangerBoardData, RISK_LEGEND } from './danger-board';
+import { buildDangerBoardData, DangerBoardData, unsupportedSystemBoardData } from './danger-board';
 import { debounce } from './debounce';
 import { ForecastPanel } from './forecast-panel';
 import { PairDetailPanel } from './pair-detail-panel';
@@ -99,14 +99,7 @@ export class DangerBoardPanel extends Base {
     if (!adapter) {
       return {
         moduleVersion: MODULE_VERSION,
-        dangerBoard: {
-          topEndangeredPcs: [],
-          topDangerousEnemies: [],
-          legend: RISK_LEGEND,
-          caveats: ['Unsupported game system.'],
-          empty: true,
-          skipped: true
-        },
+        dangerBoard: unsupportedSystemBoardData(),
         forecastEnabled: isMonteCarloEnabled()
       };
     }

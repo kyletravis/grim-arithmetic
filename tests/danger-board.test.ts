@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildDangerBoardData } from '../src/ui/danger-board';
+import {
+  buildDangerBoardData,
+  RISK_LEGEND,
+  unsupportedSystemBoardData
+} from '../src/ui/danger-board';
 import { EncounterRiskMatrix, PairRisk } from '../src/engine/encounter-risk';
 
 function pair(overrides: Partial<PairRisk>): PairRisk {
@@ -30,10 +34,38 @@ describe('buildDangerBoardData', () => {
   it('shows each PC at most once, ranked by their worst threat (desc)', () => {
     const data = buildDangerBoardData(
       matrix([
-        pair({ pcId: 'pc-1', pcName: 'Mira', enemyName: 'Cultist', attackName: 'Dagger', downProbability: 0.04, riskLabel: 'Low' }),
-        pair({ pcId: 'pc-1', pcName: 'Mira', enemyName: 'Troll', attackName: 'Claw', downProbability: 0.38, riskLabel: 'Severe' }),
-        pair({ pcId: 'pc-2', pcName: 'Seam', enemyName: 'Voidglutton', attackName: 'Bite', downProbability: 0.22, riskLabel: 'Dangerous' }),
-        pair({ pcId: 'pc-3', pcName: 'Geary', enemyName: 'Cultist', attackName: 'Dagger', downProbability: 0.04, riskLabel: 'Low' })
+        pair({
+          pcId: 'pc-1',
+          pcName: 'Mira',
+          enemyName: 'Cultist',
+          attackName: 'Dagger',
+          downProbability: 0.04,
+          riskLabel: 'Low'
+        }),
+        pair({
+          pcId: 'pc-1',
+          pcName: 'Mira',
+          enemyName: 'Troll',
+          attackName: 'Claw',
+          downProbability: 0.38,
+          riskLabel: 'Severe'
+        }),
+        pair({
+          pcId: 'pc-2',
+          pcName: 'Seam',
+          enemyName: 'Voidglutton',
+          attackName: 'Bite',
+          downProbability: 0.22,
+          riskLabel: 'Dangerous'
+        }),
+        pair({
+          pcId: 'pc-3',
+          pcName: 'Geary',
+          enemyName: 'Cultist',
+          attackName: 'Dagger',
+          downProbability: 0.04,
+          riskLabel: 'Low'
+        })
       ])
     );
 
@@ -92,7 +124,14 @@ describe('buildDangerBoardData', () => {
   it('formats the danger label as "PC vs Enemy Attack — XX% Label"', () => {
     const data = buildDangerBoardData(
       matrix([
-        pair({ pcId: 'pc-1', pcName: 'Mira', enemyName: 'Troll', attackName: 'Claw', downProbability: 0.382, riskLabel: 'Severe' })
+        pair({
+          pcId: 'pc-1',
+          pcName: 'Mira',
+          enemyName: 'Troll',
+          attackName: 'Claw',
+          downProbability: 0.382,
+          riskLabel: 'Severe'
+        })
       ])
     );
 
@@ -115,7 +154,7 @@ describe('buildDangerBoardData', () => {
     const data = buildDangerBoardData(
       matrix([
         pair({ pcId: 'pc-1', enemyId: 'npc-1', enemyName: 'Troll', downProbability: 0.38 }),
-        pair({ pcId: 'pc-2', enemyId: 'npc-1', enemyName: 'Troll', downProbability: 0.10 }),
+        pair({ pcId: 'pc-2', enemyId: 'npc-1', enemyName: 'Troll', downProbability: 0.1 }),
         pair({ pcId: 'pc-1', enemyId: 'npc-2', enemyName: 'Cultist', downProbability: 0.05 })
       ])
     );
@@ -133,9 +172,7 @@ describe('buildDangerBoardData', () => {
   });
 
   it('passes through matrix caveats to the board data', () => {
-    const data = buildDangerBoardData(
-      matrix([], { caveats: ['Troll has no supported attacks.'] })
-    );
+    const data = buildDangerBoardData(matrix([], { caveats: ['Troll has no supported attacks.'] }));
 
     expect(data.caveats).toContain('Troll has no supported attacks.');
     expect(data.empty).toBe(true);
@@ -148,5 +185,20 @@ describe('buildDangerBoardData', () => {
 
     expect(data.skipped).toBe(true);
     expect(data.caveats).toContain('Encounter too large.');
+  });
+});
+
+describe('unsupportedSystemBoardData', () => {
+  it('is empty but not skipped, so the template shows the real reason instead of "too large"', () => {
+    const data = unsupportedSystemBoardData();
+
+    expect(data).toEqual({
+      topEndangeredPcs: [],
+      topDangerousEnemies: [],
+      legend: RISK_LEGEND,
+      caveats: ['Unsupported game system.'],
+      empty: true,
+      skipped: false
+    });
   });
 });

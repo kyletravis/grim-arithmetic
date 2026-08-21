@@ -69,6 +69,24 @@ export function buildDangerBoardData(
   };
 }
 
+/**
+ * Board data for a client whose active game system has no adapter. Distinct
+ * from the `skipped` (encounter-too-large guardrail) case: `skipped` drives
+ * the "Encounter too large" template message, which would be misleading
+ * here, so this is `empty: true, skipped: false` with the real reason
+ * surfaced in `caveats`.
+ */
+export function unsupportedSystemBoardData(): DangerBoardData {
+  return {
+    topEndangeredPcs: [],
+    topDangerousEnemies: [],
+    legend: RISK_LEGEND,
+    caveats: ['Unsupported game system.'],
+    empty: true,
+    skipped: false
+  };
+}
+
 function pickTopByKey(pairs: PairRisk[], keyFn: (p: PairRisk) => string): PairRisk[] {
   const byKey = new Map<string, PairRisk>();
   for (const pair of pairs) {
