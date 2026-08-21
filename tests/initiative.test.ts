@@ -18,6 +18,7 @@ function makeCombatant(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus,

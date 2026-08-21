@@ -60,10 +60,14 @@ function materialize<TokenLike extends { name?: string }>(
     try {
       attacks = adapter.getAttacksFromToken(p.token);
     } catch {
-      caveats.push(`${p.snapshot.name}: PC attack extraction failed; treated as no supported Strike.`);
+      caveats.push(
+        `${p.snapshot.name}: PC attack extraction failed; treated as no supported Strike.`
+      );
     }
     if (attacks.length === 0) {
-      caveats.push(`${p.snapshot.name} has no supported Strike; will skip its turns in the simulation.`);
+      caveats.push(
+        `${p.snapshot.name} has no supported Strike; will skip its turns in the simulation.`
+      );
     }
     const combatant = snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
     combatant.healing = buildHealingState(p.snapshot, caveats);
@@ -78,7 +82,9 @@ function materialize<TokenLike extends { name?: string }>(
     try {
       attacks = adapter.getAttacksFromToken(h.token);
     } catch {
-      caveats.push(`${h.snapshot.name}: attack extraction failed; treated as no supported attacks.`);
+      caveats.push(
+        `${h.snapshot.name}: attack extraction failed; treated as no supported attacks.`
+      );
     }
     if (attacks.length === 0) {
       caveats.push(`${h.snapshot.name} has no supported attacks; will skip its turns.`);
@@ -106,8 +112,15 @@ function buildHealingState(snapshot: CombatantSnapshot, caveats: string[]): Heal
   const slotCount = Object.values(slots).reduce((sum, n) => sum + n, 0);
   if (!hasBattleMedicine && slotCount === 0 && cantrip === null) {
     caveats.push(`${snapshot.name} has no healing options; will not heal in this simulation.`);
-  } else if (hasBattleMedicine && slotCount === 0 && cantrip === null && caps.medicineModifier === undefined) {
-    caveats.push(`${snapshot.name}: Battle Medicine detected but no Medicine modifier; using default DC 15 with +0 modifier.`);
+  } else if (
+    hasBattleMedicine &&
+    slotCount === 0 &&
+    cantrip === null &&
+    caps.medicineModifier === undefined
+  ) {
+    caveats.push(
+      `${snapshot.name}: Battle Medicine detected but no Medicine modifier; using default DC 15 with +0 modifier.`
+    );
   }
   return {
     medicineModifier: caps.medicineModifier,
@@ -122,11 +135,7 @@ function buildHealingState(snapshot: CombatantSnapshot, caveats: string[]): Heal
 function isDebugLoggingEnabled(): boolean {
   if (typeof game === 'undefined') return false;
   try {
-    return Boolean(
-      (game as { settings?: { get?: (module: string, key: string) => unknown } })
-        .settings
-        ?.get?.(MODULE_ID, 'debugLogging') ?? false
-    );
+    return Boolean(game.settings.get(MODULE_ID, 'debugLogging') ?? false);
   } catch {
     return false;
   }

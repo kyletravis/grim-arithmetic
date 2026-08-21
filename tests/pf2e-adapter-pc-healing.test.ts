@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Pf2eAdapter } from '../src/systems/pf2e-adapter';
+import { Pf2eAdapter, type Pf2eTokenLike } from '../src/systems/pf2e-adapter';
 
 const adapter = new Pf2eAdapter();
 
@@ -32,7 +32,7 @@ function pcToken(opts: {
   spells?: SpellItem[];
   spellcastingEntries?: SpellcastingEntryFixture[];
   casterLevel?: number;
-}): unknown {
+}): Pf2eTokenLike {
   const items: unknown[] = [];
   if (opts.feats) {
     for (const f of opts.feats) {
@@ -64,7 +64,7 @@ function pcToken(opts: {
           preparedMap[String(idx)] = { id: prep.id, expended: prep.expended ?? false };
         });
         slotMap[`slot${rank}`] = {
-          max: slot.max ?? (slot.prepared?.length ?? 0),
+          max: slot.max ?? slot.prepared?.length ?? 0,
           value: slot.value,
           prepared: preparedMap
         };
@@ -116,14 +116,14 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
   });
 
   it('falls back to .value when .totalModifier is absent', () => {
-    const snapshot = adapter.getCombatantFromToken(
-      pcToken({ medicine: { value: 6, rank: 1 } })
-    );
+    const snapshot = adapter.getCombatantFromToken(pcToken({ medicine: { value: 6, rank: 1 } }));
     expect(snapshot?.pcCapabilities?.medicineModifier).toBe(6);
   });
 
   it('scales medicineDC by proficiency rank (expert -> 20)', () => {
-    const snapshot = adapter.getCombatantFromToken(pcToken({ medicine: { totalModifier: 10, rank: 2 } }));
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({ medicine: { totalModifier: 10, rank: 2 } })
+    );
     expect(snapshot?.pcCapabilities?.medicineDC).toBe(20);
   });
 
@@ -226,10 +226,7 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
               },
               2: {
                 max: 3,
-                prepared: [
-                  { id: 'heal-spell-id' },
-                  { id: 'bless-spell-id' }
-                ]
+                prepared: [{ id: 'heal-spell-id' }, { id: 'bless-spell-id' }]
               }
             }
           }

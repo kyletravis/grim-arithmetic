@@ -9,6 +9,7 @@ import {
   DEFAULT_MAX_ROUNDS,
   MAX_ITERATIONS,
   type EncounterSetup,
+  type IterationCount,
   type SimulationCombatant,
   type SimulationConfig
 } from '../src/engine/simulation-types';
@@ -25,6 +26,7 @@ function makePc(id: string, overrides: Partial<SimulationCombatant> = {}): Simul
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -45,6 +47,7 @@ function makeEnemy(attacks: AttackSnapshot[]): SimulationCombatant {
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -75,13 +78,24 @@ function makeSetup(): EncounterSetup {
   };
 }
 
-function baseConfig(overrides: Partial<SimulationConfig> = {}): SimulationConfig {
+/**
+ * Tests intentionally run far fewer iterations than the production
+ * `IterationCount` options (1000/5000/10000) to keep the suite fast; the
+ * engine itself only requires a positive integer (validateSimulationConfig),
+ * so the override here is widened to plain `number` and cast at the edge.
+ * Deliberately-invalid values (see below) still use `as never` to flag
+ * intent at the guardrail-violation call sites.
+ */
+type ConfigOverrides = Omit<Partial<SimulationConfig>, 'iterations'> & { iterations?: number };
+
+function baseConfig(overrides: ConfigOverrides = {}): SimulationConfig {
+  const { iterations, ...rest } = overrides;
   return {
-    iterations: 1000,
+    iterations: (iterations ?? 1000) as IterationCount,
     tacticsProfile: 'focus-fire',
     maxRounds: DEFAULT_MAX_ROUNDS,
     seed: 'guardrail',
-    ...overrides
+    ...rest
   };
 }
 
@@ -118,9 +132,7 @@ describe('validateSimulationConfig', () => {
     expect(() =>
       validateSimulationConfig(baseConfig({ wallClockBudgetMs: Number.POSITIVE_INFINITY }))
     ).toThrow();
-    expect(() =>
-      validateSimulationConfig(baseConfig({ wallClockBudgetMs: -1 }))
-    ).toThrow();
+    expect(() => validateSimulationConfig(baseConfig({ wallClockBudgetMs: -1 }))).toThrow();
   });
 
   it('allows wallClockBudgetMs = 0 (disabled)', () => {
@@ -161,7 +173,11 @@ describe('throttleProgress', () => {
   it('fires immediately on first call', () => {
     const now = 0;
     const calls: number[] = [];
-    const wrapped = throttleProgress((n: number) => calls.push(n), 100, () => now);
+    const wrapped = throttleProgress(
+      (n: number) => calls.push(n),
+      100,
+      () => now
+    );
     wrapped(1);
     expect(calls).toEqual([1]);
   });
@@ -169,7 +185,11 @@ describe('throttleProgress', () => {
   it('drops intermediate calls within the throttle window', () => {
     let now = 0;
     const calls: number[] = [];
-    const wrapped = throttleProgress((n: number) => calls.push(n), 100, () => now);
+    const wrapped = throttleProgress(
+      (n: number) => calls.push(n),
+      100,
+      () => now
+    );
     wrapped(1);
     now = 50;
     wrapped(2);
@@ -181,7 +201,11 @@ describe('throttleProgress', () => {
   it('fires again after the throttle window elapses', () => {
     let now = 0;
     const calls: number[] = [];
-    const wrapped = throttleProgress((n: number) => calls.push(n), 100, () => now);
+    const wrapped = throttleProgress(
+      (n: number) => calls.push(n),
+      100,
+      () => now
+    );
     wrapped(1);
     now = 200;
     wrapped(2);
@@ -191,7 +215,11 @@ describe('throttleProgress', () => {
   it('flush() emits the latest dropped call', () => {
     let now = 0;
     const calls: number[] = [];
-    const wrapped = throttleProgress((n: number) => calls.push(n), 100, () => now);
+    const wrapped = throttleProgress(
+      (n: number) => calls.push(n),
+      100,
+      () => now
+    );
     wrapped(1);
     now = 30;
     wrapped(2);
@@ -204,7 +232,11 @@ describe('throttleProgress', () => {
   it('flush() is a no-op when nothing is pending', () => {
     const now = 0;
     const calls: number[] = [];
-    const wrapped = throttleProgress((n: number) => calls.push(n), 100, () => now);
+    const wrapped = throttleProgress(
+      (n: number) => calls.push(n),
+      100,
+      () => now
+    );
     wrapped(1);
     wrapped.flush();
     expect(calls).toEqual([1]);

@@ -30,6 +30,7 @@ function makePc(id: string, attacks: AttackSnapshot[]): SimulationCombatant {
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 5,
@@ -53,6 +54,7 @@ function makeEnemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 3,
@@ -118,7 +120,10 @@ describe('pcDefaultTactics: target selection', () => {
     const standing = makeEnemy('standing', [makeAttack({ damageFormula: '1d4+1' })]);
     const pc = makePc('mira', [makeAttack()]);
 
-    const plan = pcDefaultTactics.chooseTurn(makeContext(pc, [downed, standing]), createRng('seed'));
+    const plan = pcDefaultTactics.chooseTurn(
+      makeContext(pc, [downed, standing]),
+      createRng('seed')
+    );
     expect(plan.strikes.every((s) => s.targetId === 'standing')).toBe(true);
   });
 });
@@ -146,15 +151,22 @@ describe('pcDefaultTactics: turn structure', () => {
 
 describe('pcDefaultTactics: skip-turn cases', () => {
   it('skips the turn when no standing enemies remain', () => {
-    const downed = makeEnemy('e1', [makeAttack()], { downed: true, hp: { current: 0, max: 30, temp: 0 } });
+    const downed = makeEnemy('e1', [makeAttack()], {
+      downed: true,
+      hp: { current: 0, max: 30, temp: 0 }
+    });
     const pc = makePc('mira', [makeAttack()]);
-    expect(pcDefaultTactics.chooseTurn(makeContext(pc, [downed]), createRng('seed')).strikes).toHaveLength(0);
+    expect(
+      pcDefaultTactics.chooseTurn(makeContext(pc, [downed]), createRng('seed')).strikes
+    ).toHaveLength(0);
   });
 
   it('skips the turn when the PC has no attacks', () => {
     const pc = makePc('mira', []);
     const enemy = makeEnemy('e1', [makeAttack()]);
-    expect(pcDefaultTactics.chooseTurn(makeContext(pc, [enemy]), createRng('seed')).strikes).toHaveLength(0);
+    expect(
+      pcDefaultTactics.chooseTurn(makeContext(pc, [enemy]), createRng('seed')).strikes
+    ).toHaveLength(0);
   });
 
   it('tolerates enemies with unparseable damage formulas (threat score 0)', () => {

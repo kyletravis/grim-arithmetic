@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { runSimulation } from '../src/engine/run-simulation';
 import type {
   EncounterSetup,
+  IterationCount,
   SimulationCombatant,
   SimulationConfig
 } from '../src/engine/simulation-types';
@@ -19,6 +20,7 @@ function makePc(id: string, overrides: Partial<SimulationCombatant> = {}): Simul
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -43,6 +45,7 @@ function makeEnemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -74,13 +77,22 @@ function makeSetup(): EncounterSetup {
   };
 }
 
-function makeConfig(overrides: Partial<SimulationConfig> = {}): SimulationConfig {
+/**
+ * Tests intentionally run far fewer iterations than the production
+ * `IterationCount` options (1000/5000/10000) to keep the suite fast; the
+ * engine itself only requires a positive integer (validateSimulationConfig),
+ * so the override here is widened to plain `number` and cast at the edge.
+ */
+type ConfigOverrides = Omit<Partial<SimulationConfig>, 'iterations'> & { iterations?: number };
+
+function makeConfig(overrides: ConfigOverrides = {}): SimulationConfig {
+  const { iterations, ...rest } = overrides;
   return {
-    iterations: 1000,
+    iterations: (iterations ?? 1000) as IterationCount,
     tacticsProfile: 'focus-fire',
     maxRounds: DEFAULT_MAX_ROUNDS,
     seed: 'sim-test',
-    ...overrides
+    ...rest
   };
 }
 
@@ -141,9 +153,7 @@ describe('runSimulation aggregates', () => {
   it('safe setup produces low any-PC-down probability', () => {
     const setup: EncounterSetup = {
       pcs: [makePc('mira', { hp: { current: 200, max: 200, temp: 0 }, defenses: { ac: 40 } })],
-      enemies: [
-        makeEnemy('mook', [makeAttack({ attackBonus: -5, damageFormula: '1d4' })])
-      ],
+      enemies: [makeEnemy('mook', [makeAttack({ attackBonus: -5, damageFormula: '1d4' })])],
       caveats: []
     };
     const result = runSimulation(setup, makeConfig({ iterations: 500 }));
@@ -156,12 +166,13 @@ describe('runSimulation aggregates', () => {
         makePc('mira', { hp: { current: 2, max: 24, temp: 0 } }),
         makePc('seam', { hp: { current: 2, max: 24, temp: 0 } })
       ],
-      enemies: [
-        makeEnemy('boss', [makeAttack({ attackBonus: 20, damageFormula: '5d10+10' })])
-      ],
+      enemies: [makeEnemy('boss', [makeAttack({ attackBonus: 20, damageFormula: '5d10+10' })])],
       caveats: []
     };
-    const result = runSimulation(setup, makeConfig({ iterations: 200, tacticsProfile: 'spread-damage' }));
+    const result = runSimulation(
+      setup,
+      makeConfig({ iterations: 200, tacticsProfile: 'spread-damage' })
+    );
     expect(result.tpkProbability).toBeGreaterThan(0.5);
   });
 
@@ -212,13 +223,9 @@ describe('runSimulation aggregates', () => {
 describe('runSimulation progress and abort', () => {
   it('progress callback fires monotonically from 1 to iterations', () => {
     const events: Array<{ completed: number; total: number }> = [];
-    runSimulation(
-      makeSetup(),
-      makeConfig({ iterations: 20 }),
-      {
-        onProgress: (completed, total) => events.push({ completed, total })
-      }
-    );
+    runSimulation(makeSetup(), makeConfig({ iterations: 20 }), {
+      onProgress: (completed, total) => events.push({ completed, total })
+    });
     expect(events).toHaveLength(20);
     for (let i = 0; i < events.length; i += 1) {
       expect(events[i].completed).toBe(i + 1);
@@ -228,16 +235,12 @@ describe('runSimulation progress and abort', () => {
 
   it('abort signal halts iteration and flags aborted = true', () => {
     const signal = { aborted: false };
-    const result = runSimulation(
-      makeSetup(),
-      makeConfig({ iterations: 500 }),
-      {
-        abortSignal: signal,
-        onProgress: (completed) => {
-          if (completed === 10) signal.aborted = true;
-        }
+    const result = runSimulation(makeSetup(), makeConfig({ iterations: 500 }), {
+      abortSignal: signal,
+      onProgress: (completed) => {
+        if (completed === 10) signal.aborted = true;
       }
-    );
+    });
     expect(result.aborted).toBe(true);
     expect(result.iterationsCompleted).toBeLessThan(500);
     expect(result.iterationsCompleted).toBeGreaterThanOrEqual(10);
@@ -245,7 +248,9 @@ describe('runSimulation progress and abort', () => {
 
   it('returns a coherent empty-shape result when aborted before any iteration', () => {
     const signal = { aborted: true };
-    const result = runSimulation(makeSetup(), makeConfig({ iterations: 100 }), { abortSignal: signal });
+    const result = runSimulation(makeSetup(), makeConfig({ iterations: 100 }), {
+      abortSignal: signal
+    });
     expect(result.aborted).toBe(true);
     expect(result.iterationsCompleted).toBe(0);
     expect(result.anyPcDownProbability).toBe(0);

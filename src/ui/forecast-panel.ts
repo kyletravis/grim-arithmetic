@@ -1,4 +1,7 @@
-import { runSimulationInWorker, type RunSimulationHandle } from '../engine/run-simulation-in-worker';
+import {
+  runSimulationInWorker,
+  type RunSimulationHandle
+} from '../engine/run-simulation-in-worker';
 import type { SimulationConfig, SimulationResult } from '../engine/simulation-types';
 import { DEFAULT_MAX_ROUNDS } from '../engine/simulation-types';
 import { buildEncounterSetup } from '../foundry/encounter-setup';
@@ -18,10 +21,10 @@ interface ApplicationV2Like {
   element: HTMLElement;
 }
 
-const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
-const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
-  options?: unknown
-) => ApplicationV2Like;
+const ApplicationV2Api = foundry.applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(
+  ApplicationV2Api.ApplicationV2
+) as unknown as new (options?: unknown) => ApplicationV2Like;
 
 const FORECAST_ID = `${MODULE_ID}-forecast`;
 

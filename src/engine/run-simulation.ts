@@ -104,6 +104,11 @@ function aggregate(
         meanRecoveryChecksPerIteration: 0,
         heroPointSurvivalRate: 0
       },
+      confidenceIntervals: {
+        anyPcDown: { lower: 0, upper: 0 },
+        tpk: { lower: 0, upper: 0 },
+        meanFirstDownRound: null
+      },
       caveats: [...setup.caveats, 'No iterations completed.']
     };
   }
@@ -270,7 +275,7 @@ function buildConfidenceIntervals(
 function proportionCI(successes: number, total: number): ProportionConfidenceInterval {
   if (total === 0) return { lower: 0, upper: 0 };
   const p = successes / total;
-  const se = Math.sqrt(p * (1 - p) / total);
+  const se = Math.sqrt((p * (1 - p)) / total);
   const margin = Z95 * se;
   return {
     lower: clamp01(p - margin),

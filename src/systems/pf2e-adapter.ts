@@ -1,8 +1,14 @@
-import { AttackSnapshot, CombatantSnapshot, DamageAdjustmentValue, PcCapabilities, SystemAdapter } from './base-adapter';
+import {
+  AttackSnapshot,
+  CombatantSnapshot,
+  DamageAdjustmentValue,
+  PcCapabilities,
+  SystemAdapter
+} from './base-adapter';
 
 type UnknownRecord = Record<string, unknown>;
 
-type TokenLike = {
+export type Pf2eTokenLike = {
   id?: string;
   name?: string;
   document?: {
@@ -10,6 +16,8 @@ type TokenLike = {
   };
   actor?: ActorLike;
 };
+
+type TokenLike = Pf2eTokenLike;
 
 type ActorLike = {
   id?: string;
@@ -200,7 +208,9 @@ function extractAttackFromPcAction(action: unknown): AttackSnapshot | null {
     damageType,
     traits,
     mapType: traits.includes('agile') ? 'agile' : 'normal',
-    assumptions: ['PC Strike extracted from actor.system.actions; conditional modifiers (status, MAP-adjacent feats) may be missing.']
+    assumptions: [
+      'PC Strike extracted from actor.system.actions; conditional modifiers (status, MAP-adjacent feats) may be missing.'
+    ]
   };
 }
 
@@ -346,9 +356,8 @@ function extractHealCapability(actor: ActorLike): {
   for (const item of entryItems) {
     const system = asRecord(item.system);
     const preparedKind = asRecord(system.prepared);
-    const preparationKind = typeof preparedKind.value === 'string'
-      ? (preparedKind.value as string)
-      : undefined;
+    const preparationKind =
+      typeof preparedKind.value === 'string' ? (preparedKind.value as string) : undefined;
     const entrySlots = asRecord(system.slots);
 
     for (const [slotKey, slotData] of Object.entries(entrySlots)) {
@@ -397,8 +406,10 @@ function extractHealCapability(actor: ActorLike): {
       if (isCantripSpell(system)) continue;
 
       const rank =
-        optionalNumberLike(system.level) ?? optionalNumberLike(asRecord(system.location).heightenedLevel);
-      const count = optionalNumberLike(system.slotsRemaining) ?? optionalNumberLike(system.uses) ?? 1;
+        optionalNumberLike(system.level) ??
+        optionalNumberLike(asRecord(system.location).heightenedLevel);
+      const count =
+        optionalNumberLike(system.slotsRemaining) ?? optionalNumberLike(system.uses) ?? 1;
       if (typeof rank === 'number' && rank >= 1 && count > 0) {
         slots[rank] = (slots[rank] ?? 0) + count;
       }
@@ -479,7 +490,8 @@ function detectBattleMedicineFeat(actor: ActorLike): boolean {
   const items = getActorItemsOfType(actor, 'feat');
   for (const item of items) {
     const system = asRecord(item.system);
-    const slug = typeof system.slug === 'string' ? system.slug : item.name?.toLowerCase().replace(/\s+/g, '-');
+    const slug =
+      typeof system.slug === 'string' ? system.slug : item.name?.toLowerCase().replace(/\s+/g, '-');
     if (slug === 'battle-medicine') return true;
   }
   return false;
@@ -488,11 +500,7 @@ function detectBattleMedicineFeat(actor: ActorLike): boolean {
 function isAdapterDebugLoggingEnabled(): boolean {
   if (typeof game === 'undefined') return false;
   try {
-    return Boolean(
-      (game as { settings?: { get?: (module: string, key: string) => unknown } })
-        .settings
-        ?.get?.('grim-arithmetic', 'debugLogging') ?? false
-    );
+    return Boolean(game.settings.get('grim-arithmetic', 'debugLogging') ?? false);
   } catch {
     return false;
   }
@@ -581,7 +589,11 @@ function getDisposition(token: TokenLike, actor: ActorLike): CombatantSnapshot['
 function getConditionValue(actor: ActorLike, slug: string): number {
   const condition = actor.itemTypes?.condition?.find((entry) => entry.slug === slug);
   if (!condition) return 0;
-  return optionalNumber(condition.value) ?? optionalNumber(asRecord(asRecord(condition.system).value).value) ?? 0;
+  return (
+    optionalNumber(condition.value) ??
+    optionalNumber(asRecord(asRecord(condition.system).value).value) ??
+    0
+  );
 }
 
 function getActorItems(actor: ActorLike | undefined): ItemLike[] {
@@ -592,7 +604,9 @@ function getActorItems(actor: ActorLike | undefined): ItemLike[] {
   if (Array.isArray(contents)) return contents.filter(isItemLike);
 
   if (isRecord(items) && typeof items.filter === 'function') {
-    const filtered = (items.filter as (predicate: (item: ItemLike) => boolean) => unknown)(isItemLike);
+    const filtered = (items.filter as (predicate: (item: ItemLike) => boolean) => unknown)(
+      isItemLike
+    );
     return Array.isArray(filtered) ? filtered : [];
   }
 
@@ -604,7 +618,10 @@ function isItemLike(value: unknown): value is ItemLike {
 }
 
 function getAttackBonus(system: UnknownRecord): number | undefined {
-  return optionalNumberLike(asRecord(system.bonus).value) ?? optionalNumberLike(asRecord(system.attack).value);
+  return (
+    optionalNumberLike(asRecord(system.bonus).value) ??
+    optionalNumberLike(asRecord(system.attack).value)
+  );
 }
 
 function getPrimaryDamageRoll(system: UnknownRecord): UnknownRecord | undefined {

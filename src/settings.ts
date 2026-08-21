@@ -74,9 +74,7 @@ export function applyPlayerSettingsVisibility(
 export function isMonteCarloEnabled(): boolean {
   if (typeof game === 'undefined') return true;
   try {
-    return Boolean((game as { settings?: { get?: (module: string, key: string) => unknown } })
-      .settings
-      ?.get?.(MODULE_ID, ENABLE_MONTE_CARLO_SETTING) ?? true);
+    return Boolean(game.settings.get(MODULE_ID, ENABLE_MONTE_CARLO_SETTING) ?? true);
   } catch {
     return true;
   }

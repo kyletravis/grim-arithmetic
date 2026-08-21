@@ -11,8 +11,7 @@
 export function applyTooltipDelay(ms: number): void {
   if (typeof game === 'undefined') return;
   try {
-    const manager = (game as { tooltip?: { constructor?: { TOOLTIP_ACTIVATION_MS?: number } } }).tooltip;
-    const managerClass = manager?.constructor;
+    const managerClass = game.tooltip?.constructor;
     if (managerClass) managerClass.TOOLTIP_ACTIVATION_MS = ms;
   } catch {
     /* tooltip manager unavailable; leave the default delay in place */

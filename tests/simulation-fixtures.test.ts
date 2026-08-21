@@ -3,6 +3,7 @@ import { runSimulation } from '../src/engine/run-simulation';
 import {
   DEFAULT_MAX_ROUNDS,
   type EncounterSetup,
+  type IterationCount,
   type SimulationCombatant,
   type SimulationConfig
 } from '../src/engine/simulation-types';
@@ -42,10 +43,7 @@ const DEFAULT_PC_STRIKE: AttackSnapshot = {
   assumptions: []
 };
 
-function pc(
-  id: string,
-  overrides: Partial<SimulationCombatant> = {}
-): SimulationCombatant {
+function pc(id: string, overrides: Partial<SimulationCombatant> = {}): SimulationCombatant {
   const isMira = id === 'mira';
   return {
     id,
@@ -91,6 +89,7 @@ function enemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 3,
@@ -114,13 +113,22 @@ function attack(overrides: Partial<AttackSnapshot> = {}): AttackSnapshot {
   };
 }
 
-function config(overrides: Partial<SimulationConfig> = {}): SimulationConfig {
+/**
+ * Tests intentionally run far fewer iterations than the production
+ * `IterationCount` options (1000/5000/10000) to keep the suite fast; the
+ * engine itself only requires a positive integer (validateSimulationConfig),
+ * so the override here is widened to plain `number` and cast at the edge.
+ */
+type ConfigOverrides = Omit<Partial<SimulationConfig>, 'iterations'> & { iterations?: number };
+
+function config(overrides: ConfigOverrides = {}): SimulationConfig {
+  const { iterations, ...rest } = overrides;
   return {
-    iterations: 1000,
+    iterations: (iterations ?? 1000) as IterationCount,
     tacticsProfile: 'focus-fire',
     maxRounds: DEFAULT_MAX_ROUNDS,
     seed: 'fixture',
-    ...overrides
+    ...rest
   };
 }
 
@@ -136,9 +144,18 @@ describe('simulation fixtures: 4 PCs vs 1 boss', () => {
     caveats: []
   };
 
-  for (const profile of ['random-legal', 'spread-damage', 'focus-fire', 'predator', 'boss-cinematic'] as const) {
+  for (const profile of [
+    'random-legal',
+    'spread-damage',
+    'focus-fire',
+    'predator',
+    'boss-cinematic'
+  ] as const) {
     it(`is stable under ${profile}`, () => {
-      const result = runSimulation(setup, config({ tacticsProfile: profile, seed: `4v1-${profile}` }));
+      const result = runSimulation(
+        setup,
+        config({ tacticsProfile: profile, seed: `4v1-${profile}` })
+      );
       expect({
         profile,
         anyPcDownProbability: result.anyPcDownProbability,
@@ -164,9 +181,18 @@ describe('simulation fixtures: 4 PCs vs 4 minions', () => {
     caveats: []
   };
 
-  for (const profile of ['random-legal', 'spread-damage', 'focus-fire', 'predator', 'boss-cinematic'] as const) {
+  for (const profile of [
+    'random-legal',
+    'spread-damage',
+    'focus-fire',
+    'predator',
+    'boss-cinematic'
+  ] as const) {
     it(`is stable under ${profile}`, () => {
-      const result = runSimulation(setup, config({ tacticsProfile: profile, seed: `4v4-${profile}` }));
+      const result = runSimulation(
+        setup,
+        config({ tacticsProfile: profile, seed: `4v4-${profile}` })
+      );
       expect({
         profile,
         anyPcDownProbability: result.anyPcDownProbability,
@@ -255,12 +281,13 @@ describe('simulation fixtures: degenerate setups', () => {
         pc('mira', { hp: { current: 2, max: 24, temp: 0 } }),
         pc('seam', { hp: { current: 2, max: 24, temp: 0 } })
       ],
-      enemies: [
-        enemy('boss', [attack({ attackBonus: 25, damageFormula: '5d10+10' })])
-      ],
+      enemies: [enemy('boss', [attack({ attackBonus: 25, damageFormula: '5d10+10' })])],
       caveats: []
     };
-    const result = runSimulation(setup, config({ iterations: 500, seed: 'tpk-fixture', tacticsProfile: 'spread-damage' }));
+    const result = runSimulation(
+      setup,
+      config({ iterations: 500, seed: 'tpk-fixture', tacticsProfile: 'spread-damage' })
+    );
     expect({
       anyPcDownProbability: result.anyPcDownProbability,
       tpkProbability: result.tpkProbability,

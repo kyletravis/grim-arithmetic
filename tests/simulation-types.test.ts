@@ -37,6 +37,7 @@ describe('simulation-types shapes', () => {
       wounded: 0,
       doomed: 0,
       heroPoints: 1,
+      heroPointSurvivalUsed: false,
       downed: false,
       dead: false,
       initiativeBonus: 6,
@@ -57,6 +58,7 @@ describe('simulation-types shapes', () => {
       wounded: 0,
       doomed: 0,
       heroPoints: 0,
+      heroPointSurvivalUsed: false,
       downed: false,
       dead: false,
       initiativeBonus: 4,
@@ -111,7 +113,10 @@ describe('simulation-types shapes', () => {
       firstDownRound: 2,
       tpk: false,
       perCombatant: [],
-      damageByPair: { 'enemy-1->pc-1': 8 }
+      damageByPair: { 'enemy-1->pc-1': 8 },
+      healsFired: 0,
+      recoveryChecksFired: 0,
+      heroPointSurvivalsFired: 0
     };
     expect(result.damageByPair['enemy-1->pc-1']).toBe(8);
   });
@@ -129,6 +134,16 @@ describe('simulation-types shapes', () => {
       medianFirstDownRound: 2,
       perPc: [],
       perEnemy: [],
+      safetyNet: {
+        meanHealsPerIteration: 0,
+        meanRecoveryChecksPerIteration: 0,
+        heroPointSurvivalRate: 0
+      },
+      confidenceIntervals: {
+        anyPcDown: { lower: 0, upper: 0 },
+        tpk: { lower: 0, upper: 0 },
+        meanFirstDownRound: null
+      },
       caveats: []
     };
     expect(result.aborted).toBe(false);

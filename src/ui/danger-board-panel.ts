@@ -18,10 +18,10 @@ interface ApplicationV2Like {
   render(force?: boolean | Record<string, unknown>): Promise<unknown>;
 }
 
-const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
-const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
-  options?: unknown
-) => ApplicationV2Like;
+const ApplicationV2Api = foundry.applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(
+  ApplicationV2Api.ApplicationV2
+) as unknown as new (options?: unknown) => ApplicationV2Like;
 
 export class DangerBoardPanel extends Base {
   static DEFAULT_OPTIONS = {

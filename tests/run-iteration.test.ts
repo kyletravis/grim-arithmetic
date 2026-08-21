@@ -20,6 +20,7 @@ function makePc(id: string, overrides: Partial<SimulationCombatant> = {}): Simul
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 6,
@@ -44,6 +45,7 @@ function makeEnemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -170,14 +172,25 @@ describe('runIteration: side-aware tactics (PCs act, v0.6.0-rc.3)', () => {
         makePc('mira', {
           hp: { current: 24, max: 24, temp: 0 },
           attacks: [
-            { id: 'sword', name: 'Sword', attackBonus: 14, damageFormula: '2d8+6',
-              damageType: 'slashing', traits: [], mapType: 'normal', assumptions: [] }
+            {
+              id: 'sword',
+              name: 'Sword',
+              attackBonus: 14,
+              damageFormula: '2d8+6',
+              damageType: 'slashing',
+              traits: [],
+              mapType: 'normal',
+              assumptions: []
+            }
           ]
         })
       ],
-      enemies: [makeEnemy('brittle', [makeAttack({ attackBonus: 0, damageFormula: '1d4' })], {
-        hp: { current: 6, max: 6, temp: 0 }, defenses: { ac: 14 }
-      })],
+      enemies: [
+        makeEnemy('brittle', [makeAttack({ attackBonus: 0, damageFormula: '1d4' })], {
+          hp: { current: 6, max: 6, temp: 0 },
+          defenses: { ac: 14 }
+        })
+      ],
       caveats: []
     };
     const config = makeConfig({ maxRounds: 5, seed: 'pc-acts' });
@@ -196,7 +209,12 @@ describe('runIteration: side-aware tactics (PCs act, v0.6.0-rc.3)', () => {
       enemies: [makeEnemy('boss', [makeAttack({ attackBonus: 15, damageFormula: '5d10+10' })])],
       caveats: []
     };
-    const result = runIteration(setup, makeConfig({ maxRounds: 5, seed: 'passive' }), createRng('passive'), 0);
+    const result = runIteration(
+      setup,
+      makeConfig({ maxRounds: 5, seed: 'passive' }),
+      createRng('passive'),
+      0
+    );
     // With no PC attacks, behavior collapses to the rc.2 baseline: enemy grinds PC.
     expect(result.tpk).toBe(true);
   });

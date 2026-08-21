@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { Pf2eAdapter } from '../src/systems/pf2e-adapter';
+import { Pf2eAdapter, type Pf2eTokenLike } from '../src/systems/pf2e-adapter';
 
 const adapter = new Pf2eAdapter();
 
 function pcTokenWith(overrides: {
   actions?: unknown[];
   items?: { contents: unknown[] };
-}): unknown {
+}): Pf2eTokenLike {
   return {
     id: 'pc-1',
     name: 'Mira Stormwake',
@@ -47,7 +47,9 @@ describe('Pf2eAdapter.getAttacksFromToken: PC actions list (primary path)', () =
         damageType: 'slashing',
         traits: ['versatile-p'],
         mapType: 'normal',
-        assumptions: ['PC Strike extracted from actor.system.actions; conditional modifiers (status, MAP-adjacent feats) may be missing.']
+        assumptions: [
+          'PC Strike extracted from actor.system.actions; conditional modifiers (status, MAP-adjacent feats) may be missing.'
+        ]
       }
     ]);
   });
@@ -222,7 +224,7 @@ describe('Pf2eAdapter.getAttacksFromToken: graceful empty cases', () => {
   });
 
   it('returns [] when token has no actor', () => {
-    expect(adapter.getAttacksFromToken({ id: 't' } as unknown)).toEqual([]);
+    expect(adapter.getAttacksFromToken({ id: 't' } as Pf2eTokenLike)).toEqual([]);
   });
 
   it('does not affect the NPC melee path', () => {

@@ -1,6 +1,6 @@
 import { MODULE_ID, MODULE_TITLE } from './constants';
 import { logDebugCapture } from './debug-capture';
-import { registerSettings, applyPlayerSettingsVisibility, type SettingsRegistry } from './settings';
+import { registerSettings, applyPlayerSettingsVisibility } from './settings';
 import { DangerBoardPanel } from './ui/danger-board-panel';
 import { ForecastPanel } from './ui/forecast-panel';
 import { PairDetailPanel } from './ui/pair-detail-panel';
@@ -15,7 +15,7 @@ Hooks.once('init', () => {
 });
 
 function registerHandlebarsHelpers(): void {
-  const handlebars = (globalThis as { Handlebars?: { registerHelper(name: string, fn: (...args: unknown[]) => unknown): void } }).Handlebars;
+  const handlebars = typeof Handlebars === 'undefined' ? undefined : Handlebars;
   if (!handlebars) return;
   handlebars.registerHelper('eq', function (a: unknown, b: unknown): boolean {
     return a === b;
@@ -25,10 +25,7 @@ function registerHandlebarsHelpers(): void {
 Hooks.once('ready', () => {
   applyTooltipDelay(750);
   // Runs before the GM guard below: players must reach this to have their settings hidden.
-  applyPlayerSettingsVisibility(
-    (game.settings as { settings?: SettingsRegistry } | undefined)?.settings,
-    game.user?.isGM === true
-  );
+  applyPlayerSettingsVisibility(game.settings.settings, game.user?.isGM === true);
 
   if (!game.user?.isGM) return;
 
@@ -41,6 +38,8 @@ Hooks.once('ready', () => {
       PairDetailPanel.openForPair(pcId, enemyId, attackId),
     openPairDetailFromSelection: () => PairDetailPanel.openForSelection(),
     openForecast: () => ForecastPanel.open(),
-    captureTokenDebug: (token = canvas.tokens?.controlled?.[0]) => logDebugCapture(token)
+    captureTokenDebug: (
+      token = canvas.tokens?.controlled?.[0] as Parameters<typeof logDebugCapture>[0]
+    ) => logDebugCapture(token)
   };
 });

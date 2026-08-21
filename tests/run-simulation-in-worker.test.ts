@@ -5,6 +5,7 @@ import {
 } from '../src/engine/run-simulation-in-worker';
 import type {
   EncounterSetup,
+  IterationCount,
   SimulationCombatant,
   SimulationConfig
 } from '../src/engine/simulation-types';
@@ -22,6 +23,7 @@ function makePc(id: string): SimulationCombatant {
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -54,6 +56,7 @@ function makeEnemy(): SimulationCombatant {
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -70,13 +73,22 @@ function makeSetup(): EncounterSetup {
   };
 }
 
-function makeConfig(overrides: Partial<SimulationConfig> = {}): SimulationConfig {
+/**
+ * Tests intentionally run far fewer iterations than the production
+ * `IterationCount` options (1000/5000/10000) to keep the suite fast; the
+ * engine itself only requires a positive integer (validateSimulationConfig),
+ * so the override here is widened to plain `number` and cast at the edge.
+ */
+type ConfigOverrides = Omit<Partial<SimulationConfig>, 'iterations'> & { iterations?: number };
+
+function makeConfig(overrides: ConfigOverrides = {}): SimulationConfig {
+  const { iterations, ...rest } = overrides;
   return {
-    iterations: 50,
+    iterations: (iterations ?? 50) as IterationCount,
     tacticsProfile: 'focus-fire',
     maxRounds: DEFAULT_MAX_ROUNDS,
     seed: 'worker-test',
-    ...overrides
+    ...rest
   };
 }
 
@@ -115,10 +127,7 @@ describe('runSimulationInWorker sync fallback (Worker undefined in tests)', () =
   });
 
   it('rejects when validation fails (e.g. iterations too high)', async () => {
-    const handle = runSimulationInWorker(
-      makeSetup(),
-      makeConfig({ iterations: 20000 as never })
-    );
+    const handle = runSimulationInWorker(makeSetup(), makeConfig({ iterations: 20000 as never }));
     await expect(handle.promise).rejects.toThrow();
   });
 });
