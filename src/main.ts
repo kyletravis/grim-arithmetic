@@ -1,5 +1,5 @@
 import { MODULE_ID, MODULE_TITLE } from './constants';
-import { logDebugCapture } from './debug-capture';
+import { buildLiveFixture, logDebugCapture, type DebugTokenLike } from './debug-capture';
 import { registerSettings, applyPlayerSettingsVisibility } from './settings';
 import { getSystemAdapter } from './systems/adapter-registry';
 import { DangerBoardPanel } from './ui/danger-board-panel';
@@ -50,6 +50,16 @@ Hooks.once('ready', () => {
     openForecast: () => ForecastPanel.open(),
     captureTokenDebug: (
       token = canvas.tokens?.controlled?.[0] as Parameters<typeof logDebugCapture>[0]
-    ) => logDebugCapture(token)
+    ) => logDebugCapture(token),
+    exportLiveFixture: (token = canvas.tokens?.controlled?.[0] as DebugTokenLike | undefined) => {
+      if (!token) return null;
+      const fixture = buildLiveFixture(token);
+      const json = JSON.stringify(fixture, null, 2);
+      console.log(json);
+      void (
+        globalThis as { navigator?: { clipboard?: { writeText(t: string): Promise<void> } } }
+      ).navigator?.clipboard?.writeText(json);
+      return fixture;
+    }
   };
 });

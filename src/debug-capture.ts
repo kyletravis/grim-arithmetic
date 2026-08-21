@@ -1,7 +1,7 @@
 import { isDebugLoggingEnabled } from './settings';
 import { asRecord, getActorItems, isRecord, type UnknownRecord } from './systems/record-utils';
 
-type DebugTokenLike = {
+export type DebugTokenLike = {
   id?: string;
   name?: string;
   document?: {
@@ -64,6 +64,119 @@ export function logDebugCapture(token?: DebugTokenLike): unknown | null {
   const capture = buildDebugCapture(token);
   console.log('Grim Arithmetic | Debug capture', capture);
   return capture;
+}
+
+export interface LiveFixture {
+  token: UnknownRecord;
+  expect?: { disposition?: string; minAttacks?: number; attackBonusAtLeast?: number };
+}
+
+/**
+ * Build a JSON-safe fixture from a live token, pruned to exactly what the
+ * PF2e adapter reads. Used by `exportLiveFixture()` so GMs can capture a
+ * real actor's data and drop it into tests/fixtures/live/ for regression
+ * coverage. Only character stats are kept — no biography/notes fields.
+ */
+export function buildLiveFixture(token: DebugTokenLike): LiveFixture {
+  const actor = token.actor;
+  const system = asRecord(actor?.system);
+  const attributes = asRecord(system.attributes);
+  const actions = Array.isArray(system.actions) ? system.actions.filter(isRecord) : [];
+  const itemTypes = asRecord(actor?.itemTypes);
+  const keepItemTypes = new Set([
+    'melee',
+    'weapon',
+    'spell',
+    'spellcastingEntry',
+    'feat',
+    'condition'
+  ]);
+  const items = getActorItems(actor?.items)
+    .filter((i) => typeof i.type === 'string' && keepItemTypes.has(i.type))
+    .map((i) => ({
+      id: i.id ?? (i as { _id?: string })._id,
+      name: i.name,
+      type: i.type,
+      system: pruneItemSystem(asRecord(i.system))
+    }));
+  return {
+    token: {
+      id: token.id,
+      name: token.name,
+      document: { disposition: token.document?.disposition },
+      actor: actor
+        ? {
+            id: actor.id,
+            name: actor.name,
+            type: actor.type,
+            system: withoutUndefined({
+              attributes: withoutUndefined({
+                hp: attributes.hp,
+                ac: attributes.ac,
+                perception: attributes.perception,
+                resistances: attributes.resistances,
+                weaknesses: attributes.weaknesses,
+                immunities: attributes.immunities
+              }),
+              perception: system.perception,
+              abilities: system.abilities,
+              skills: { medicine: asRecord(system.skills).medicine },
+              saves: system.saves,
+              traits: system.traits,
+              resources: { heroPoints: asRecord(system.resources).heroPoints },
+              details: { level: asRecord(system.details).level },
+              resistances: system.resistances,
+              weaknesses: system.weaknesses,
+              immunities: system.immunities,
+              actions: actions.map((a) =>
+                withoutUndefined({
+                  slug: a.slug,
+                  label: a.label,
+                  totalModifier: a.totalModifier,
+                  damageFormula: a.damageFormula,
+                  traits: a.traits,
+                  item: (() => {
+                    const it = asRecord(a.item);
+                    return {
+                      id: it.id,
+                      name: it.name,
+                      system: pruneItemSystem(asRecord(it.system))
+                    };
+                  })()
+                })
+              )
+            }),
+            itemTypes: {
+              condition: (Array.isArray(itemTypes.condition) ? itemTypes.condition : [])
+                .filter(isRecord)
+                .map((c) => ({ slug: c.slug, value: c.value, system: c.system }))
+            },
+            items
+          }
+        : null
+    }
+  };
+}
+
+function pruneItemSystem(system: UnknownRecord): UnknownRecord {
+  return withoutUndefined({
+    slug: system.slug,
+    bonus: system.bonus,
+    attack: system.attack,
+    damageRolls: system.damageRolls,
+    damage: system.damage,
+    runes: system.runes,
+    traits: system.traits,
+    equipped: system.equipped,
+    range: system.range,
+    weaponType: system.weaponType,
+    level: system.level,
+    location: system.location,
+    prepared: system.prepared,
+    slots: system.slots,
+    slotsRemaining: system.slotsRemaining,
+    isCantrip: system.isCantrip
+  });
 }
 
 function buildPcCapture(
