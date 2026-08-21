@@ -88,6 +88,7 @@ export class ForecastPanel extends Base {
     if (!root) return;
     root.querySelectorAll<HTMLSelectElement>('[data-grim-forecast-control]').forEach((el) => {
       el.addEventListener('change', () => {
+        if (this.runState.kind === 'running') return;
         const key = el.dataset.grimForecastControl;
         if (key === 'tacticsProfile') {
           const value = el.value;
@@ -108,9 +109,14 @@ export class ForecastPanel extends Base {
 
   async _preClose(): Promise<void> {
     this.currentHandle?.cancel();
+    this.currentHandle = undefined;
+    this.runState = { kind: 'idle' };
   }
 
   private startRun(): void {
+    this.currentHandle?.cancel();
+    this.currentHandle = undefined;
+
     const adapter = new Pf2eAdapter();
     let setup;
     try {
@@ -144,23 +150,24 @@ export class ForecastPanel extends Base {
     this.runState = { kind: 'running', completed: 0, total: 5000 };
     this.render();
 
-    const handle = runSimulationInWorker(setup, config, {
+    const handle: RunSimulationHandle = runSimulationInWorker(setup, config, {
       onProgress: (completed, total) => {
-        if (this.runState.kind === 'running') {
-          this.runState = { kind: 'running', completed, total };
-          this.render();
-        }
+        if (this.currentHandle !== handle || this.runState.kind !== 'running') return;
+        this.runState = { kind: 'running', completed, total };
+        this.updateProgressText(completed, total);
       }
     });
     this.currentHandle = handle;
 
     handle.promise.then(
       (result: SimulationResult) => {
+        if (this.currentHandle !== handle) return;
         this.runState = { kind: 'done', result };
         this.currentHandle = undefined;
         this.render();
       },
       (err) => {
+        if (this.currentHandle !== handle) return;
         this.runState = {
           kind: 'error',
           message: err instanceof Error ? err.message : String(err)
@@ -169,5 +176,14 @@ export class ForecastPanel extends Base {
         this.render();
       }
     );
+  }
+
+  private updateProgressText(completed: number, total: number): void {
+    const node = this.element?.querySelector<HTMLElement>('[data-grim-progress]');
+    if (!node) return;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    node.textContent =
+      game.i18n?.format('GrimArithmetic.Forecast.Progress', { completed, total, percent }) ??
+      `${completed}/${total} (${percent}%)`;
   }
 }

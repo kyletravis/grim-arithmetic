@@ -34,7 +34,7 @@
 
     {{#if (eq state "running")}}
       <section class="grim-arithmetic-forecast__progress">
-        <p>{{localize "GrimArithmetic.Forecast.Progress" completed=progress.completed total=progress.total percent=progress.percent}}</p>
+        <p data-grim-progress>{{localize "GrimArithmetic.Forecast.Progress" completed=progress.completed total=progress.total percent=progress.percent}}</p>
       </section>
     {{/if}}
 
