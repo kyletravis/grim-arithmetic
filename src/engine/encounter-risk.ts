@@ -97,7 +97,8 @@ function buildPairRisk(
       doomed: pc.deathState?.doomed ?? 0,
       assumeHeroPointAvailable: resolveHeroPointAvailability(pc, controls.heroPointMode),
       damageType: attack.damageType,
-      targetAdjustments: pc.damageAdjustments
+      targetAdjustments: pc.damageAdjustments,
+      traits: attack.traits
     });
 
     return {

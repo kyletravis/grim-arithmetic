@@ -1,6 +1,9 @@
 import { attackOutcomeProbabilities } from './attack-probability';
+import { criticalDistribution, describeCritModel } from './critical-damage';
 import { DamageDistribution, DamageOutcome, damageDistribution } from './dice';
 import { riskLabelFor, type RiskLabel } from './risk-bands';
+
+export { doubleDistribution } from './mortality-double';
 
 export type MapType = 'normal' | 'agile' | 'none';
 
@@ -35,6 +38,8 @@ export interface ImmediateDownRiskInput {
   assumeHeroPointAvailable?: boolean;
   damageType?: string;
   targetAdjustments?: DamageAdjustments;
+  /** PF2e trait slugs on the attack (e.g. 'deadly-d10', 'fatal-d12'). */
+  traits?: string[];
 }
 
 export interface DamageSummary {
@@ -72,7 +77,7 @@ export interface DyingSeverity {
 
 export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownRiskResult {
   const rawBaseDamage = damageDistribution(input.damageFormula);
-  const rawCritDamage = doubleDistribution(rawBaseDamage);
+  const rawCritDamage = criticalDistribution(input.damageFormula, input.traits ?? []);
   const damageAdjustment = buildDamageAdjustmentSummary(input.damageType, input.targetAdjustments);
   const baseDamage = applyDamageAdjustment(rawBaseDamage, damageAdjustment);
   const critDamage = applyDamageAdjustment(rawCritDamage, damageAdjustment);
@@ -130,12 +135,12 @@ export function immediateDownRisk(input: ImmediateDownRiskInput): ImmediateDownR
     assumptions: [
       'Uses exact damage distributions for supported formulas.',
       damageAdjustment.note,
-      'Critical damage is modeled as simple double damage of the supported formula total.',
+      describeCritModel(input.damageFormula, input.traits ?? []),
       `Enemy turn model: ${input.strikes} Strike${input.strikes === 1 ? '' : 's'}.`,
       `MAP model: ${input.mapType}.`
     ],
     notModeled: [
-      'Deadly, fatal, precision, splash, and persistent damage.',
+      'Precision, splash, and persistent damage.',
       'Reactions such as Shield Block or Champion reactions.',
       'Healing before or during the enemy turn.',
       'Permanent death probability.'
@@ -347,18 +352,6 @@ function scaleOutcomes(
     damage: outcome.damage,
     probability: outcome.probability * branchProbability
   }));
-}
-
-export function doubleDistribution(distribution: DamageDistribution): DamageDistribution {
-  return {
-    min: distribution.min * 2,
-    max: distribution.max * 2,
-    mean: distribution.mean * 2,
-    outcomes: distribution.outcomes.map((outcome) => ({
-      damage: outcome.damage * 2,
-      probability: outcome.probability
-    }))
-  };
 }
 
 function probabilityAtLeast(outcomes: readonly DamageOutcome[], threshold: number): number {

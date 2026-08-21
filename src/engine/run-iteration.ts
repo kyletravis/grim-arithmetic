@@ -165,7 +165,8 @@ export function runIteration(
             defenderAc: target.defenses.ac,
             damageFormula: attack.damageFormula,
             damageType: attack.damageType,
-            defenderAdjustments: target.damageAdjustments
+            defenderAdjustments: target.damageAdjustments,
+            traits: attack.traits
           },
           rng
         );
@@ -245,7 +246,10 @@ function decrementSpellSlot(healer: SimulationCombatant, rank: number): Simulati
   };
 }
 
-function markBattleMedicineUsed(healer: SimulationCombatant, targetId: string): SimulationCombatant {
+function markBattleMedicineUsed(
+  healer: SimulationCombatant,
+  targetId: string
+): SimulationCombatant {
   if (!healer.healing) return healer;
   const nextUsed = new Set(healer.healing.battleMedicineUsedTargets);
   nextUsed.add(targetId);

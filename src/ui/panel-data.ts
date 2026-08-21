@@ -123,7 +123,8 @@ export function buildMortalityPanelData<TokenLike>({
     doomed,
     assumeHeroPointAvailable,
     damageType: attack.damageType,
-    targetAdjustments: subject.damageAdjustments
+    targetAdjustments: subject.damageAdjustments,
+    traits: attack.traits
   });
 
   const assumptions = [...attack.assumptions, ...result.assumptions];

@@ -1,13 +1,10 @@
 import type { DamageAdjustments } from '../systems/base-adapter';
 import type { DegreeOfSuccess } from './degree-of-success';
 import { degreeOfSuccess } from './degree-of-success';
+import { criticalDistribution } from './critical-damage';
 import type { DamageDistribution } from './dice';
 import { damageDistribution } from './dice';
-import {
-  applyDamageAdjustment,
-  buildDamageAdjustmentSummary,
-  doubleDistribution
-} from './mortality';
+import { applyDamageAdjustment, buildDamageAdjustmentSummary } from './mortality';
 import type { Rng } from './prng';
 
 /**
@@ -28,6 +25,8 @@ export interface StrikeSampleInput {
   damageFormula: string;
   damageType?: string;
   defenderAdjustments?: DamageAdjustments;
+  /** PF2e trait slugs on the attack (e.g. 'deadly-d10', 'fatal-d12'). */
+  traits?: string[];
 }
 
 /** Outcome of a single seeded Strike sample. */
@@ -51,7 +50,7 @@ export interface StrikeSampleResult {
  *     handled by the shared helper).
  *  3. On success or critical success, sample damage from the exact PMF that
  *     the analytic engine already constructs (damageDistribution +
- *     doubleDistribution + applyDamageAdjustment) using inverse-CDF over
+ *     criticalDistribution + applyDamageAdjustment) using inverse-CDF over
  *     rng.next().
  *  4. Apply defender resistance / weakness / immunity via the same
  *     helper used by the v0.5.0 panel.
@@ -72,7 +71,10 @@ export function sampleStrike(input: StrikeSampleInput, rng: Rng): StrikeSampleRe
     const adjustment = buildDamageAdjustmentSummary(input.damageType, input.defenderAdjustments);
     const distribution =
       degree === 'criticalSuccess'
-        ? applyDamageAdjustment(doubleDistribution(baseDamage), adjustment)
+        ? applyDamageAdjustment(
+            criticalDistribution(input.damageFormula, input.traits ?? []),
+            adjustment
+          )
         : applyDamageAdjustment(baseDamage, adjustment);
     damage = sampleFromDistribution(distribution, rng);
   }

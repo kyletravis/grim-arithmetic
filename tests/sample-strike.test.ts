@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { attackOutcomeProbabilities } from '../src/engine/attack-probability';
 import { damageDistribution } from '../src/engine/dice';
-import {
-  applyDamageAdjustment,
-  buildDamageAdjustmentSummary
-} from '../src/engine/mortality';
+import { applyDamageAdjustment, buildDamageAdjustmentSummary } from '../src/engine/mortality';
 import { createRng } from '../src/engine/prng';
 import { sampleStrike, type StrikeSampleInput } from '../src/engine/sample-strike';
 
@@ -211,5 +208,22 @@ describe('sampleStrike MAP', () => {
       if (b.degree !== 'failure' && b.degree !== 'criticalFailure') hitsB += 1;
     }
     expect(hitsA).toBeGreaterThan(hitsB);
+  });
+});
+
+describe('sampleStrike critical traits', () => {
+  it('samples deadly dice on critical successes', () => {
+    const withDeadly: StrikeSampleInput = { ...baseInput, traits: ['deadly-d10'] };
+    const rng = createRng('deadly-crit');
+    const plainRng = createRng('deadly-crit');
+    let maxWithDeadly = 0;
+    let maxPlain = 0;
+    for (let i = 0; i < 5000; i += 1) {
+      maxWithDeadly = Math.max(maxWithDeadly, sampleStrike(withDeadly, rng).damage);
+      maxPlain = Math.max(maxPlain, sampleStrike(baseInput, plainRng).damage);
+    }
+    // 1d8+4: plain crit tops out at 2*12 = 24; deadly d10 adds up to 10 more.
+    expect(maxPlain).toBe(24);
+    expect(maxWithDeadly).toBeGreaterThan(24);
   });
 });
