@@ -57,8 +57,8 @@ export interface StrikeSampleResult {
  *
  * Identical seeds produce identical outputs.
  *
- * Performance: PMFs are rebuilt per call. The round orchestrator can cache
- * per-(attack × defender) PMFs across rounds if profiling shows it matters.
+ * Performance: damageDistribution() memoizes its PMFs, so the per-call lookups
+ * here (criticalDistribution's included) hit that cache across rounds.
  */
 export function sampleStrike(input: StrikeSampleInput, rng: Rng): StrikeSampleResult {
   const die = rng.nextInt(1, 20);

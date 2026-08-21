@@ -148,6 +148,11 @@ export function runIteration(
               degree: 'success'
             });
             if (applied.becameDowned) everDowned.add(target.id);
+            // A crit-failed Battle Medicine can down its own patient; that is
+            // still the first down of the run for firstDownRound purposes.
+            if (applied.becameDowned && target.side === 'pc' && firstDownRound === null) {
+              firstDownRound = round;
+            }
             finalTarget = applied.combatant;
           }
           combatants.set(target.id, finalTarget);

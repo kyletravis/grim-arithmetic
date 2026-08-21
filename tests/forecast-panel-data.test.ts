@@ -85,6 +85,13 @@ describe('buildForecastPanelData: idle state', () => {
     expect(data.otherAssumptions.find((a) => a.includes('Hero Points'))).toBeDefined();
   });
 
+  it('names the enemy Strike-count setting in the idle-state bullet', () => {
+    const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
+    expect(data.otherAssumptions).toContain(
+      'Enemies make the "Default enemy Strike count" (module setting) of Strikes per turn.'
+    );
+  });
+
   it('surfaces the selected tactics profile description inline (KHT-129)', () => {
     const data = buildForecastPanelData({
       ...baseArgs({ kind: 'idle' }),
@@ -220,6 +227,29 @@ describe('buildForecastPanelData: done state', () => {
     });
     expect(data.result?.aborted).toBe(true);
     expect(data.message).toBe('Forecast aborted.');
+  });
+
+  it("replaces the enemy Strike-count bullet with the run's actual count", () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({ kind: 'done', result: makeResult({ enemyStrikesPerTurn: 3 }) })
+    });
+    const bullets = data.otherAssumptions.filter((a) => a.startsWith('Enemies make'));
+    expect(bullets).toEqual([
+      'Enemies make 3 Strikes per turn (module setting "Default enemy Strike count").'
+    ]);
+    // The remaining baseline bullets survive the replacement.
+    expect(
+      data.otherAssumptions.find((a) => a.includes('PCs Strike the most-dangerous'))
+    ).toBeDefined();
+  });
+
+  it('uses the singular form when enemies make a single Strike per turn', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({ kind: 'done', result: makeResult({ enemyStrikesPerTurn: 1 }) })
+    });
+    expect(data.otherAssumptions).toContain(
+      'Enemies make 1 Strike per turn (module setting "Default enemy Strike count").'
+    );
   });
 
   it('threads setup caveats into the collapsed assumptions block', () => {

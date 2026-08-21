@@ -93,6 +93,7 @@ describe('buildDebugCapture', () => {
               label: 'Longsword',
               totalModifier: 14,
               damage: () => null,
+              ready: true,
               traits: [{ name: 'versatile-p' }],
               item: {
                 id: 'i',
@@ -115,7 +116,8 @@ describe('buildDebugCapture', () => {
         {
           slug: 'longsword',
           totalModifier: 14,
-          damageType: 'function',
+          damageKind: 'function',
+          ready: true,
           item: { system: { damage: { dice: 1, die: 'd8' }, runes: { striking: 1 } } }
         }
       ]

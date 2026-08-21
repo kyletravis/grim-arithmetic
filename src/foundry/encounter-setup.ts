@@ -71,6 +71,11 @@ function materialize<TokenLike extends { name?: string }>(
     }
     const attackAssumptions = new Set(attacks.flatMap((attack) => attack.assumptions));
     for (const assumption of attackAssumptions) caveats.push(`${p.snapshot.name}: ${assumption}`);
+    // everDowned counts the starting state, so a PC already at 0 HP pins
+    // "any PC down" at 100% — say so rather than letting it read as a forecast.
+    if (p.snapshot.hp.current + (p.snapshot.hp.temp ?? 0) <= 0) {
+      caveats.push(`${p.snapshot.name} starts this run at 0 HP, so "any PC down" will read 100%.`);
+    }
     const combatant = snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
     combatant.healing = buildHealingState(p.snapshot, caveats);
     if (debugLogging) {
@@ -168,7 +173,9 @@ function snapshotToSimulationCombatant(
     wounded: snapshot.deathState?.wounded ?? 0,
     doomed: snapshot.deathState?.doomed ?? 0,
     heroPoints: snapshot.deathState?.heroPoints ?? 0,
-    downed: (snapshot.deathState?.dying ?? 0) > 0,
+    // A PC at 0 HP is unconscious whether or not they are still dying (a
+    // passed recovery check stabilizes them but leaves them down).
+    downed: snapshot.hp.current <= 0 || (snapshot.deathState?.dying ?? 0) > 0,
     dead: false,
     initiativeBonus: snapshot.initiativeBonus ?? 0,
     damageAdjustments: snapshot.damageAdjustments,

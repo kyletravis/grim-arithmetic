@@ -39,6 +39,29 @@ describe('live fixtures (drop exportLiveFixture() output into tests/fixtures/liv
     expect(adapter.getAttacksFromToken(fixture.token as Pf2eTokenLike)).toHaveLength(1);
   });
 
+  it("records each PC strike's ready flag", () => {
+    const fixture = buildLiveFixture({
+      id: 't',
+      name: 'Mira',
+      document: { disposition: 1 },
+      actor: {
+        id: 'a',
+        name: 'Mira',
+        type: 'character',
+        system: {
+          actions: [
+            { slug: 'longsword', label: 'Longsword', totalModifier: 14, ready: true },
+            { slug: 'shortbow', label: 'Shortbow', totalModifier: 12, ready: false }
+          ]
+        },
+        items: []
+      }
+    });
+    const actions = (fixture.token.actor as { system: { actions: { ready?: boolean }[] } }).system
+      .actions;
+    expect(actions.map((a) => a.ready)).toEqual([true, false]);
+  });
+
   for (const file of files) {
     it(`extracts ${file}`, () => {
       const fixture = JSON.parse(readFileSync(join(dir, file), 'utf8'));

@@ -1,4 +1,4 @@
-import { EncounterParticipants } from '../foundry/encounter-participants';
+import type { EncounterParticipants } from '../foundry/encounter-participants';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 import { ImmediateDownRiskResult, immediateDownRisk } from './mortality';
 import {

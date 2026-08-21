@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../../src/engine/prng';
-import type { SimulationCombatant } from '../../src/engine/simulation-types';
+import type { HealingState, SimulationCombatant } from '../../src/engine/simulation-types';
 import { pcDefaultTactics } from '../../src/engine/tactics/pc-default';
 import type { TacticsContext } from '../../src/engine/tactics/tactics-types';
 import type { AttackSnapshot } from '../../src/systems/base-adapter';
@@ -176,6 +176,63 @@ describe('pcDefaultTactics: skip-turn cases', () => {
 
     const plan = pcDefaultTactics.chooseTurn(makeContext(pc, [weird, real]), createRng('seed'));
     expect(plan.strikes[0].targetId).toBe('real');
+  });
+});
+
+describe('pcDefaultTactics: emergency heal', () => {
+  function healSpellState(): HealingState {
+    return {
+      medicineDC: 15,
+      hasBattleMedicine: false,
+      battleMedicineUsedTargets: new Set<string>(),
+      healSpellSlotsRemaining: { 1: 1 }
+    };
+  }
+
+  it('treats a stabilized, unconscious ally (0 HP, dying 0) as an emergency heal target', () => {
+    const healer = makePc('healer', [makeAttack()]);
+    healer.healing = healSpellState();
+    const ally = makePc('ally', [makeAttack()]);
+    ally.hp = { current: 0, max: 24, temp: 0 };
+    ally.downed = true;
+    ally.dying = 0;
+    const enemy = makeEnemy('e1', [makeAttack()]);
+
+    const plan = pcDefaultTactics.chooseTurn(
+      { attacker: healer, pcs: [healer, ally], enemies: [enemy], round: 1, strikesPerTurn: 2 },
+      createRng('seed')
+    );
+
+    expect(plan.heal).toBeDefined();
+    expect(plan.heal?.targetId).toBe('ally');
+    expect(plan.heal?.kind).toBe('heal-spell-2action');
+    expect(plan.strikes).toHaveLength(0);
+  });
+
+  it('prefers a dying ally over a stabilized, unconscious one', () => {
+    const healer = makePc('healer', [makeAttack()]);
+    healer.healing = healSpellState();
+    const stable = makePc('a-stable', [makeAttack()]);
+    stable.hp = { current: 0, max: 24, temp: 0 };
+    stable.downed = true;
+    const dying = makePc('z-dying', [makeAttack()]);
+    dying.hp = { current: 0, max: 24, temp: 0 };
+    dying.downed = true;
+    dying.dying = 2;
+    const enemy = makeEnemy('e1', [makeAttack()]);
+
+    const plan = pcDefaultTactics.chooseTurn(
+      {
+        attacker: healer,
+        pcs: [healer, stable, dying],
+        enemies: [enemy],
+        round: 1,
+        strikesPerTurn: 2
+      },
+      createRng('seed')
+    );
+
+    expect(plan.heal?.targetId).toBe('z-dying');
   });
 });
 

@@ -59,6 +59,39 @@ describe('Pf2eAdapter.getAttacksFromToken: PC actions list (primary path)', () =
     ]);
   });
 
+  it('keeps only ready strikes when PF2e flags the held weapon', () => {
+    const token = pcTokenWith({
+      actions: [
+        {
+          slug: 'stowed-bow',
+          label: 'Shortbow',
+          totalModifier: 12,
+          damageFormula: '1d6+2'
+        },
+        {
+          slug: 'longsword',
+          label: 'Longsword',
+          totalModifier: 14,
+          damageFormula: '1d8+5',
+          ready: true
+        }
+      ]
+    });
+
+    expect(adapter.getAttacksFromToken(token).map((a) => a.id)).toEqual(['longsword']);
+  });
+
+  it('keeps every strike when no action carries a ready flag', () => {
+    const token = pcTokenWith({
+      actions: [
+        { slug: 'shortbow', label: 'Shortbow', totalModifier: 12, damageFormula: '1d6+2' },
+        { slug: 'longsword', label: 'Longsword', totalModifier: 14, damageFormula: '1d8+5' }
+      ]
+    });
+
+    expect(adapter.getAttacksFromToken(token).map((a) => a.id)).toEqual(['shortbow', 'longsword']);
+  });
+
   it('extracts every strike for a dual-wielder', () => {
     const token = pcTokenWith({
       actions: [
@@ -324,6 +357,19 @@ describe('Pf2eAdapter.getAttacksFromToken: synthesized from strike item (live PF
       }
     });
     expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8+4');
+  });
+
+  it('thief racket does not apply DEX to a non-finesse weapon', () => {
+    const token = pcTokenWith({
+      actions: [liveStrike({ traits: [] })],
+      abilities: { str: { mod: 1 }, dex: { mod: 4 } },
+      items: {
+        contents: [
+          { id: 'f1', name: 'Thief Racket', type: 'feat', system: { slug: 'thief-racket' } }
+        ]
+      }
+    });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8+1');
   });
 
   it('takes mapType from an agile trait that only lives on the weapon item', () => {

@@ -8,9 +8,10 @@ import type { TacticsProfile, TurnPlanHeal, TurnPlanStrike } from './tactics-typ
  * Hardcoded PC tactics profile for v0.6.0-rc.4.
  *
  * Decision tree (highest priority first):
- *   1. **Emergency heal** — any standing PC ally is dying and this PC has
- *      healing capability. Spend the full turn on a 2-action heal of the
- *      most-injured dying ally. No strikes this round.
+ *   1. **Emergency heal** — any PC ally is unconscious (dying, or stabilized
+ *      at 0 HP) and this PC has healing capability. Spend the full turn on a
+ *      2-action heal of that ally: dying allies first (highest dying value),
+ *      then stabilized-but-unconscious allies. No strikes this round.
  *   2. **Top-up heal** — any ally is below 40% HP (and not dying). This PC
  *      heals with one action and strikes with the other. Target the
  *      lowest-HP non-dying ally.
@@ -39,10 +40,10 @@ export const pcDefaultTactics: TacticsProfile = {
     const standingEnemies = context.enemies.filter((e) => !e.downed && !e.dead);
     const attacker = context.attacker;
 
-    // Step 1: emergency heal — any ally is dying.
-    const dyingAlly = pickPriorityDyingAlly(context.pcs);
-    if (dyingAlly && canHeal(attacker.healing)) {
-      const heal = planHeal(attacker, dyingAlly, 'emergency');
+    // Step 1: emergency heal — any ally is dying or unconscious at 0 HP.
+    const emergencyAlly = pickPriorityEmergencyAlly(context.pcs);
+    if (emergencyAlly && canHeal(attacker.healing)) {
+      const heal = planHeal(attacker, emergencyAlly, 'emergency');
       if (heal) {
         return { strikes: [], heal };
       }
@@ -85,13 +86,17 @@ function canHeal(healing: HealingState | undefined): boolean {
   return hasSlot || healing.hasBattleMedicine;
 }
 
-function pickPriorityDyingAlly(
+function pickPriorityEmergencyAlly(
   pcs: readonly SimulationCombatant[]
 ): SimulationCombatant | undefined {
-  const dying = pcs.filter((c) => c.dying > 0 && !c.dead);
-  if (dying.length === 0) return undefined;
-  // Pick the ally closest to death threshold (highest dying value); ties by id.
-  return [...dying].sort((a, b) => {
+  // A PC who passed a recovery check is stabilized (dying 0) but still
+  // unconscious at 0 HP, and stays out of the fight until healed — so they
+  // are an emergency target too, just a lower-priority one than a dying ally.
+  const candidates = pcs.filter((c) => !c.dead && (c.dying > 0 || c.downed));
+  if (candidates.length === 0) return undefined;
+  // Dying allies first, closest to the death threshold (highest dying value);
+  // stabilized allies (dying 0) sort last. Ties by id.
+  return [...candidates].sort((a, b) => {
     if (b.dying !== a.dying) return b.dying - a.dying;
     return a.id < b.id ? -1 : 1;
   })[0];

@@ -118,6 +118,9 @@ export const TACTICS_PROFILE_DESCRIPTIONS: Record<TacticsProfileId, string> = {
     'Enemy uses the highest-damage attack on the toughest standing PC, all strikes on the same target.'
 };
 
+/** Shared lead-in for the enemy Strike-count bullet; used to swap it per run. */
+const ENEMY_STRIKES_BULLET_PREFIX = 'Enemies make';
+
 export function buildForecastPanelData({
   moduleVersion,
   enabled,
@@ -134,7 +137,8 @@ export function buildForecastPanelData({
   const vitalAssumption =
     'Not modeled: reactions (Shield Block, Champion), spells beyond Heal, persistent damage, attacks of opportunity, movement / reach / line of sight.';
   const otherAssumptions = [
-    'Enemies make the configured Default enemy Strike count of Strikes per turn (module setting).',
+    ENEMY_STRIKES_BULLET_PREFIX +
+      ' the "Default enemy Strike count" (module setting) of Strikes per turn.',
     'PCs Strike the most-dangerous standing enemy (2 strikes per turn by default).',
     'PCs with healing capability substitute Strikes for Heal spells / Battle Medicine when allies are dying or below 40% HP (Battle Medicine follows the Treat Wounds DC table).',
     'Dying PCs roll PF2e recovery checks each turn (DC 10+dying); crit-success / success lower dying, failure / crit-failure raise it.',
@@ -202,7 +206,12 @@ export function buildForecastPanelData({
   // done
   const result = state.result;
   const n = result.enemyStrikesPerTurn;
-  const enemyStrikesBullet = `Enemies make ${n} Strike${n === 1 ? '' : 's'} per turn (module setting "Default enemy Strike count").`;
+  const enemyStrikesBullet = `${ENEMY_STRIKES_BULLET_PREFIX} ${n} Strike${n === 1 ? '' : 's'} per turn (module setting "Default enemy Strike count").`;
+  // Swap the placeholder bullet for the run's actual count by matching on the
+  // shared prefix, so reordering the baseline list can't drop the wrong bullet.
+  const resolvedAssumptions = otherAssumptions.map((bullet) =>
+    bullet.startsWith(ENEMY_STRIKES_BULLET_PREFIX) ? enemyStrikesBullet : bullet
+  );
   return {
     moduleVersion,
     enabled: true,
@@ -213,7 +222,7 @@ export function buildForecastPanelData({
     result: buildForecastResultView(result),
     pessimismWarning: buildPessimismWarning(result),
     vitalAssumption,
-    otherAssumptions: [enemyStrikesBullet, ...otherAssumptions.slice(1), ...result.caveats]
+    otherAssumptions: [...resolvedAssumptions, ...result.caveats]
   };
 }
 

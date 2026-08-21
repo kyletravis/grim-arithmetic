@@ -134,6 +134,7 @@ export function buildLiveFixture(token: DebugTokenLike): LiveFixture {
                   label: a.label,
                   totalModifier: a.totalModifier,
                   damageFormula: a.damageFormula,
+                  ready: a.ready,
                   traits: a.traits,
                   item: (() => {
                     const it = asRecord(a.item);
@@ -197,8 +198,9 @@ function buildPcCapture(
         slug: action.slug,
         label: action.label,
         totalModifier: action.totalModifier,
-        damageType: typeof action.damage,
+        damageKind: typeof action.damage,
         damageFormula: action.damageFormula,
+        ready: action.ready,
         traits: action.traits,
         item: {
           id: item.id,

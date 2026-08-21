@@ -35,7 +35,7 @@ export function getAttacksFromPcActor(actor: Pf2eActorLike): AttackSnapshot[] {
   const actionsRaw = system.actions;
   const actions: unknown[] = Array.isArray(actionsRaw) ? actionsRaw : [];
 
-  const fromActions = actions
+  const fromActions = preferReadyActions(actions)
     .map((entry): AttackSnapshot | null => extractAttackFromPcAction(entry, actor))
     .filter((attack): attack is AttackSnapshot => attack !== null);
 
@@ -47,6 +47,17 @@ export function getAttacksFromPcActor(actor: Pf2eActorLike): AttackSnapshot[] {
     .filter(isWeaponEquipped)
     .map((item): AttackSnapshot | null => extractAttackFromWeaponItem(item))
     .filter((attack): attack is AttackSnapshot => attack !== null);
+}
+
+/**
+ * PF2e flags the strikes of currently-held weapons `ready`. When any strike
+ * carries the flag, the unflagged ones belong to stowed weapons the PC cannot
+ * Strike with this turn, so drop them. Data without the flag keeps every
+ * strike (older PF2e versions and hand-built fixtures).
+ */
+function preferReadyActions(actions: readonly unknown[]): unknown[] {
+  const ready = actions.filter((entry) => isRecord(entry) && entry.ready === true);
+  return ready.length > 0 ? ready : [...actions];
 }
 
 function extractAttackFromPcAction(action: unknown, actor: Pf2eActorLike): AttackSnapshot | null {
@@ -145,8 +156,8 @@ function parseDie(value: unknown): number | undefined {
 
 /**
  * STR for melee/thrown damage (finesse only affects the attack roll, not damage);
- * DEX when the actor has the thief racket and DEX is higher; ranged: 0 unless
- * thrown (STR) or propulsive (half STR if positive).
+ * DEX when the actor has the thief racket, the weapon is finesse, and DEX is
+ * higher; ranged: 0 unless thrown (STR) or propulsive (half STR if positive).
  */
 function abilityModifierFor(
   actor: Pf2eActorLike,
@@ -163,7 +174,7 @@ function abilityModifierFor(
     if (traits.includes('propulsive')) return str > 0 ? Math.floor(str / 2) : str;
     return 0;
   }
-  if (dex > str && hasThiefRacket(actor)) return dex;
+  if (traits.includes('finesse') && dex > str && hasThiefRacket(actor)) return dex;
   return str;
 }
 

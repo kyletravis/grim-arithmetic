@@ -85,6 +85,72 @@ describe('buildEncounterSetupFromSource', () => {
     expect(setup.caveats.filter((c) => c === 'Mira: X')).toEqual(['Mira: X']);
   });
 
+  it('marks a PC at 0 HP as downed even when not dying', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc', {
+              name: 'Mira',
+              hp: { current: 0, max: 24, temp: 0 },
+              deathState: { dying: 0, wounded: 1, doomed: 0, heroPoints: 1 }
+            }),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.pcs[0].downed).toBe(true);
+  });
+
+  it('caveats a PC that starts the run at 0 HP', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc', {
+              name: 'Mira',
+              hp: { current: 0, max: 24, temp: 0 }
+            }),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.caveats).toContain(
+      'Mira starts this run at 0 HP, so "any PC down" will read 100%.'
+    );
+  });
+
+  it('does not add the 0-HP caveat for a PC kept up by temporary HP', () => {
+    const source = {
+      combatants: [
+        {
+          token: {
+            id: 'mira',
+            name: 'Mira',
+            snapshot: makeSnapshot('mira', 'pc', {
+              name: 'Mira',
+              hp: { current: 0, max: 24, temp: 5 }
+            }),
+            attacks: [makeAttack()]
+          }
+        }
+      ]
+    };
+
+    const setup = buildEncounterSetupFromSource(source, mockAdapter);
+    expect(setup.caveats.some((c) => c.includes('starts this run at 0 HP'))).toBe(false);
+  });
+
   it('partitions PCs and enemies by disposition', () => {
     const source = {
       combatants: [
