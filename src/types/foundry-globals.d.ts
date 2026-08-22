@@ -60,5 +60,4 @@ declare const ui: {
 };
 
 declare const Handlebars:
-  | { registerHelper(name: string, fn: (...args: unknown[]) => unknown): void }
-  | undefined;
+  { registerHelper(name: string, fn: (...args: unknown[]) => unknown): void } | undefined;

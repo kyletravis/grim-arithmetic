@@ -19,8 +19,7 @@ import { throttleProgress } from './simulation-guardrails';
 import type { EncounterSetup, SimulationConfig, SimulationResult } from './simulation-types';
 
 export type WorkerInbound =
-  | { type: 'run'; setup: EncounterSetup; config: SimulationConfig }
-  | { type: 'abort' };
+  { type: 'run'; setup: EncounterSetup; config: SimulationConfig } | { type: 'abort' };
 
 export type WorkerOutbound =
   | { type: 'progress'; completed: number; total: number }
