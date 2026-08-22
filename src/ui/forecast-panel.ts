@@ -1,9 +1,12 @@
-import { runSimulationInWorker, type RunSimulationHandle } from '../engine/run-simulation-in-worker';
+import {
+  runSimulationInWorker,
+  type RunSimulationHandle
+} from '../engine/run-simulation-in-worker';
 import type { SimulationConfig, SimulationResult } from '../engine/simulation-types';
 import { DEFAULT_MAX_ROUNDS } from '../engine/simulation-types';
 import { buildEncounterSetup } from '../foundry/encounter-setup';
-import { isMonteCarloEnabled } from '../settings';
-import { Pf2eAdapter } from '../systems/pf2e-adapter';
+import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
+import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
   buildForecastPanelData,
@@ -11,17 +14,17 @@ import {
   type ForecastPanelData,
   type ForecastRunState,
   type SimulationControls
-} from './panel-data';
+} from './forecast-panel-data';
 
 interface ApplicationV2Like {
   render(force?: boolean | Record<string, unknown>): Promise<unknown>;
   element: HTMLElement;
 }
 
-const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
-const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
-  options?: unknown
-) => ApplicationV2Like;
+const ApplicationV2Api = foundry.applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(
+  ApplicationV2Api.ApplicationV2
+) as unknown as new (options?: unknown) => ApplicationV2Like;
 
 const FORECAST_ID = `${MODULE_ID}-forecast`;
 
@@ -85,6 +88,7 @@ export class ForecastPanel extends Base {
     if (!root) return;
     root.querySelectorAll<HTMLSelectElement>('[data-grim-forecast-control]').forEach((el) => {
       el.addEventListener('change', () => {
+        if (this.runState.kind === 'running') return;
         const key = el.dataset.grimForecastControl;
         if (key === 'tacticsProfile') {
           const value = el.value;
@@ -105,10 +109,21 @@ export class ForecastPanel extends Base {
 
   async _preClose(): Promise<void> {
     this.currentHandle?.cancel();
+    this.currentHandle = undefined;
+    this.runState = { kind: 'idle' };
   }
 
   private startRun(): void {
-    const adapter = new Pf2eAdapter();
+    this.currentHandle?.cancel();
+    this.currentHandle = undefined;
+
+    const adapter = getSystemAdapter();
+    if (!adapter) {
+      this.runState = { kind: 'error', message: 'Unsupported game system.' };
+      this.render();
+      return;
+    }
+
     let setup;
     try {
       setup = buildEncounterSetup(adapter);
@@ -134,29 +149,31 @@ export class ForecastPanel extends Base {
     const config: SimulationConfig = {
       iterations: 5000,
       tacticsProfile: this.controls.tacticsProfile,
-      maxRounds: DEFAULT_MAX_ROUNDS
+      maxRounds: DEFAULT_MAX_ROUNDS,
+      enemyStrikesPerTurn: getDefaultStrikes()
     };
 
     this.runState = { kind: 'running', completed: 0, total: 5000 };
     this.render();
 
-    const handle = runSimulationInWorker(setup, config, {
+    const handle: RunSimulationHandle = runSimulationInWorker(setup, config, {
       onProgress: (completed, total) => {
-        if (this.runState.kind === 'running') {
-          this.runState = { kind: 'running', completed, total };
-          this.render();
-        }
+        if (this.currentHandle !== handle || this.runState.kind !== 'running') return;
+        this.runState = { kind: 'running', completed, total };
+        this.updateProgressText(completed, total);
       }
     });
     this.currentHandle = handle;
 
     handle.promise.then(
       (result: SimulationResult) => {
+        if (this.currentHandle !== handle) return;
         this.runState = { kind: 'done', result };
         this.currentHandle = undefined;
         this.render();
       },
       (err) => {
+        if (this.currentHandle !== handle) return;
         this.runState = {
           kind: 'error',
           message: err instanceof Error ? err.message : String(err)
@@ -165,5 +182,14 @@ export class ForecastPanel extends Base {
         this.render();
       }
     );
+  }
+
+  private updateProgressText(completed: number, total: number): void {
+    const node = this.element?.querySelector<HTMLElement>('[data-grim-progress]');
+    if (!node) return;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    node.textContent =
+      game.i18n?.format('GrimArithmetic.Forecast.Progress', { completed, total, percent }) ??
+      `${completed}/${total} (${percent}%)`;
   }
 }

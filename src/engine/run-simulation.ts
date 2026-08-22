@@ -1,17 +1,18 @@
 import { createRng, deriveChildSeed } from './prng';
 import { runIteration } from './run-iteration';
 import { validateSimulationConfig } from './simulation-guardrails';
+import { DEFAULT_STRIKES_PER_TURN } from './tactics/tactics-types';
 import type {
   EncounterSetup,
   IterationResult,
   MeanConfidenceInterval,
   PerEnemyAggregate,
   PerPcAggregate,
-  ProportionConfidenceInterval,
   SimulationConfig,
   SimulationConfidenceIntervals,
   SimulationResult
 } from './simulation-types';
+import { meanCI, median, proportionCI } from './statistics';
 
 export interface RunSimulationOptions {
   /** Fires with (completed, total) after each iteration completes. */
@@ -74,6 +75,7 @@ function aggregate(
   aborted: boolean
 ): SimulationResult {
   const completedCount = results.length;
+  const enemyStrikesPerTurn = config.enemyStrikesPerTurn ?? DEFAULT_STRIKES_PER_TURN;
   if (completedCount === 0) {
     return {
       iterationsRequested: config.iterations,
@@ -104,7 +106,14 @@ function aggregate(
         meanRecoveryChecksPerIteration: 0,
         heroPointSurvivalRate: 0
       },
-      caveats: [...setup.caveats, 'No iterations completed.']
+      confidenceIntervals: {
+        anyPcDown: { lower: 0, upper: 0 },
+        tpk: { lower: 0, upper: 0 },
+        meanFirstDownRound: null
+      },
+      roundCapRate: 0,
+      caveats: [...setup.caveats, 'No iterations completed.'],
+      enemyStrikesPerTurn
     };
   }
 
@@ -124,11 +133,14 @@ function aggregate(
     for (const combatant of result.perCombatant) {
       if (combatant.side !== 'pc') continue;
       pcCount += 1;
-      const isDown = combatant.downed || combatant.dead;
-      if (isDown) {
+      // "Down" for risk reporting means "hit 0 HP at any point", matching the
+      // UI copy ("knocked out at least once"); a healed PC still counts.
+      if (combatant.everDowned || combatant.downed || combatant.dead) {
         anyDown = true;
         downByPc.set(combatant.id, (downByPc.get(combatant.id) ?? 0) + 1);
-      } else {
+      }
+      // TPK stays an end-state concept: everyone still down when it ended.
+      if (!combatant.downed && !combatant.dead) {
         allDown = false;
       }
       if (combatant.dead) {
@@ -213,6 +225,14 @@ function aggregate(
       ? firstDownRounds.reduce((a, b) => a + b, 0) / firstDownRounds.length
       : null;
 
+  const roundCapRate = results.filter((r) => r.hitRoundCap).length / completedCount;
+  const caveats = [...setup.caveats];
+  if (roundCapRate > 0) {
+    caveats.push(
+      `${Math.round(roundCapRate * 100)}% of runs reached the ${config.maxRounds}-round cap and were cut off; risk may be understated for long fights.`
+    );
+  }
+
   const confidenceIntervals = buildConfidenceIntervals(
     anyDownCount,
     completedCount,
@@ -238,17 +258,11 @@ function aggregate(
       heroPointSurvivalRate: hpSurvivalIterations / completedCount
     },
     confidenceIntervals,
-    caveats: [...setup.caveats]
+    roundCapRate,
+    caveats,
+    enemyStrikesPerTurn
   };
 }
-
-function median(values: number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
-}
-
-const Z95 = 1.959963984540054;
 
 function buildConfidenceIntervals(
   anyPcDownCount: number,
@@ -265,32 +279,4 @@ function buildConfidenceIntervals(
   }
 
   return { anyPcDown, tpk, meanFirstDownRound: meanFdr };
-}
-
-function proportionCI(successes: number, total: number): ProportionConfidenceInterval {
-  if (total === 0) return { lower: 0, upper: 0 };
-  const p = successes / total;
-  const se = Math.sqrt(p * (1 - p) / total);
-  const margin = Z95 * se;
-  return {
-    lower: clamp01(p - margin),
-    upper: clamp01(p + margin)
-  };
-}
-
-function meanCI(values: number[]): MeanConfidenceInterval {
-  const n = values.length;
-  if (n === 0) return { lower: 0, upper: 0 };
-  const mean = values.reduce((a, b) => a + b, 0) / n;
-  const variance = values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / n;
-  const se = Math.sqrt(variance / n);
-  const margin = Z95 * se;
-  return {
-    lower: mean - margin,
-    upper: mean + margin
-  };
-}
-
-function clamp01(v: number): number {
-  return Math.max(0, Math.min(1, v));
 }

@@ -5,7 +5,7 @@
 [![Foundry Verified](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkyletravis%2Fgrim-arithmetic%2Freleases%2Flatest%2Fdownload%2Fmodule.json&query=%24.compatibility.verified&style=for-the-badge&label=FOUNDRY%20VERIFIED&prefix=v&colorB=orange)](https://foundryvtt.com/packages/grim-arithmetic)
 [![License: MIT](https://img.shields.io/github/license/kyletravis/grim-arithmetic?style=for-the-badge&label=LICENSE&color=blueviolet)](https://github.com/kyletravis/grim-arithmetic/blob/main/LICENSE)
 
-*Foundry knows how hard the encounter is. Grim Arithmetic tells you who might not walk away.*
+_Foundry knows how hard the encounter is. Grim Arithmetic tells you who might not walk away._
 
 A GM-only Foundry VTT module for **Pathfinder 2e** that surfaces real, immediate down-risk for every PC vs every enemy in the current scene — using exact dice distributions, not vibes.
 
@@ -30,13 +30,14 @@ A GM-only Foundry VTT module for **Pathfinder 2e** that surfaces real, immediate
 
 - **Encounter Danger Board** — a sortable table of the most endangered PCs and the most dangerous enemies, with per-pair down chance and a one-click drilldown.
 - **Pair Detail panel** — exact dice-distribution math for a chosen PC vs enemy Strike: damage range, average, swinginess, down chance, dying severity, doomed-adjusted death threshold, and Hero Point notes.
+- **Deadly / fatal** crit traits modeled — extra dice after doubling for deadly, a swapped-and-added die for fatal.
 - **PF2e-aware extraction** — pulls Strikes, AC, HP, wounded, and doomed straight from the actor.
 - **Honest about scope** — explicitly flags what is and isn't modeled (no permanent-death probability, no reactions, no persistent damage — yet).
 
 ## Install
 
 **Option 1 — Foundry package directory (easiest):**
-Search for **Grim Arithmetic** in Foundry's **Add-on Modules → Install Module** browser, or visit the [listing on foundryvtt.com](https://foundryvtt.com/packages/grim-arithmetic) and click *Install*.
+Search for **Grim Arithmetic** in Foundry's **Add-on Modules → Install Module** browser, or visit the [listing on foundryvtt.com](https://foundryvtt.com/packages/grim-arithmetic) and click _Install_.
 
 **Option 2 — Manifest URL:**
 In Foundry, go to **Add-on Modules → Install Module → Manifest URL** and paste:
@@ -56,16 +57,17 @@ After installing, enable **Grim Arithmetic** inside your PF2e world via **Game S
 3. The **Encounter Danger Board** opens, ranking the riskiest PC/enemy pairings in the scene.
 4. Click **Detail** on any row to open the **Pair Detail** panel for that matchup.
 5. In Pair Detail, you can switch the enemy Strike, change MAP, toggle Hero Point assumptions, and pick which wounded value drives the math.
+6. Settings → Default enemy Strike count (world, GM-only) drives all three windows.
 
 The board and detail panel are GM-only and never broadcast to players.
 
 ## Compatibility
 
-| | |
-|---|---|
-| Foundry VTT | Built for **v14** (verified on v14.364); **v13** supported for backwards compatibility |
-| System | Pathfinder 2e (`pf2e`) |
-| Current version | see [latest release](https://github.com/kyletravis/grim-arithmetic/releases/latest) |
+|                 |                                                                                        |
+| --------------- | -------------------------------------------------------------------------------------- |
+| Foundry VTT     | Built for **v14** (verified on v14.364); **v13** supported for backwards compatibility |
+| System          | Pathfinder 2e (`pf2e`)                                                                 |
+| Current version | see [latest release](https://github.com/kyletravis/grim-arithmetic/releases/latest)    |
 
 Starfinder 2e support is on the roadmap.
 

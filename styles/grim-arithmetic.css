@@ -191,7 +191,7 @@
 }
 
 .grim-arithmetic-panel__danger-row-rank::before {
-  content: counter(grim-rank) ".";
+  content: counter(grim-rank) '.';
 }
 
 .grim-arithmetic-panel__danger-row-label {

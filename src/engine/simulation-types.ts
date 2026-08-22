@@ -21,14 +21,11 @@ export const MAX_ITERATIONS: IterationCount = 10000;
 /**
  * Default round cap if the encounter never terminates by other means.
  *
- * Set to 5 because PCs take no actions in the v0.6.0 baseline. Real PF2e
- * encounters typically resolve in 4–6 rounds because the party ends them;
- * letting the no-action model run for 10 rounds piles damage onto PCs who
- * would never have stood still that long in real play, dramatically
- * overstating risk. Five rounds is the closest match to "how bad could
- * this realistically get before the party would have ended the fight."
+ * PCs act (v0.6.0-rc.3+), so most fights end by round 3–5 on their own; the
+ * cap only stops true stalemates. Iterations that hit it are counted and
+ * surfaced as a caveat so a truncated fight never passes silently.
  */
-export const DEFAULT_MAX_ROUNDS = 5;
+export const DEFAULT_MAX_ROUNDS = 10;
 
 /**
  * Per-combatant runtime state inside a simulation iteration.
@@ -36,12 +33,6 @@ export const DEFAULT_MAX_ROUNDS = 5;
  * Distinct from CombatantSnapshot (the system adapter's read-only extraction)
  * because simulation state mutates round-to-round: HP drops, dying ticks up,
  * downed/dead flags flip. SimulationCombatant carries the engine's working state.
- *
- * Fields explicitly NOT modeled in v0.6.0 (deferred):
- *   - persistent damage values
- *   - recovery check state machine
- *   - hero point spend tracking
- *   - per-PC action plans
  */
 /**
  * Healing runtime state for a PC (v0.6.0-rc.4 Phase I-A).
@@ -56,7 +47,6 @@ export interface HealingState {
   hasBattleMedicine: boolean;
   battleMedicineUsedTargets: Set<string>;
   healSpellSlotsRemaining: Record<number, number>;
-  healCantripLevel: number | null;
 }
 
 export interface SimulationCombatant {
@@ -137,6 +127,11 @@ export interface SimulationConfig {
   wallClockBudgetMs?: number;
   /** Whether to capture per-strike events in IterationResult (memory cost). */
   captureEvents?: boolean;
+  /**
+   * Strikes each enemy makes per turn (defaultStrikes world setting).
+   * Defaults to DEFAULT_STRIKES_PER_TURN when omitted.
+   */
+  enemyStrikesPerTurn?: 1 | 2 | 3;
 }
 
 /**
@@ -167,6 +162,8 @@ export interface PerCombatantOutcome {
   doomed: number;
   downed: boolean;
   dead: boolean;
+  /** True if the combatant was at 0 HP at any point this iteration, even if later healed. */
+  everDowned: boolean;
   /** Total damage taken across all rounds in this iteration. */
   damageTaken: number;
 }
@@ -189,6 +186,8 @@ export interface IterationResult {
   damageByPair: Record<string, number>;
   /** Optional event log when SimulationConfig.captureEvents is true. */
   events?: RoundEvent[];
+  /** True when the iteration ran out of rounds instead of resolving. */
+  hitRoundCap: boolean;
   /** Per-iteration safety-net counters (Phase I-A). */
   healsFired: number;
   recoveryChecksFired: number;
@@ -249,8 +248,12 @@ export interface SimulationResult {
   safetyNet: SafetyNetStats;
   /** 95% confidence intervals for headline metrics. */
   confidenceIntervals: SimulationConfidenceIntervals;
+  /** Fraction of completed iterations that were cut off by the round cap. */
+  roundCapRate: number;
   /** Caveats from setup builder plus engine-level notes. */
   caveats: string[];
+  /** Strikes each enemy made per turn in this run (config.enemyStrikesPerTurn or the default). */
+  enemyStrikesPerTurn: number;
 }
 
 /** 95% confidence interval for a proportion (e.g., down probability). */

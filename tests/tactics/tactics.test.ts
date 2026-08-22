@@ -18,10 +18,7 @@ function makeAttack(overrides: Partial<AttackSnapshot> = {}): AttackSnapshot {
   };
 }
 
-function makePc(
-  id: string,
-  overrides: Partial<SimulationCombatant> = {}
-): SimulationCombatant {
+function makePc(id: string, overrides: Partial<SimulationCombatant> = {}): SimulationCombatant {
   return {
     id,
     name: id,
@@ -32,6 +29,7 @@ function makePc(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 0,
@@ -56,6 +54,7 @@ function makeEnemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 0,
@@ -65,11 +64,8 @@ function makeEnemy(
   };
 }
 
-function makeContext(
-  attacker: SimulationCombatant,
-  pcs: SimulationCombatant[]
-): TacticsContext {
-  return { attacker, pcs, enemies: [attacker], round: 1 };
+function makeContext(attacker: SimulationCombatant, pcs: SimulationCombatant[]): TacticsContext {
+  return { attacker, pcs, enemies: [attacker], round: 1, strikesPerTurn: 2 };
 }
 
 describe('TACTICS_PROFILES registry', () => {
@@ -86,7 +82,10 @@ describe('TACTICS_PROFILES registry', () => {
 
 describe('random-legal tactics', () => {
   const profile = TACTICS_PROFILES['random-legal'];
-  const enemy = makeEnemy('boss', [makeAttack({ id: 'claw' }), makeAttack({ id: 'bite', damageFormula: '1d10+4' })]);
+  const enemy = makeEnemy('boss', [
+    makeAttack({ id: 'claw' }),
+    makeAttack({ id: 'bite', damageFormula: '1d10+4' })
+  ]);
   const pcs = [makePc('mira'), makePc('seam'), makePc('jor')];
 
   it('produces DEFAULT_STRIKES_PER_TURN strikes (2) when targets exist', () => {
@@ -115,7 +114,9 @@ describe('random-legal tactics', () => {
   });
 
   it('returns no strikes when all PCs are downed', () => {
-    const downedAll = pcs.map((pc) => makePc(pc.id, { downed: true, hp: { current: 0, max: 20, temp: 0 } }));
+    const downedAll = pcs.map((pc) =>
+      makePc(pc.id, { downed: true, hp: { current: 0, max: 20, temp: 0 } })
+    );
     const plan = profile.chooseTurn(makeContext(enemy, downedAll), createRng('seed'));
     expect(plan.strikes).toHaveLength(0);
   });
@@ -167,6 +168,14 @@ describe('spread-damage tactics', () => {
 describe('focus-fire tactics', () => {
   const profile = TACTICS_PROFILES['focus-fire'];
   const enemy = makeEnemy('boss', [makeAttack()]);
+
+  it('produces strikesPerTurn strikes with sequential mapIndex (A1)', () => {
+    const pcs = [makePc('mira'), makePc('seam')];
+    const context = { ...makeContext(enemy, pcs), strikesPerTurn: 3 };
+    const plan = profile.chooseTurn(context, createRng('seed'));
+    expect(plan.strikes).toHaveLength(3);
+    expect(plan.strikes.map((s) => s.mapIndex)).toEqual([0, 1, 2]);
+  });
 
   it('targets the lowest-HP standing PC for every strike', () => {
     const pcs = [
@@ -259,7 +268,9 @@ describe('boss-cinematic tactics', () => {
   });
 
   it('falls back to the only available attack when the highest-damage pick is unparseable', () => {
-    const onlyWeird = makeEnemy('weird', [makeAttack({ id: 'unparseable', damageFormula: 'persistent fire' })]);
+    const onlyWeird = makeEnemy('weird', [
+      makeAttack({ id: 'unparseable', damageFormula: 'persistent fire' })
+    ]);
     const plan = profile.chooseTurn(makeContext(onlyWeird, [makePc('mira')]), createRng('seed'));
     expect(plan.strikes).toHaveLength(2);
     expect(plan.strikes[0].attackId).toBe('unparseable');

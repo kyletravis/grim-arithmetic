@@ -30,7 +30,11 @@ function makeHostileSnapshot(id: string, name: string): CombatantSnapshot {
   };
 }
 
-function makeAttack(id: string, name: string, overrides: Partial<AttackSnapshot> = {}): AttackSnapshot {
+function makeAttack(
+  id: string,
+  name: string,
+  overrides: Partial<AttackSnapshot> = {}
+): AttackSnapshot {
   return {
     id,
     name,
@@ -65,9 +69,7 @@ function makeParticipants(): EncounterParticipants<FakeToken> {
   };
 }
 
-function makeAdapter(
-  attacksByEnemyId: Record<string, AttackSnapshot[]>
-): SystemAdapter<FakeToken> {
+function makeAdapter(attacksByEnemyId: Record<string, AttackSnapshot[]>): SystemAdapter<FakeToken> {
   return {
     id: 'pf2e',
     label: 'Pathfinder Second Edition',
@@ -190,5 +192,35 @@ describe('computeEncounterRiskMatrix', () => {
     expect(result.skipped).toBe(true);
     expect(result.pairs).toEqual([]);
     expect(result.caveats.some((c) => c.toLowerCase().includes('too large'))).toBe(true);
+  });
+
+  it('excludes PCs already at 0 HP with a caveat instead of reporting 100%', () => {
+    const downedPcId = 'pc-1';
+    const adapter = makeAdapter({
+      'npc-1': [makeAttack('claw', 'Claw')]
+    });
+
+    const participants: EncounterParticipants<FakeToken> = {
+      pcs: [
+        {
+          token: pcToken1,
+          snapshot: { ...makePcSnapshot(downedPcId, 'Mira'), hp: { current: 0, temp: 0, max: 30 } }
+        },
+        { token: pcToken2, snapshot: makePcSnapshot('pc-2', 'Seam') }
+      ],
+      hostiles: [{ token: enemyToken1, snapshot: makeHostileSnapshot('npc-1', 'Troll') }],
+      unsupported: [],
+      caveats: []
+    };
+
+    const matrix = computeEncounterRiskMatrix(participants, {
+      adapter,
+      controls: DEFAULT_PANEL_CONTROLS
+    });
+
+    expect(matrix.pairs.find((p) => p.pcId === downedPcId)).toBeUndefined();
+    expect(matrix.caveats).toContain(
+      'Mira is already at 0 HP and was excluded from the danger board.'
+    );
   });
 });

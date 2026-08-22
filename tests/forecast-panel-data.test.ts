@@ -6,7 +6,7 @@ import {
   TACTICS_PROFILE_DESCRIPTIONS,
   type ForecastRunState,
   type SimulationControls
-} from '../src/ui/panel-data';
+} from '../src/ui/forecast-panel-data';
 import type { SimulationResult } from '../src/engine/simulation-types';
 
 function makeControls(overrides: Partial<SimulationControls> = {}): SimulationControls {
@@ -75,10 +75,21 @@ describe('buildForecastPanelData: idle state', () => {
     const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
     // The "not modeled" caveat is surfaced inline; the rest collapse (KHT-129).
     expect(data.vitalAssumption).toContain('Not modeled:');
-    expect(data.otherAssumptions.find((a) => a.includes('PCs Strike the most-dangerous'))).toBeDefined();
-    expect(data.otherAssumptions.find((a) => a.includes('Heal spells / Battle Medicine'))).toBeDefined();
+    expect(
+      data.otherAssumptions.find((a) => a.includes('PCs Strike the most-dangerous'))
+    ).toBeDefined();
+    expect(
+      data.otherAssumptions.find((a) => a.includes('Heal spells / Battle Medicine'))
+    ).toBeDefined();
     expect(data.otherAssumptions.find((a) => a.includes('recovery checks'))).toBeDefined();
     expect(data.otherAssumptions.find((a) => a.includes('Hero Points'))).toBeDefined();
+  });
+
+  it('names the enemy Strike-count setting in the idle-state bullet', () => {
+    const data = buildForecastPanelData(baseArgs({ kind: 'idle' }));
+    expect(data.otherAssumptions).toContain(
+      'Enemies make the "Default enemy Strike count" (module setting) of Strikes per turn.'
+    );
   });
 
   it('surfaces the selected tactics profile description inline (KHT-129)', () => {
@@ -162,7 +173,9 @@ function makeResult(overrides: Partial<SimulationResult> = {}): SimulationResult
       tpk: { lower: 0.1, upper: 0.14 },
       meanFirstDownRound: { lower: 2.0, upper: 2.2 }
     },
+    roundCapRate: 0,
     caveats: [],
+    enemyStrikesPerTurn: 2,
     ...overrides
   };
 }
@@ -216,6 +229,29 @@ describe('buildForecastPanelData: done state', () => {
     expect(data.message).toBe('Forecast aborted.');
   });
 
+  it("replaces the enemy Strike-count bullet with the run's actual count", () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({ kind: 'done', result: makeResult({ enemyStrikesPerTurn: 3 }) })
+    });
+    const bullets = data.otherAssumptions.filter((a) => a.startsWith('Enemies make'));
+    expect(bullets).toEqual([
+      'Enemies make 3 Strikes per turn (module setting "Default enemy Strike count").'
+    ]);
+    // The remaining baseline bullets survive the replacement.
+    expect(
+      data.otherAssumptions.find((a) => a.includes('PCs Strike the most-dangerous'))
+    ).toBeDefined();
+  });
+
+  it('uses the singular form when enemies make a single Strike per turn', () => {
+    const data = buildForecastPanelData({
+      ...baseArgs({ kind: 'done', result: makeResult({ enemyStrikesPerTurn: 1 }) })
+    });
+    expect(data.otherAssumptions).toContain(
+      'Enemies make 1 Strike per turn (module setting "Default enemy Strike count").'
+    );
+  });
+
   it('threads setup caveats into the collapsed assumptions block', () => {
     const data = buildForecastPanelData({
       ...baseArgs({
@@ -223,25 +259,62 @@ describe('buildForecastPanelData: done state', () => {
         result: makeResult({ caveats: ['unsupported actor X skipped'] })
       })
     });
-    expect(data.otherAssumptions.some((a) => a.includes('unsupported actor X skipped'))).toBe(true);
+    expect(data.otherAssumptions).toContain('unsupported actor X skipped');
   });
 
-  it('shows a pessimism banner when any-PC-down >= 80%', () => {
+  it('shows a pessimism banner when TPK risk reaches the Severe band', () => {
     const data = buildForecastPanelData({
       ...baseArgs({
         kind: 'done',
-        result: makeResult({ anyPcDownProbability: 0.99 })
+        result: makeResult({ tpkProbability: 0.4 })
       })
     });
     expect(data.pessimismWarning).toBeDefined();
-    expect(data.pessimismWarning).toMatch(/high-risk|healing|Hero Points|structural lethality/i);
+    expect(data.pessimismWarning).toMatch(/dead PC or a TPK|structural lethality/i);
   });
 
-  it('omits the pessimism banner when any-PC-down is below the threshold', () => {
+  it('shows a pessimism banner when a single PC death risk reaches the Severe band', () => {
     const data = buildForecastPanelData({
       ...baseArgs({
         kind: 'done',
-        result: makeResult({ anyPcDownProbability: 0.4 })
+        result: makeResult({
+          tpkProbability: 0.02,
+          perPc: [
+            {
+              id: 'mira',
+              name: 'Mira',
+              downProbability: 0.9,
+              deathProbability: 0.4,
+              meanEndingHp: 3,
+              topContributingEnemyId: 'troll'
+            }
+          ]
+        })
+      })
+    });
+    expect(data.pessimismWarning).toBeDefined();
+  });
+
+  it('omits the pessimism banner when PCs are knocked out a lot but rarely die', () => {
+    // everDowned semantics: a party that wins ~95% of the time still reports a
+    // high any-PC-down. That is not a "high-risk encounter".
+    const data = buildForecastPanelData({
+      ...baseArgs({
+        kind: 'done',
+        result: makeResult({
+          anyPcDownProbability: 0.95,
+          tpkProbability: 0.05,
+          perPc: [
+            {
+              id: 'mira',
+              name: 'Mira',
+              downProbability: 0.95,
+              deathProbability: 0.02,
+              meanEndingHp: 9,
+              topContributingEnemyId: 'troll'
+            }
+          ]
+        })
       })
     });
     expect(data.pessimismWarning).toBeUndefined();

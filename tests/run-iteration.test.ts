@@ -20,6 +20,7 @@ function makePc(id: string, overrides: Partial<SimulationCombatant> = {}): Simul
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 6,
@@ -44,6 +45,7 @@ function makeEnemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 4,
@@ -170,14 +172,25 @@ describe('runIteration: side-aware tactics (PCs act, v0.6.0-rc.3)', () => {
         makePc('mira', {
           hp: { current: 24, max: 24, temp: 0 },
           attacks: [
-            { id: 'sword', name: 'Sword', attackBonus: 14, damageFormula: '2d8+6',
-              damageType: 'slashing', traits: [], mapType: 'normal', assumptions: [] }
+            {
+              id: 'sword',
+              name: 'Sword',
+              attackBonus: 14,
+              damageFormula: '2d8+6',
+              damageType: 'slashing',
+              traits: [],
+              mapType: 'normal',
+              assumptions: []
+            }
           ]
         })
       ],
-      enemies: [makeEnemy('brittle', [makeAttack({ attackBonus: 0, damageFormula: '1d4' })], {
-        hp: { current: 6, max: 6, temp: 0 }, defenses: { ac: 14 }
-      })],
+      enemies: [
+        makeEnemy('brittle', [makeAttack({ attackBonus: 0, damageFormula: '1d4' })], {
+          hp: { current: 6, max: 6, temp: 0 },
+          defenses: { ac: 14 }
+        })
+      ],
       caveats: []
     };
     const config = makeConfig({ maxRounds: 5, seed: 'pc-acts' });
@@ -196,7 +209,12 @@ describe('runIteration: side-aware tactics (PCs act, v0.6.0-rc.3)', () => {
       enemies: [makeEnemy('boss', [makeAttack({ attackBonus: 15, damageFormula: '5d10+10' })])],
       caveats: []
     };
-    const result = runIteration(setup, makeConfig({ maxRounds: 5, seed: 'passive' }), createRng('passive'), 0);
+    const result = runIteration(
+      setup,
+      makeConfig({ maxRounds: 5, seed: 'passive' }),
+      createRng('passive'),
+      0
+    );
     // With no PC attacks, behavior collapses to the rc.2 baseline: enemy grinds PC.
     expect(result.tpk).toBe(true);
   });
@@ -232,5 +250,98 @@ describe('runIteration metrics', () => {
     const config = makeConfig();
     const result = runIteration(setup, config, createRng('index'), 42);
     expect(result.iterationIndex).toBe(42);
+  });
+});
+
+describe('runIteration: enemyStrikesPerTurn (A1)', () => {
+  it('enemies make enemyStrikesPerTurn strikes per turn when configured', () => {
+    const setup = makeSetup({
+      pcs: [makePc('mira', { defenses: { ac: 10 }, hp: { current: 200, max: 200, temp: 0 } })],
+      enemies: [makeEnemy('boss', [makeAttack()])]
+    });
+    const config = makeConfig({
+      tacticsProfile: 'focus-fire',
+      maxRounds: 1,
+      enemyStrikesPerTurn: 3,
+      captureEvents: true
+    });
+    const result = runIteration(setup, config, createRng(1), 0, { useFixedInitiative: true });
+    const enemyStrikes = result.events!.filter((e) => e.attackerId === setup.enemies[0].id);
+    expect(enemyStrikes).toHaveLength(3);
+  });
+});
+
+describe('runIteration: recovery checks (C4)', () => {
+  it('recovery-check stabilization increments wounded', () => {
+    // Find a seed whose first d20 is a nat 20 so the recovery check is a
+    // critical success (dying 1 -> 0). useFixedInitiative keeps the roll
+    // first in the RNG stream.
+    let seed = 0;
+    while (createRng(seed).nextInt(1, 20) !== 20) seed += 1;
+
+    const setup = makeSetup({
+      pcs: [
+        makePc('mira', { hp: { current: 0, max: 24, temp: 0 }, dying: 1, downed: true, wounded: 0 })
+      ],
+      enemies: [makeEnemy('boss', [])]
+    });
+    const result = runIteration(setup, makeConfig({ maxRounds: 1 }), createRng(seed), 0, {
+      useFixedInitiative: true
+    });
+    expect(result.perCombatant[0]).toMatchObject({ dying: 0, wounded: 1, downed: true });
+  });
+});
+
+describe('runIteration: round cap (C6)', () => {
+  it('flags iterations that hit the round cap', () => {
+    // PC with attacks: [] vs enemy with attacks: [] — nobody can end the fight.
+    const setup = makeSetup({
+      pcs: [makePc('mira')],
+      enemies: [makeEnemy('boss', [])]
+    });
+    const result = runIteration(
+      setup,
+      makeConfig({ tacticsProfile: 'spread-damage', maxRounds: 3 }),
+      createRng(1)
+    );
+    expect(result.roundsElapsed).toBe(3);
+    expect(result.hitRoundCap).toBe(true);
+  });
+
+  it('does not flag iterations that end before the cap', () => {
+    const setup = makeSetup({
+      pcs: [makePc('mira', { hp: { current: 200, max: 200, temp: 0 }, attacks: [makeAttack()] })],
+      enemies: [makeEnemy('boss', [makeAttack()], { hp: { current: 1, max: 40, temp: 0 } })]
+    });
+    const result = runIteration(setup, makeConfig({ maxRounds: 10 }), createRng('quick-kill'));
+    expect(result.hitRoundCap).toBe(false);
+  });
+});
+
+describe('runIteration: everDowned', () => {
+  it('marks a PC that was downed and then healed back up as everDowned', () => {
+    const medic = makePc('medic', {
+      healing: {
+        medicineModifier: 8,
+        medicineDC: 15,
+        hasBattleMedicine: false,
+        battleMedicineUsedTargets: new Set<string>(),
+        healSpellSlotsRemaining: { 1: 1 }
+      }
+    });
+    const faller = makePc('faller', {
+      hp: { current: 0, max: 24, temp: 0 },
+      dying: 1,
+      downed: true
+    });
+    const setup = makeSetup({ pcs: [medic, faller], enemies: [makeEnemy('boss', [])] });
+    // Fixed initiative keeps the medic ahead of the dying PC, so the heal
+    // lands before the fight ends.
+    const result = runIteration(setup, makeConfig({ maxRounds: 1 }), createRng('ever-downed'), 0, {
+      useFixedInitiative: true
+    });
+    const outcome = result.perCombatant.find((c) => c.id === 'faller');
+    expect(outcome).toMatchObject({ everDowned: true, downed: false, dying: 0 });
+    expect(outcome!.endingHp).toBeGreaterThan(0);
   });
 });

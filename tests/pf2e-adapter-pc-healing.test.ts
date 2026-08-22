@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Pf2eAdapter } from '../src/systems/pf2e-adapter';
+import { Pf2eAdapter, type Pf2eTokenLike } from '../src/systems/pf2e-adapter';
 
 const adapter = new Pf2eAdapter();
 
@@ -27,12 +27,12 @@ interface SpellcastingEntryFixture {
 }
 
 function pcToken(opts: {
-  medicine?: { totalModifier?: number; value?: number; rank?: number };
+  medicine?: { totalModifier?: number; mod?: number; value?: number; rank?: number };
   feats?: Array<{ slug?: string; name?: string }>;
   spells?: SpellItem[];
   spellcastingEntries?: SpellcastingEntryFixture[];
   casterLevel?: number;
-}): unknown {
+}): Pf2eTokenLike {
   const items: unknown[] = [];
   if (opts.feats) {
     for (const f of opts.feats) {
@@ -64,7 +64,7 @@ function pcToken(opts: {
           preparedMap[String(idx)] = { id: prep.id, expended: prep.expended ?? false };
         });
         slotMap[`slot${rank}`] = {
-          max: slot.max ?? (slot.prepared?.length ?? 0),
+          max: slot.max ?? slot.prepared?.length ?? 0,
           value: slot.value,
           prepared: preparedMap
         };
@@ -110,28 +110,34 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
       medicineModifier: 8,
       hasBattleMedicine: true,
       medicineDC: 15,
-      healSpellSlots: undefined,
-      healCantripLevel: null
+      healSpellSlots: undefined
     });
   });
 
   it('falls back to .value when .totalModifier is absent', () => {
-    const snapshot = adapter.getCombatantFromToken(
-      pcToken({ medicine: { value: 6, rank: 1 } })
-    );
+    const snapshot = adapter.getCombatantFromToken(pcToken({ medicine: { value: 6, rank: 1 } }));
     expect(snapshot?.pcCapabilities?.medicineModifier).toBe(6);
   });
 
-  it('scales medicineDC by proficiency rank (expert -> 20)', () => {
-    const snapshot = adapter.getCombatantFromToken(pcToken({ medicine: { totalModifier: 10, rank: 2 } }));
+  it('falls back to skills.medicine.mod', () => {
+    const snapshot = adapter.getCombatantFromToken(pcToken({ medicine: { mod: 9, rank: 1 } }));
+    expect(snapshot?.pcCapabilities?.medicineModifier).toBe(9);
+  });
+
+  it('picks the DC 20 Treat Wounds row for an expert with a +10 modifier', () => {
+    const snapshot = adapter.getCombatantFromToken(
+      pcToken({ medicine: { totalModifier: 10, rank: 2 } })
+    );
     expect(snapshot?.pcCapabilities?.medicineDC).toBe(20);
   });
 
-  it('scales medicineDC by proficiency rank (master -> 30, legendary -> 40)', () => {
+  it('caps the DC at the highest row the modifier still hits half the time', () => {
+    // Master +15 cannot reach DC 30 on 50% of rolls (30 - 15 = 15 > 11), so
+    // they attempt DC 20; legendary +20 likewise steps down from 40 to 30.
     const m = adapter.getCombatantFromToken(pcToken({ medicine: { totalModifier: 15, rank: 3 } }));
     const l = adapter.getCombatantFromToken(pcToken({ medicine: { totalModifier: 20, rank: 4 } }));
-    expect(m?.pcCapabilities?.medicineDC).toBe(30);
-    expect(l?.pcCapabilities?.medicineDC).toBe(40);
+    expect(m?.pcCapabilities?.medicineDC).toBe(20);
+    expect(l?.pcCapabilities?.medicineDC).toBe(30);
   });
 
   it('defaults medicineDC to 15 when rank is unknown', () => {
@@ -158,10 +164,10 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
 
   it('returns a minimal pcCapabilities object when PC has no Medicine and no Battle Medicine', () => {
     const snapshot = adapter.getCombatantFromToken(pcToken({}));
-    expect(snapshot?.pcCapabilities).toEqual({ medicineDC: 15, healCantripLevel: null });
+    expect(snapshot?.pcCapabilities).toEqual({ medicineDC: 15 });
   });
 
-  it('extracts prepared Heal spell slots and Heal cantrip from a Cleric', () => {
+  it('extracts prepared Heal spell slots from a Cleric and ignores the Heal cantrip', () => {
     const snapshot = adapter.getCombatantFromToken(
       pcToken({
         casterLevel: 4,
@@ -173,10 +179,9 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
       })
     );
     expect(snapshot?.pcCapabilities?.healSpellSlots).toEqual({ 1: 3, 2: 2 });
-    expect(snapshot?.pcCapabilities?.healCantripLevel).toBe(4);
   });
 
-  it('detects Heal cantrip with no prepared slots (Druid with only the cantrip)', () => {
+  it('reports no heal slots for a Druid with only the Heal cantrip', () => {
     const snapshot = adapter.getCombatantFromToken(
       pcToken({
         casterLevel: 6,
@@ -184,7 +189,6 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
       })
     );
     expect(snapshot?.pcCapabilities?.healSpellSlots).toBeUndefined();
-    expect(snapshot?.pcCapabilities?.healCantripLevel).toBe(6);
   });
 
   it('returns no Heal capability for a martial PC with no spells', () => {
@@ -192,7 +196,6 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
       pcToken({ medicine: { totalModifier: 5, rank: 1 } })
     );
     expect(snapshot?.pcCapabilities?.healSpellSlots).toBeUndefined();
-    expect(snapshot?.pcCapabilities?.healCantripLevel).toBeNull();
   });
 
   it('treats spells with no slotsRemaining as 1 prepared slot by default', () => {
@@ -226,10 +229,7 @@ describe('Pf2eAdapter PC capabilities: Medicine extraction', () => {
               },
               2: {
                 max: 3,
-                prepared: [
-                  { id: 'heal-spell-id' },
-                  { id: 'bless-spell-id' }
-                ]
+                prepared: [{ id: 'heal-spell-id' }, { id: 'bless-spell-id' }]
               }
             }
           }

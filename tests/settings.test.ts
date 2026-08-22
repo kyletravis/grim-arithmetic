@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { ENABLE_MONTE_CARLO_SETTING, isMonteCarloEnabled, applyPlayerSettingsVisibility } from '../src/settings';
+import {
+  ENABLE_MONTE_CARLO_SETTING,
+  applyPlayerSettingsVisibility,
+  getDefaultStrikes,
+  getModuleSetting,
+  isDebugLoggingEnabled,
+  isMonteCarloEnabled
+} from '../src/settings';
 
 describe('settings: enableMonteCarlo', () => {
   it('exposes the setting key as a stable constant', () => {
@@ -14,7 +21,11 @@ describe('settings: enableMonteCarlo', () => {
 });
 
 describe('settings: applyPlayerSettingsVisibility (KHT-118)', () => {
-  const KEYS = ['grim-arithmetic.defaultStrikes', 'grim-arithmetic.debugLogging', 'grim-arithmetic.enableMonteCarlo'];
+  const KEYS = [
+    'grim-arithmetic.defaultStrikes',
+    'grim-arithmetic.debugLogging',
+    'grim-arithmetic.enableMonteCarlo'
+  ];
 
   function makeRegistry(): Map<string, { config: boolean }> {
     return new Map([
@@ -49,5 +60,17 @@ describe('settings: applyPlayerSettingsVisibility (KHT-118)', () => {
 
   it('is a no-op when the registry is null', () => {
     expect(() => applyPlayerSettingsVisibility(null, false)).not.toThrow();
+  });
+});
+
+describe('settings: helpers outside Foundry', () => {
+  it('getModuleSetting returns the fallback when game is undefined', () => {
+    expect(getModuleSetting('anything', 42)).toBe(42);
+  });
+  it('isDebugLoggingEnabled defaults to false', () => {
+    expect(isDebugLoggingEnabled()).toBe(false);
+  });
+  it('getDefaultStrikes defaults to 2', () => {
+    expect(getDefaultStrikes()).toBe(2);
   });
 });

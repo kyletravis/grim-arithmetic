@@ -1,0 +1,9 @@
+dist/
+releases/
+coverage/
+.superpowers/
+templates/*.hbs
+package.json
+package-lock.json
+module.json
+tests/__snapshots__/

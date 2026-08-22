@@ -2,20 +2,16 @@ import { damageDistribution } from '../dice';
 import type { HealKind } from '../heal-actions';
 import type { HealingState, SimulationCombatant } from '../simulation-types';
 import { pickFirstAttack } from './shared';
-import {
-  DEFAULT_STRIKES_PER_TURN,
-  type TacticsProfile,
-  type TurnPlanHeal,
-  type TurnPlanStrike
-} from './tactics-types';
+import type { TacticsProfile, TurnPlanHeal, TurnPlanStrike } from './tactics-types';
 
 /**
  * Hardcoded PC tactics profile for v0.6.0-rc.4.
  *
  * Decision tree (highest priority first):
- *   1. **Emergency heal** — any standing PC ally is dying and this PC has
- *      healing capability. Spend the full turn on a 2-action heal of the
- *      most-injured dying ally. No strikes this round.
+ *   1. **Emergency heal** — any PC ally is unconscious (dying, or stabilized
+ *      at 0 HP) and this PC has healing capability. Spend the full turn on a
+ *      2-action heal of that ally: dying allies first (highest dying value),
+ *      then stabilized-but-unconscious allies. No strikes this round.
  *   2. **Top-up heal** — any ally is below 40% HP (and not dying). This PC
  *      heals with one action and strikes with the other. Target the
  *      lowest-HP non-dying ally.
@@ -26,9 +22,10 @@ import {
  * emergent (PC1 heals an ally; PC2 re-evaluates and doesn't double-heal).
  *
  * Heal priority within a single PC's choice:
- *   Heal spell (2-action) > Heal cantrip (2-action) >
- *   Heal spell (1-action) > Heal cantrip (1-action) >
- *   Battle Medicine.
+ *   Emergency: Heal spell (2-action) > Battle Medicine.
+ *   Top-up:    Heal spell (1-action) > Battle Medicine.
+ * (Both spell variants draw on the same slot pool, so only the one that fits
+ * the action budget is offered per mode.)
  * Battle Medicine cannot target a PC already healed by Battle Medicine
  * this iteration (per PF2e 1/target/day rule, approximated for the
  * single-encounter sim).
@@ -36,17 +33,17 @@ import {
  * Slot economy: heal-spell consumes the lowest-rank slot remaining.
  */
 export const pcDefaultTactics: TacticsProfile = {
-  id: 'random-legal',
+  id: 'pc-default',
   description:
     'PCs heal dying or low-HP allies when capable; otherwise 2 Strikes against the most-dangerous standing enemy.',
   chooseTurn(context) {
     const standingEnemies = context.enemies.filter((e) => !e.downed && !e.dead);
     const attacker = context.attacker;
 
-    // Step 1: emergency heal — any ally is dying.
-    const dyingAlly = pickPriorityDyingAlly(context.pcs);
-    if (dyingAlly && canHeal(attacker.healing)) {
-      const heal = planHeal(attacker, dyingAlly, 'emergency');
+    // Step 1: emergency heal — any ally is dying or unconscious at 0 HP.
+    const emergencyAlly = pickPriorityEmergencyAlly(context.pcs);
+    if (emergencyAlly && canHeal(attacker.healing)) {
+      const heal = planHeal(attacker, emergencyAlly, 'emergency');
       if (heal) {
         return { strikes: [], heal };
       }
@@ -75,7 +72,8 @@ export const pcDefaultTactics: TacticsProfile = {
     if (!attack) return { strikes: [] };
     const target = [...standingEnemies].sort(comparePcTargetPriority)[0];
     const strikes: TurnPlanStrike[] = [];
-    for (let i = 0; i < DEFAULT_STRIKES_PER_TURN; i += 1) {
+    const strikeCount = Math.min(3, context.strikesPerTurn);
+    for (let i = 0; i < strikeCount; i += 1) {
       strikes.push({ attackId: attack.id, targetId: target.id, mapIndex: i as 0 | 1 | 2 });
     }
     return { strikes };
@@ -85,14 +83,20 @@ export const pcDefaultTactics: TacticsProfile = {
 function canHeal(healing: HealingState | undefined): boolean {
   if (!healing) return false;
   const hasSlot = Object.values(healing.healSpellSlotsRemaining).some((n) => n > 0);
-  return hasSlot || healing.healCantripLevel !== null || healing.hasBattleMedicine;
+  return hasSlot || healing.hasBattleMedicine;
 }
 
-function pickPriorityDyingAlly(pcs: readonly SimulationCombatant[]): SimulationCombatant | undefined {
-  const dying = pcs.filter((c) => c.dying > 0 && !c.dead);
-  if (dying.length === 0) return undefined;
-  // Pick the ally closest to death threshold (highest dying value); ties by id.
-  return [...dying].sort((a, b) => {
+function pickPriorityEmergencyAlly(
+  pcs: readonly SimulationCombatant[]
+): SimulationCombatant | undefined {
+  // A PC who passed a recovery check is stabilized (dying 0) but still
+  // unconscious at 0 HP, and stays out of the fight until healed — so they
+  // are an emergency target too, just a lower-priority one than a dying ally.
+  const candidates = pcs.filter((c) => !c.dead && (c.dying > 0 || c.downed));
+  if (candidates.length === 0) return undefined;
+  // Dying allies first, closest to the death threshold (highest dying value);
+  // stabilized allies (dying 0) sort last. Ties by id.
+  return [...candidates].sort((a, b) => {
     if (b.dying !== a.dying) return b.dying - a.dying;
     return a.id < b.id ? -1 : 1;
   })[0];
@@ -131,28 +135,19 @@ function planHeal(
   // last.
   const tryKinds: HealKind[] =
     mode === 'emergency'
-      ? ['heal-spell-2action', 'heal-cantrip-2action', 'heal-spell-1action', 'heal-cantrip-1action', 'battle-medicine']
-      : ['heal-spell-1action', 'heal-cantrip-1action', 'heal-spell-2action', 'heal-cantrip-2action', 'battle-medicine'];
+      ? ['heal-spell-2action', 'battle-medicine']
+      : ['heal-spell-1action', 'battle-medicine'];
 
   for (const kind of tryKinds) {
-    if (kind === 'heal-spell-2action' || kind === 'heal-spell-1action' || kind === 'heal-spell-3action') {
+    if (kind === 'heal-spell-2action' || kind === 'heal-spell-1action') {
       const rank = pickLowestSlotRank(healing.healSpellSlotsRemaining);
       if (rank !== undefined) {
         return { kind, healerId: healer.id, targetId: target.id, spellRank: rank };
       }
       continue;
     }
-    if (kind === 'heal-cantrip-2action' || kind === 'heal-cantrip-1action') {
-      if (healing.healCantripLevel !== null) {
-        return { kind, healerId: healer.id, targetId: target.id };
-      }
-      continue;
-    }
     if (kind === 'battle-medicine') {
-      if (
-        healing.hasBattleMedicine &&
-        !healing.battleMedicineUsedTargets.has(target.id)
-      ) {
+      if (healing.hasBattleMedicine && !healing.battleMedicineUsedTargets.has(target.id)) {
         return { kind, healerId: healer.id, targetId: target.id };
       }
       continue;

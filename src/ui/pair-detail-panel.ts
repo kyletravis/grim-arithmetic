@@ -1,7 +1,9 @@
 import { getCurrentTokenSelection, TokenSelectionResult } from '../foundry/selection';
-import { Pf2eAdapter } from '../systems/pf2e-adapter';
+import { getDefaultStrikes } from '../settings';
+import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
 import {
+  buildControlOptions,
   buildMortalityPanelData,
   DEFAULT_PANEL_CONTROLS,
   MortalityPanelData,
@@ -16,17 +18,17 @@ interface ApplicationV2Like {
   element: HTMLElement;
 }
 
-const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
-const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
-  options?: unknown
-) => ApplicationV2Like;
+const ApplicationV2Api = foundry.applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(
+  ApplicationV2Api.ApplicationV2
+) as unknown as new (options?: unknown) => ApplicationV2Like;
 
 const PAIR_DETAIL_ID = `${MODULE_ID}-pair-detail`;
 
 export class PairDetailPanel extends Base {
   private static singleton?: PairDetailPanel;
 
-  private controls: PanelControls = { ...DEFAULT_PANEL_CONTROLS };
+  private controls: PanelControls = { ...DEFAULT_PANEL_CONTROLS, strikes: getDefaultStrikes() };
   private explicitSelection?: TokenSelectionResult<unknown>;
 
   static DEFAULT_OPTIONS = {
@@ -79,10 +81,19 @@ export class PairDetailPanel extends Base {
   }
 
   async _prepareContext(): Promise<MortalityPanelData> {
+    const adapter = getSystemAdapter();
+    if (!adapter) {
+      return {
+        moduleVersion: MODULE_VERSION,
+        message: 'Grim Arithmetic does not support this game system.',
+        errors: ['Unsupported game system.'],
+        controls: buildControlOptions(this.controls, [])
+      };
+    }
     const selection = this.explicitSelection ?? getCurrentTokenSelection();
     return buildMortalityPanelData({
       selection,
-      adapter: new Pf2eAdapter(),
+      adapter,
       controls: this.controls,
       moduleVersion: MODULE_VERSION
     });

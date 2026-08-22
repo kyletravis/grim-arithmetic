@@ -82,10 +82,7 @@ function runInActualWorker(
   config: SimulationConfig,
   options: RunSimulationInWorkerOptions
 ): RunSimulationHandle {
-  const worker = new Worker(
-    new URL('./simulation.worker.ts', import.meta.url),
-    { type: 'module' }
-  );
+  const worker = new Worker(new URL('./simulation.worker.ts', import.meta.url), { type: 'module' });
 
   let cancelled = false;
   let settled = false;

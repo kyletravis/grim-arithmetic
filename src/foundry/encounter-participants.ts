@@ -38,7 +38,11 @@ export function resolveEncounterParticipants<TokenLike extends { name?: string }
   const combatants = source.combatants ? Array.from(source.combatants) : [];
 
   if (combatants.length > 0) {
-    return classifyTokens(combatants.map((c) => c.token), adapter, []);
+    return classifyTokens(
+      combatants.map((c) => c.token),
+      adapter,
+      []
+    );
   }
 
   if (options.allowSceneFallback && source.sceneTokens) {
@@ -110,16 +114,12 @@ export function getEncounterParticipants<TokenLike extends { name?: string }>(
 
   const sceneTokens = canvas.tokens?.placeables as Iterable<TokenLike> | undefined;
 
-  return resolveEncounterParticipants(
-    { combatants, sceneTokens },
-    adapter,
-    options
-  );
+  return resolveEncounterParticipants({ combatants, sceneTokens }, adapter, options);
 }
 
-function extractCombatantToken<TokenLike>(
-  combatant: { token?: { object?: TokenLike } | TokenLike }
-): TokenLike | undefined {
+function extractCombatantToken<TokenLike>(combatant: {
+  token?: { object?: TokenLike } | TokenLike;
+}): TokenLike | undefined {
   const token = combatant.token;
   if (!token) return undefined;
   const maybeObject = (token as { object?: TokenLike }).object;

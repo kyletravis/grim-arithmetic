@@ -7,7 +7,14 @@ export interface DamageDistribution {
   min: number;
   max: number;
   mean: number;
-  outcomes: DamageOutcome[];
+  outcomes: readonly DamageOutcome[];
+}
+
+const CACHE_LIMIT = 512;
+const cache = new Map<string, DamageDistribution>();
+
+export function clearDistributionCache(): void {
+  cache.clear();
 }
 
 const BUDGET = {
@@ -29,6 +36,27 @@ export function averageDamage(formula: string): number {
 
 export function damageDistribution(formula: string): DamageDistribution {
   const normalized = normalizeFormula(formula);
+  const cached = cache.get(normalized);
+  if (cached) return cached;
+  const built = buildDistribution(normalized, formula);
+  if (cache.size >= CACHE_LIMIT) cache.delete(cache.keys().next().value as string);
+  cache.set(normalized, built);
+  return built;
+}
+
+/** Convolve two independent distributions (sum of damage). */
+export function combineDistributions(
+  left: DamageDistribution,
+  right: DamageDistribution
+): DamageDistribution {
+  const states = convolve(
+    new Map(left.outcomes.map((o) => [o.damage, o.probability])),
+    new Map(right.outcomes.map((o) => [o.damage, o.probability]))
+  );
+  return summarizeDistribution(states, 'combined');
+}
+
+function buildDistribution(normalized: string, formula: string): DamageDistribution {
   const terms = normalized.match(/[+-]?[^+-]+/g) ?? [];
 
   if (terms.length > BUDGET.maxTerms) {
@@ -56,11 +84,15 @@ export function damageDistribution(formula: string): DamageDistribution {
   for (const term of terms) {
     const termStates = termDistribution(term);
     if (termStates.size > BUDGET.maxOutcomes) {
-      throw budgetExceeded(`term ${term} produced ${termStates.size} outcomes (max ${BUDGET.maxOutcomes})`);
+      throw budgetExceeded(
+        `term ${term} produced ${termStates.size} outcomes (max ${BUDGET.maxOutcomes})`
+      );
     }
     states = convolve(states, termStates);
     if (states.size > BUDGET.maxOutcomes) {
-      throw budgetExceeded(`convolution produced ${states.size} outcomes (max ${BUDGET.maxOutcomes})`);
+      throw budgetExceeded(
+        `convolution produced ${states.size} outcomes (max ${BUDGET.maxOutcomes})`
+      );
     }
   }
 
@@ -142,10 +174,10 @@ function summarizeDistribution(states: Map<number, number>, formula: string): Da
 
   const mean = outcomes.reduce((sum, outcome) => sum + outcome.damage * outcome.probability, 0);
 
-  return {
+  return Object.freeze({
     min: outcomes[0].damage,
     max: outcomes[outcomes.length - 1].damage,
     mean,
-    outcomes
-  };
+    outcomes: Object.freeze(outcomes)
+  });
 }

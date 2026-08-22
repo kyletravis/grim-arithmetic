@@ -1,9 +1,11 @@
 import { MODULE_ID } from './constants';
 
 export const ENABLE_MONTE_CARLO_SETTING = 'enableMonteCarlo';
+export const DEFAULT_STRIKES_SETTING = 'defaultStrikes';
+export const DEBUG_LOGGING_SETTING = 'debugLogging';
 
 export function registerSettings(): void {
-  game.settings.register(MODULE_ID, 'defaultStrikes', {
+  game.settings.register(MODULE_ID, DEFAULT_STRIKES_SETTING, {
     name: 'GrimArithmetic.Settings.DefaultStrikes.Name',
     hint: 'GrimArithmetic.Settings.DefaultStrikes.Hint',
     scope: 'world',
@@ -17,7 +19,7 @@ export function registerSettings(): void {
     }
   });
 
-  game.settings.register(MODULE_ID, 'debugLogging', {
+  game.settings.register(MODULE_ID, DEBUG_LOGGING_SETTING, {
     name: 'GrimArithmetic.Settings.DebugLogging.Name',
     hint: 'GrimArithmetic.Settings.DebugLogging.Hint',
     scope: 'client',
@@ -36,7 +38,11 @@ export function registerSettings(): void {
   });
 }
 
-const GRIM_SETTING_KEYS = ['defaultStrikes', 'debugLogging', ENABLE_MONTE_CARLO_SETTING] as const;
+const GRIM_SETTING_KEYS = [
+  DEFAULT_STRIKES_SETTING,
+  DEBUG_LOGGING_SETTING,
+  ENABLE_MONTE_CARLO_SETTING
+] as const;
 
 export interface SettingsRegistry {
   get(key: string): { config?: boolean } | undefined;
@@ -65,6 +71,20 @@ export function applyPlayerSettingsVisibility(
 }
 
 /**
+ * Read a module setting, tolerating every "Foundry isn't here" case (tests,
+ * pre-init, unexpected errors) by returning the fallback.
+ */
+export function getModuleSetting<T>(key: string, fallback: T): T {
+  if (typeof game === 'undefined') return fallback;
+  try {
+    const value = game.settings.get(MODULE_ID, key);
+    return value === undefined || value === null ? fallback : (value as T);
+  } catch {
+    return fallback;
+  }
+}
+
+/**
  * True when the Monte Carlo simulation feature is enabled for this client.
  *
  * Defaults to true. Returns true when game/settings are unavailable (test
@@ -72,12 +92,15 @@ export function applyPlayerSettingsVisibility(
  * never has to mock Foundry globals just to exercise downstream logic.
  */
 export function isMonteCarloEnabled(): boolean {
-  if (typeof game === 'undefined') return true;
-  try {
-    return Boolean((game as { settings?: { get?: (module: string, key: string) => unknown } })
-      .settings
-      ?.get?.(MODULE_ID, ENABLE_MONTE_CARLO_SETTING) ?? true);
-  } catch {
-    return true;
-  }
+  return Boolean(getModuleSetting(ENABLE_MONTE_CARLO_SETTING, true));
+}
+
+export function isDebugLoggingEnabled(): boolean {
+  return Boolean(getModuleSetting(DEBUG_LOGGING_SETTING, false));
+}
+
+/** World default for enemy Strikes per turn (Danger Board, Pair Detail initial value, Forecast enemies). */
+export function getDefaultStrikes(): 1 | 2 | 3 {
+  const value = Number(getModuleSetting(DEFAULT_STRIKES_SETTING, 2));
+  return value === 1 || value === 3 ? value : 2;
 }

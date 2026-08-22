@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createRng } from '../../src/engine/prng';
-import type { SimulationCombatant } from '../../src/engine/simulation-types';
+import type { HealingState, SimulationCombatant } from '../../src/engine/simulation-types';
 import { pcDefaultTactics } from '../../src/engine/tactics/pc-default';
 import type { TacticsContext } from '../../src/engine/tactics/tactics-types';
 import type { AttackSnapshot } from '../../src/systems/base-adapter';
@@ -30,6 +30,7 @@ function makePc(id: string, attacks: AttackSnapshot[]): SimulationCombatant {
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 5,
@@ -53,6 +54,7 @@ function makeEnemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 3,
@@ -66,7 +68,7 @@ function makeContext(
   attacker: SimulationCombatant,
   enemies: SimulationCombatant[]
 ): TacticsContext {
-  return { attacker, pcs: [attacker], enemies, round: 1 };
+  return { attacker, pcs: [attacker], enemies, round: 1, strikesPerTurn: 2 };
 }
 
 describe('pcDefaultTactics: target selection', () => {
@@ -118,7 +120,10 @@ describe('pcDefaultTactics: target selection', () => {
     const standing = makeEnemy('standing', [makeAttack({ damageFormula: '1d4+1' })]);
     const pc = makePc('mira', [makeAttack()]);
 
-    const plan = pcDefaultTactics.chooseTurn(makeContext(pc, [downed, standing]), createRng('seed'));
+    const plan = pcDefaultTactics.chooseTurn(
+      makeContext(pc, [downed, standing]),
+      createRng('seed')
+    );
     expect(plan.strikes.every((s) => s.targetId === 'standing')).toBe(true);
   });
 });
@@ -146,15 +151,22 @@ describe('pcDefaultTactics: turn structure', () => {
 
 describe('pcDefaultTactics: skip-turn cases', () => {
   it('skips the turn when no standing enemies remain', () => {
-    const downed = makeEnemy('e1', [makeAttack()], { downed: true, hp: { current: 0, max: 30, temp: 0 } });
+    const downed = makeEnemy('e1', [makeAttack()], {
+      downed: true,
+      hp: { current: 0, max: 30, temp: 0 }
+    });
     const pc = makePc('mira', [makeAttack()]);
-    expect(pcDefaultTactics.chooseTurn(makeContext(pc, [downed]), createRng('seed')).strikes).toHaveLength(0);
+    expect(
+      pcDefaultTactics.chooseTurn(makeContext(pc, [downed]), createRng('seed')).strikes
+    ).toHaveLength(0);
   });
 
   it('skips the turn when the PC has no attacks', () => {
     const pc = makePc('mira', []);
     const enemy = makeEnemy('e1', [makeAttack()]);
-    expect(pcDefaultTactics.chooseTurn(makeContext(pc, [enemy]), createRng('seed')).strikes).toHaveLength(0);
+    expect(
+      pcDefaultTactics.chooseTurn(makeContext(pc, [enemy]), createRng('seed')).strikes
+    ).toHaveLength(0);
   });
 
   it('tolerates enemies with unparseable damage formulas (threat score 0)', () => {
@@ -164,6 +176,63 @@ describe('pcDefaultTactics: skip-turn cases', () => {
 
     const plan = pcDefaultTactics.chooseTurn(makeContext(pc, [weird, real]), createRng('seed'));
     expect(plan.strikes[0].targetId).toBe('real');
+  });
+});
+
+describe('pcDefaultTactics: emergency heal', () => {
+  function healSpellState(): HealingState {
+    return {
+      medicineDC: 15,
+      hasBattleMedicine: false,
+      battleMedicineUsedTargets: new Set<string>(),
+      healSpellSlotsRemaining: { 1: 1 }
+    };
+  }
+
+  it('treats a stabilized, unconscious ally (0 HP, dying 0) as an emergency heal target', () => {
+    const healer = makePc('healer', [makeAttack()]);
+    healer.healing = healSpellState();
+    const ally = makePc('ally', [makeAttack()]);
+    ally.hp = { current: 0, max: 24, temp: 0 };
+    ally.downed = true;
+    ally.dying = 0;
+    const enemy = makeEnemy('e1', [makeAttack()]);
+
+    const plan = pcDefaultTactics.chooseTurn(
+      { attacker: healer, pcs: [healer, ally], enemies: [enemy], round: 1, strikesPerTurn: 2 },
+      createRng('seed')
+    );
+
+    expect(plan.heal).toBeDefined();
+    expect(plan.heal?.targetId).toBe('ally');
+    expect(plan.heal?.kind).toBe('heal-spell-2action');
+    expect(plan.strikes).toHaveLength(0);
+  });
+
+  it('prefers a dying ally over a stabilized, unconscious one', () => {
+    const healer = makePc('healer', [makeAttack()]);
+    healer.healing = healSpellState();
+    const stable = makePc('a-stable', [makeAttack()]);
+    stable.hp = { current: 0, max: 24, temp: 0 };
+    stable.downed = true;
+    const dying = makePc('z-dying', [makeAttack()]);
+    dying.hp = { current: 0, max: 24, temp: 0 };
+    dying.downed = true;
+    dying.dying = 2;
+    const enemy = makeEnemy('e1', [makeAttack()]);
+
+    const plan = pcDefaultTactics.chooseTurn(
+      {
+        attacker: healer,
+        pcs: [healer, stable, dying],
+        enemies: [enemy],
+        round: 1,
+        strikesPerTurn: 2
+      },
+      createRng('seed')
+    );
+
+    expect(plan.heal?.targetId).toBe('z-dying');
   });
 });
 

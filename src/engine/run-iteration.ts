@@ -15,7 +15,7 @@ import type {
 } from './simulation-types';
 import { TACTICS_PROFILES } from './tactics';
 import { pcDefaultTactics } from './tactics/pc-default';
-import type { TacticsProfile } from './tactics/tactics-types';
+import { DEFAULT_STRIKES_PER_TURN, type TacticsProfile } from './tactics/tactics-types';
 
 export interface RunIterationOptions {
   /** When true, initiative is taken in input order (no RNG consumed). */
@@ -26,13 +26,20 @@ export interface RunIterationOptions {
  * Run a single encounter iteration to termination.
  *
  *  - Initiative is rolled once at the start using the seeded RNG.
- *  - Each round walks the initiative order. PCs take a no-op turn in v0.6.0
- *    (the conservative baseline; PC actions are deferred to v0.7.0+).
+ *  - Each round walks the initiative order. Each PC turn runs the PC tactics
+ *    decision tree: heal (Battle Medicine / Heal spell) an ally who is dying
+ *    or below 40% HP, or otherwise make 2 Strikes at the most-dangerous
+ *    standing enemy. Dying PCs roll a recovery check at the start of their
+ *    turn before acting.
  *  - Each enemy turn asks the configured tactics profile for a TurnPlan,
  *    then resolves each strike via the sample-strike + apply-damage path.
  *  - The plan is committed when the turn starts; a strike that lands on
  *    an already-downed (but not dead) target still increments dying.
- *  - Termination: all PCs downed (TPK), all enemies dead, or maxRounds hit.
+ *  - A PC that drops to 0 HP is recorded as everDowned for the whole
+ *    iteration, even if an ally heals them back up afterwards.
+ *  - Termination: all PCs downed (TPK), all enemies dead, or the round cap
+ *    (DEFAULT_MAX_ROUNDS = 10) is hit (the last case sets hitRoundCap so the
+ *    aggregator can flag truncation).
  *
  * Same setup + same config + same seed -> byte-identical IterationResult.
  */
@@ -63,8 +70,14 @@ export function runIteration(
   const pcTactics: TacticsProfile = pcDefaultTactics;
   const damageByPair: Record<string, number> = {};
   const events: RoundEvent[] = [];
+  // Combatants that hit 0 HP at any point, even if healed back up later.
+  const everDowned = new Set<string>();
+  for (const combatant of allCombatants) {
+    if (combatant.downed) everDowned.add(combatant.id);
+  }
   let firstDownRound: number | null = null;
   let roundsElapsed = 0;
+  let terminatedEarly = false;
 
   let recoveryChecksFired = 0;
   let heroPointSurvivalsFired = 0;
@@ -84,10 +97,13 @@ export function runIteration(
         const recovery = sampleRecoveryCheck(actor, rng);
         recoveryChecksFired += 1;
         const threshold = deathThresholdFor(actor);
+        // PF2e: losing the dying condition (stabilizing) raises wounded by 1.
+        const stabilized = actor.dying > 0 && recovery.newDying === 0;
         const recovered: SimulationCombatant = {
           ...actor,
           dying: recovery.newDying,
-          downed: recovery.newDying > 0 || actor.hp.current === 0,
+          wounded: stabilized ? actor.wounded + 1 : actor.wounded,
+          downed: true, // still at 0 HP, unconscious until healed
           dead: recovery.newDying >= threshold
         };
         combatants.set(actor.id, recovered);
@@ -101,7 +117,14 @@ export function runIteration(
       const pcs = liveSideMembers(combatants, 'pc');
       const enemies = liveSideMembers(combatants, 'enemy');
       const tactics = actor.side === 'pc' ? pcTactics : enemyTactics;
-      const plan = tactics.chooseTurn({ attacker: actor, pcs, enemies, round }, rng);
+      const strikesPerTurn =
+        actor.side === 'pc'
+          ? DEFAULT_STRIKES_PER_TURN
+          : (config.enemyStrikesPerTurn ?? DEFAULT_STRIKES_PER_TURN);
+      const plan = tactics.chooseTurn(
+        { attacker: actor, pcs, enemies, round, strikesPerTurn },
+        rng
+      );
 
       // Heal action (PC tactics only) runs before strikes.
       if (plan.heal) {
@@ -110,16 +133,13 @@ export function runIteration(
           const result = sampleHealAction(
             {
               kind: plan.heal.kind,
-              healerLevel: actor.healing?.healCantripLevel ?? undefined,
               spellRank: plan.heal.spellRank,
               medicineModifier: actor.healing?.medicineModifier,
               medicineDC: actor.healing?.medicineDC
             },
             rng
           );
-          // Heal spell on a dying target clears dying (per PF2e).
-          const clearsDying = plan.heal.kind.startsWith('heal-spell') && target.dying > 0;
-          const healed = applyHeal(target, result.healedAmount, { clearsDying });
+          const healed = applyHeal(target, result.healedAmount);
           // Collateral damage from crit-failed Battle Medicine.
           let finalTarget = healed;
           if (result.collateralDamage && result.collateralDamage > 0) {
@@ -127,6 +147,12 @@ export function runIteration(
               damage: result.collateralDamage,
               degree: 'success'
             });
+            if (applied.becameDowned) everDowned.add(target.id);
+            // A crit-failed Battle Medicine can down its own patient; that is
+            // still the first down of the run for firstDownRound purposes.
+            if (applied.becameDowned && target.side === 'pc' && firstDownRound === null) {
+              firstDownRound = round;
+            }
             finalTarget = applied.combatant;
           }
           combatants.set(target.id, finalTarget);
@@ -165,7 +191,8 @@ export function runIteration(
             defenderAc: target.defenses.ac,
             damageFormula: attack.damageFormula,
             damageType: attack.damageType,
-            defenderAdjustments: target.damageAdjustments
+            defenderAdjustments: target.damageAdjustments,
+            traits: attack.traits
           },
           rng
         );
@@ -177,6 +204,8 @@ export function runIteration(
           const pairKey = `${actor.id}->${target.id}`;
           damageByPair[pairKey] = (damageByPair[pairKey] ?? 0) + applied.damageAbsorbed;
         }
+
+        if (applied.becameDowned) everDowned.add(target.id);
 
         if (applied.becameDowned && target.side === 'pc' && firstDownRound === null) {
           firstDownRound = round;
@@ -201,8 +230,14 @@ export function runIteration(
       }
     }
 
-    if (allPcsDownedOrDead(combatants)) break;
-    if (allEnemiesDead(combatants)) break;
+    if (allPcsDownedOrDead(combatants)) {
+      terminatedEarly = true;
+      break;
+    }
+    if (allEnemiesDead(combatants)) {
+      terminatedEarly = true;
+      break;
+    }
   }
 
   const perCombatant: PerCombatantOutcome[] = Array.from(combatants.values()).map((c) => ({
@@ -214,6 +249,7 @@ export function runIteration(
     doomed: c.doomed,
     downed: c.downed,
     dead: c.dead,
+    everDowned: everDowned.has(c.id) || c.downed,
     damageTaken: Math.max(0, (startingPool.get(c.id) ?? 0) - (c.hp.current + c.hp.temp))
   }));
 
@@ -227,6 +263,7 @@ export function runIteration(
     perCombatant,
     damageByPair,
     events: config.captureEvents ? events : undefined,
+    hitRoundCap: !terminatedEarly,
     healsFired,
     recoveryChecksFired,
     heroPointSurvivalsFired
@@ -245,7 +282,10 @@ function decrementSpellSlot(healer: SimulationCombatant, rank: number): Simulati
   };
 }
 
-function markBattleMedicineUsed(healer: SimulationCombatant, targetId: string): SimulationCombatant {
+function markBattleMedicineUsed(
+  healer: SimulationCombatant,
+  targetId: string
+): SimulationCombatant {
   if (!healer.healing) return healer;
   const nextUsed = new Set(healer.healing.battleMedicineUsedTargets);
   nextUsed.add(targetId);

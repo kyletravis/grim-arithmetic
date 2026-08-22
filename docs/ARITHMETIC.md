@@ -34,6 +34,8 @@ The current calculation uses:
 
 The current calculation does **not** model:
 
+**v0.9.0 change:** deadly and fatal are now modeled (see "Critical hits with deadly / fatal" below) and have been removed from this list.
+
 - permanent death probability
 - recovery checks
 - healing before or during the enemy turn
@@ -41,7 +43,7 @@ The current calculation does **not** model:
 - Shield Block damage prevention
 - Champion reactions or other defensive reactions
 - resistance, weakness, or immunity edge cases for ambiguous/mixed damage
-- deadly, fatal, precision, splash, or persistent damage
+- precision, splash, or persistent damage
 - enemy tactics beyond “make this many Strikes against this PC”
 - terrain, reach, movement, action availability, or line of effect
 
@@ -263,7 +265,28 @@ crit total = normal total × 2
 
 For example, `1d4+2` has normal totals 3, 4, 5, and 6. Its simple crit distribution is 6, 8, 10, and 12.
 
-This is still intentionally simplified. PF2e traits like deadly and fatal are not modeled yet.
+This is still intentionally simplified. Simple doubling is still the model for Strikes without deadly or fatal; see the next section for how those two traits are layered on top.
+
+---
+
+## Critical hits with deadly / fatal (v0.9.0)
+
+**v0.9.0 change:** deadly and fatal are now modeled instead of being ignored. The wording below matches `describeCritModel()`'s output verbatim.
+
+- **Deadly** adds extra weapon-type damage dice **after doubling**: 1 die normally, 2 dice if the weapon rolls 3 dice, 3 dice if it rolls 4 or more. In `describeCritModel()`'s wording: `deadly dN (+M dN after doubling)`.
+- **Fatal** first swaps the weapon's damage die for the fatal die, _then_ doubles, then adds one more fatal die on top. In `describeCritModel()`'s wording: `fatal dN (weapon die becomes dN, +1dN after doubling)`.
+- A weapon can have both traits; when it does, the fatal swap happens first, then doubling, then the fatal bonus die, then the deadly bonus dice.
+- Weapon specialization and property runes are not folded into the crit model; only the base weapon dice, the striking rune, and deadly/fatal are.
+
+### Worked example
+
+`1d8+4` with the `fatal-d10` trait:
+
+1. Fatal swaps the weapon die before doubling: `1d8+4` becomes `1d10+4`. Normal totals run 5–14.
+2. Double the swapped formula: 10–28.
+3. Add one fatal die (`1d10`, no flat bonus) on top of the doubled total: the final crit range is **11–38**.
+
+If the same weapon also had `deadly-d8`, one more `1d8` would be added after step 3 (two `1d8` if it rolled 3 weapon dice, three if 4+), per the deadly formula above.
 
 ---
 
@@ -585,7 +608,11 @@ Do **not** use the MVP result as:
 
 ## Encounter-wide danger board in v0.5.0
 
-v0.5.0 splits the UI into **two windows**: an Encounter Danger Board (main, opened by the skull button) and a Pair Detail popup (one reusable instance, opened from danger board rows or from the "selected PC + targeted enemy" button). The single-pair math is unchanged — the encounter view simply runs that same engine against every supported pair in the active combat, and the detail window renders one pair at a time using the same `buildMortalityPanelData` builder.
+**v0.9.0 change:** documented that PCs already at 0 HP are excluded from the board (with a caveat), that the board auto-refreshes on combat/actor/token changes, and that it is a single (singleton) window like the Forecast.
+
+v0.5.0 splits the UI into **two windows**: an Encounter Danger Board (main, opened by the skull button) and a Pair Detail popup (one reusable instance, opened from danger board rows or from the "selected PC + targeted enemy" button). Both the Danger Board and Pair Detail are singleton windows — opening either one again re-renders the same instance rather than stacking duplicates. The single-pair math is unchanged — the encounter view simply runs that same engine against every supported pair in the active combat, and the detail window renders one pair at a time using the same `buildMortalityPanelData` builder.
+
+The Danger Board **auto-refreshes** (debounced) whenever combat, actor, or token data changes that could affect the board — combat updates, combatants added/removed, the combat ending, or an actor/token update or deletion — so it stays current without the GM needing to manually reopen it.
 
 ### How pairs are generated
 
@@ -593,6 +620,7 @@ When a combat encounter is active, Grim Arithmetic reads combatants from `game.c
 
 - Tokens whose actor disposition resolves to `pc` go into the **PCs** list.
 - Tokens whose token-document disposition resolves to `enemy` (PF2e hostile, Foundry disposition `-1`) go into the **hostiles** list.
+- A PC already at 0 HP is **excluded from the board** with a per-PC caveat ("`<name>` is already at 0 HP and was excluded from the danger board.") — there is no meaningful "down risk" for a PC who is already down.
 - Allied or neutral combatants are excluded with a caveat naming each one.
 - Combatants the system adapter cannot extract are surfaced as **unsupported actors** rather than throwing.
 
@@ -641,14 +669,16 @@ v0.6.0 adds an entirely new feature alongside the v0.5.0 danger board: a Monte C
 
 ### What the simulation answers
 
-The danger board answers: *"if the enemies all swung at the PCs right now, who would drop?"* — narrow, per-pair, no turn order, no tactics.
+The danger board answers: _"if the enemies all swung at the PCs right now, who would drop?"_ — narrow, per-pair, no turn order, no tactics.
 
-The Monte Carlo simulation answers: *"if we played out this encounter many times under explicit assumptions, what tends to happen?"* — broader, full encounter, configurable tactics. Headline metrics:
+The Monte Carlo simulation answers: _"if we played out this encounter many times under explicit assumptions, what tends to happen?"_ — broader, full encounter, configurable tactics. Headline metrics:
 
-- **Any-PC-down probability** — fraction of iterations where at least one PC was downed.
-- **TPK probability** — fraction of iterations where every PC was downed.
+**v0.9.0 change:** "Any PC down" and per-PC "Down" are `everDowned` metrics — a PC counts as down if it was at 0 HP at _any point_ in the iteration, even if healed back up before the iteration ended. TPK and per-PC death are still end-of-iteration state. The high-risk banner's trigger changed accordingly: it now fires on death risk (TPK ≥ 35% or any PC's death chance ≥ 35%), not on any-PC-down, since knockouts are routine in PF2e and would otherwise trip the banner on almost every encounter.
+
+- **Any-PC-down probability** — fraction of iterations where at least one PC was at 0 HP at any point, whether or not it was later healed back up.
+- **TPK probability** — fraction of iterations where every PC was downed at the end of the iteration.
 - **Expected first-down round** — mean / median round in which the first PC dropped.
-- **Per-PC down and death rates**, mean ending HP, biggest contributing enemy.
+- **Per-PC down and death rates** — "down" uses the same at-any-point semantics as any-PC-down; "death" is end-of-iteration. Also reports mean ending HP and biggest contributing enemy.
 - **Per-enemy damage share** and top target.
 
 ### Where the UI lives
@@ -699,44 +729,52 @@ In rc.3, PCs use **one hardcoded tactics profile** (no UI dropdown). Future v0.6
 
 PC Strikes resolve through the exact same `sampleStrike` + `applyDamage` pipeline as enemy strikes. Enemy resistance/weakness/immunity applies to PC damage symmetrically. An enemy at 0 HP is marked dead directly (no dying spiral); the encounter ends early once all enemies are dead.
 
+### PC Strike synthesis (v0.9.0)
+
+**v0.9.0 change:** PC Strike attack bonus and damage are now read/synthesized from actor data rather than left as a rc.3 approximation.
+
+- **Attack bonus** is the PF2e-compiled strike's `totalModifier` — the same number the PF2e sheet shows for that Strike, proficiency and all.
+- **Damage** is synthesized as weapon dice (`item.system.damage.dice` + the `runes.striking` value) plus an ability modifier:
+  - Melee and thrown Strikes use **STR** — finesse changes the attack roll's ability, not the damage die's ability, so it does not change damage here.
+  - Melee and thrown Strikes use **DEX instead when the actor has the thief racket and the weapon is finesse** and DEX is higher than STR (the rogue Thief racket's "use DEX for damage" benefit, which PF2e limits to finesse weapons).
+  - Ranged, non-thrown Strikes get **no ability modifier**, except **propulsive** weapons, which add `floor(STR / 2)` when STR is positive.
+- The **striking rune** is read only from the remaster `runes.striking` field; legacy striking-as-trait data is not read.
+- Weapon specialization and property runes (other than striking) are **not** included in the synthesized damage.
+- Each PC that used synthesis surfaces the relevant assumption string in the Forecast's "Other modeling assumptions" so a GM can see when a Strike's damage was synthesized versus read directly from `actor.system.actions`.
+
 ### Iterations and stability
 
-Three iteration counts are exposed in the UI:
+**v0.9.0 change:** the Forecast runs a fixed 5,000 iterations (±1.4% on any-PC-down); the engine caps at 10,000. There is no iteration-count or seed control in the UI.
 
-| Iterations | Approx. headline standard error | Approx. wall-clock on a typical GM machine |
-|------------|---------------------------------|---------------------------------------------|
-| 1,000      | ±3% on any-PC-down              | Sub-second |
-| 5,000      | ±1.4% on any-PC-down            | A few seconds (default) |
-| 10,000     | ±1% on any-PC-down              | Several seconds |
+The Forecast runs a fixed 5,000 iterations (±1.4% on any-PC-down); the engine caps at 10,000. That standard error band is why a 1k-vs-1k comparison used to feel noisy — at 5,000 iterations any-PC-down is stable to roughly ±1.4 percentage points, tight enough for GM decision-making without the wall-clock cost of 10k.
 
-Use 1k for quick what-ifs; 5k for the typical case; 10k when comparing two close options (encounter A vs encounter B, or two tactics profiles) where the gap might be within 1k's noise band. The engine refuses to run more than 10,000 iterations in a single call.
-
-### Seeding
-
-Two forms accepted in the seed input:
-
-- Blank: a fresh random seed is picked each run; results vary run-to-run within the standard-error band.
-- Filled (string or number): deterministic. Same seed + same setup + same config → byte-identical SimulationResult.
-
-The runner derives a per-iteration sub-seed from the master seed so iteration N is reproducible independently of total iteration count. Truncating from a 5k run to a 1k run yields the same first 1,000 per-iteration outcomes when the master seed matches.
+Internally, the runner still derives a per-iteration sub-seed from a master seed, so a given master seed + setup + config always produces a byte-identical `SimulationResult` — the UI uses a fresh seed each run; tests pass explicit seeds.
 
 ### PC survival mechanics (v0.6.0-rc.4)
 
+**v0.9.0 change:** the recovery-check step sizes and the healing table below were corrected (recovery crit-failure was previously misdocumented as +1 instead of +2, and Battle Medicine now follows the full four-DC Treat Wounds table rather than a single flat DC); the dying/Wounded interaction and the stabilized-PC-hit-again case are now spelled out explicitly; the Heal cantrip bullet is removed because no such spell exists in PF2e.
+
 rc.4 ships Phase I-A of the PC survival work: healing, recovery checks, and Hero Point death prevention. Reactions (Shield Block, Champion) are reserved for rc.5 Phase I-B.
 
-- **Recovery checks.** At the start of each dying PC's turn, the engine rolls a PF2e flat check (1d20 vs DC 10+dying). Crit-success / success / failure / crit-failure step dying by −2 / −1 / 0 / +1. Most dying PCs recover within 1–2 rounds without intervention, which dramatically cuts the rc.3 "drop once, die" cascade.
+- **Recovery checks.** At the start of each dying PC's turn, the engine rolls a PF2e flat check (1d20 vs DC 10+dying). Crit-success / success / failure / crit-failure step dying by **−2 / −1 / +1 / +2**. Most dying PCs recover within 1–2 rounds without intervention, which dramatically cuts the rc.3 "drop once, die" cascade.
 - **Healing actions** (when extracted from the PC's actor data):
-  - **Battle Medicine** — Medicine check vs DC (proficiency-scaled). Crit-success heals 4d8+8; success heals 2d8+4; failure heals 0; crit-failure heals 0 and deals 1d8 to the target. 1/target/day per PF2e.
-  - **Heal spell** — 1-action heals 1d10 single target; 2-action heals `<rank>d8 + 8*<rank>`; 3-action heals same as 2-action (sim ignores AoE positioning). Consumes a prepared slot. Heal cast on a dying target also clears dying.
-  - **Heal cantrip** — 1-action 1d10; 2-action `(1 + ceil(level/2))d8`, scaling with caster level. At-will.
+  - **Battle Medicine** follows the PF2e Treat Wounds table: the healer attempts the highest DC their Medicine proficiency allows that they still succeed on at least half their rolls against (DC 15 trained / 20 expert / 30 master / 40 legendary). Healing scales with the chosen DC: crit-success heals 4d8 plus the DC's bonus (+0 / +10 / +30 / +50); success heals 2d8 plus the same bonus; failure heals 0; crit-failure heals 0 and deals 1d8 to the target. 1/target/day per PF2e.
+  - **Heal spell** — 1-action heals `<rank>d8` (touch, single target); 2-action heals `<rank>d8 + 8×<rank>` (30 ft). Consumes a prepared slot (or a spontaneous slot of that rank). Heal cast on a dying target also clears dying, per the dying rules below. 3-action Heal (the mass-heal burst) is **not modeled**.
 - **PC tactics decision tree** runs each PC turn:
-  1. *Emergency heal* — any standing ally is dying. Full-turn 2-action heal on the most-dying ally. No Strikes that round.
-  2. *Top-up heal* — any ally below 40% HP (and not dying). 1-action heal + 1-action Strike.
-  3. *Default* — 2 Strikes at the most-dangerous standing enemy.
-  Healer preference: Heal spell 2-action > Heal cantrip 2-action > 1-action variants > Battle Medicine. Slot economy: spell slots decrement; Battle Medicine respects per-target restriction.
-- **Hero Point death prevention** — when a PC would die (`dying >= deathThreshold`), spend a Hero Point to drop to dying 0 at 0 HP. Capped at one Hero Point survival per iteration per PC. Eliminates the one-bad-roll TPK pattern rc.3 still produced.
+  1. _Emergency heal_ — any ally is unconscious: dying, or stabilized at 0 HP after a passed recovery check. Full-turn 2-action heal, dying allies first (highest dying value) and stabilized-but-unconscious allies next. No Strikes that round.
+  2. _Top-up heal_ — any ally below 40% HP (and not dying). 1-action heal + 1-action Strike.
+  3. _Default_ — 2 Strikes at the most-dangerous standing enemy.
+     Healer preference: Heal spell 2-action > 1-action variant > Battle Medicine. Slot economy: spell slots decrement; Battle Medicine respects per-target restriction.
+- **Hero Point death prevention** — when a PC would die (`dying >= deathThreshold`), spend a Hero Point to drop to dying 0 at 0 HP. Capped at one Hero Point survival per iteration per PC. Eliminates the one-bad-roll TPK pattern rc.3 still produced. Per PF2e RAW, this does **not** add Wounded — Wounded only increases when dying is lost through healing or a recovery check, not through Hero Point avoidance. Two deliberate simplifications: PF2e RAW spends **all** of a character's Hero Points to avoid death, while the simulation spends exactly one; and the simulation caps avoided deaths at one per run per PC regardless of how many Hero Points that PC holds.
 
 The combination cuts rc.3's TPK rate for the canonical 3-PC vs 2-enemy "Low Threat" encounter from ~32% (focus-fire) to ~2%, matching GM intuition for a PF2e Low-Threat encounter with a healer in the party.
+
+### Dying and Wounded (v0.9.0)
+
+- Any healing that brings a PC to 1+ HP clears dying entirely and wakes the PC, regardless of how much dying they had.
+- Losing dying — whether by healing to 1+ HP or by a successful recovery check reaching 0 — increases Wounded by 1. Hero Point death avoidance is the one exception: it does not touch Wounded.
+- A stabilized PC sitting at 0 HP (dying 0, downed) who is hit again re-enters dying at **1 + Wounded** on a normal hit, or **2 + Wounded** on a critical hit — the same formula as the first time they were downed, using whatever Wounded value they are carrying now.
+- Recovery check degrees of success step dying by −2 / −1 / +1 / +2 (crit success / success / failure / crit failure); see "Recovery checks" above.
 
 ### Explicitly not modeled in v0.6.0
 
@@ -745,6 +783,7 @@ PC actions, healing, recovery, and Hero Point survival are all modeled as of rc.
 - **Reactions** (rc.5). Shield Block, Champion reactions (Liberator/Redeemer/Paladin) — coming in rc.5. Attacks of opportunity defer to v0.7.0+.
 - **Spells beyond Heal.** Enemies use Strikes only; PCs use Strikes + Heal. Save-based threats and offensive spells defer to v0.7.0+.
 - **Persistent damage.** v0.8.0+.
+- **The Heal cantrip**, which does not exist in PF2e. The closest at-will option is Stabilize, which is also not modeled.
 - **Movement, reach, line of sight.** The simulation assumes everyone can reach everyone.
 - **Initiative-altering abilities.** Delay, Ready, surprise rounds, and feats that move initiative are not modeled.
 - **PC multi-attack action economy beyond 2 Strikes/turn.** Real PCs sometimes Strike 3 times (third Strike at -10 MAP); rc.4 caps at 2.
@@ -755,15 +794,21 @@ PC actions, healing, recovery, and Hero Point survival are all modeled as of rc.
 The forecast is decision support, not prophecy.
 
 - After rc.4, the simulation reflects realistic round counts (typically 2–4 rounds) AND a realistic safety net (healing, recovery, Hero Points). A "Low Threat" PF2e encounter with a healer in the party should now show low single-digit TPK risk; if it doesn't, the encounter likely has structural lethality worth examining.
-- A 30% TPK probability is still a **model artifact**, not a 30% campaign-death chance. It's the probability under "no healing, no reactions, no Hero Points, fixed tactics for both sides." Real-table risk usually skews lower because PCs use Battle Medicine, Shield Block, Demoralize, and similar non-Strike actions the model does not yet simulate.
-- A 1k run with TPK 5% and a second 1k run with TPK 8% are within the same noise band (±3%). If a close call matters, bump to 10k.
+- A 30% TPK probability is still a **model artifact**, not a 30% campaign-death chance. Healing, recovery checks, and Hero Point death prevention _are_ modeled, so the number is the probability under "fixed tactics for both sides, no reactions, no positioning." Real-table risk usually skews lower because PCs also Shield Block, Demoralize, retreat, and take other non-Strike actions the model does not yet simulate.
+- Two Forecast runs of the same encounter can land a few points apart (roughly ±1.4% on any-PC-down at the fixed 5,000-iteration count) purely from RNG noise — that is expected, not a bug.
 - Risk pills (Low / Guarded / Dangerous / Severe / Grim) use the same v0.5.0 thresholds; per-PC risk is mapped from each PC's own down probability.
 - The biggest threat enemy is "who contributed the most absorbed damage across iterations," not necessarily "who's the dramatic villain."
-- The Danger Board's per-pair view is still the right tool for "what's lethal *right now in a single turn*"; the Forecast answers the multi-round encounter question.
+- The Danger Board's per-pair view is still the right tool for "what's lethal _right now in a single turn_"; the Forecast answers the multi-round encounter question.
 
 ### Performance and the kill switch
 
+**v0.9.0 change:** documented the round cap and its cap-rate caveat, and the "Default enemy Strike count" setting that now drives the Danger Board, Pair Detail, and the Forecast together.
+
 The simulation runs in a Web Worker so the Foundry main thread stays responsive even at 10k iterations. Progress events are throttled to ~10/sec to avoid postMessage flooding. Aborting a run mid-flight returns a partial result flagged `aborted: true` rather than discarding everything.
+
+Every iteration also has a hard **round cap of 10** (`DEFAULT_MAX_ROUNDS`) as a backstop against true stalemates — most fights end well before that on their own now that PCs act. An iteration that reaches the cap is counted rather than silently truncated: if any runs hit it, the Forecast reports a caveat such as "N% of runs reached the 10-round cap and were cut off; risk may be understated for long fights."
+
+A world (GM-only) setting, **Default enemy Strike count**, sets how many Strikes each enemy makes per turn. It drives three things together: the Encounter Danger Board's per-pair math, the Pair Detail panel's starting Strike count, and the number of Strikes simulated enemies make per turn in the Forecast. PCs are unaffected by this setting — they always make 2 Strikes per turn (see "PC tactics" above).
 
 A per-client setting in **Configure Settings → Module Settings → Grim Arithmetic** — **Enable Monte Carlo encounter simulation** — disables the feature entirely on machines where it's too costly. When the kill switch is off, the "Forecast encounter" button is hidden on the Danger Board and no Worker is constructed. The v0.5.0 danger board behavior is unchanged either way.
 
@@ -778,11 +823,17 @@ src/engine/degree-of-success.ts
 src/engine/attack-probability.ts
 src/engine/dice.ts
 src/engine/mortality.ts
+src/engine/critical-damage.ts
 src/engine/encounter-risk.ts
 src/engine/prng.ts
+src/engine/risk-bands.ts
+src/engine/risk-controls.ts
+src/engine/statistics.ts
 src/engine/simulation-types.ts
 src/engine/sample-strike.ts
 src/engine/sim-state.ts
+src/engine/heal-actions.ts
+src/engine/sample-recovery.ts
 src/engine/initiative.ts
 src/engine/tactics/*.ts
 src/engine/run-iteration.ts
@@ -799,37 +850,58 @@ src/ui/danger-board-panel.ts
 src/ui/pair-detail-panel.ts
 src/ui/pair-detail-resolver.ts
 src/ui/forecast-panel.ts
+src/ui/forecast-panel-data.ts
+src/systems/adapter-registry.ts
 src/systems/pf2e-adapter.ts
+src/systems/pf2e-pc-strikes.ts
+src/systems/pf2e-pc-capabilities.ts
 ```
 
 Current tests live in:
 
 ```text
-tests/degree-of-success.test.ts
+tests/adapter-registry.test.ts
 tests/attack-probability.test.ts
+tests/critical-damage.test.ts
+tests/damage-adjustments.test.ts
+tests/danger-board.test.ts
+tests/debounce.test.ts
+tests/debug-capture.test.ts
+tests/degree-of-success.test.ts
 tests/dice.test.ts
-tests/mortality.test.ts
-tests/panel-data.test.ts
-tests/pf2e-adapter.test.ts
-tests/pf2e-adapter-pc-strikes.test.ts
+tests/encounter-guardrail.test.ts
 tests/encounter-participants.test.ts
 tests/encounter-risk.test.ts
-tests/danger-board.test.ts
-tests/encounter-guardrail.test.ts
-tests/pair-detail-panel.test.ts
-tests/prng.test.ts
-tests/simulation-types.test.ts
-tests/sim-state.test.ts
-tests/sample-strike.test.ts
-tests/initiative.test.ts
-tests/tactics/tactics.test.ts
-tests/tactics/pc-default.test.ts
-tests/run-iteration.test.ts
-tests/run-simulation.test.ts
-tests/simulation-guardrails.test.ts
 tests/encounter-setup.test.ts
-tests/run-simulation-in-worker.test.ts
 tests/forecast-panel-data.test.ts
-tests/simulation-fixtures.test.ts
+tests/heal-actions.test.ts
+tests/initiative.test.ts
+tests/live-fixtures.test.ts
+tests/mortality.test.ts
+tests/pair-detail-panel.test.ts
+tests/panel-data.test.ts
+tests/pf2e-adapter-pc-healing.test.ts
+tests/pf2e-adapter-pc-strikes.test.ts
+tests/pf2e-adapter.test.ts
+tests/pf2e-table-fixtures.test.ts
+tests/prng.test.ts
+tests/record-utils.test.ts
+tests/release-package.test.ts
+tests/risk-bands.test.ts
+tests/risk-tooltip.test.ts
+tests/run-iteration.test.ts
+tests/run-simulation-in-worker.test.ts
+tests/run-simulation.test.ts
+tests/sample-recovery.test.ts
+tests/sample-strike.test.ts
+tests/selection.test.ts
 tests/settings.test.ts
+tests/sim-state.test.ts
+tests/simulation-fixtures.test.ts
+tests/simulation-guardrails.test.ts
+tests/simulation-types.test.ts
+tests/statistics.test.ts
+tests/tactics/pc-default.test.ts
+tests/tactics/tactics.test.ts
+tests/tooltip-delay.test.ts
 ```

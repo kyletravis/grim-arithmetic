@@ -1,11 +1,12 @@
 import { computeEncounterRiskMatrix, MAX_PAIRS } from '../engine/encounter-risk';
+import { DEFAULT_PANEL_CONTROLS } from '../engine/risk-controls';
 import { getEncounterParticipants } from '../foundry/encounter-participants';
-import { isMonteCarloEnabled } from '../settings';
-import { Pf2eAdapter } from '../systems/pf2e-adapter';
+import { getDefaultStrikes, isMonteCarloEnabled } from '../settings';
+import { getSystemAdapter } from '../systems/adapter-registry';
 import { MODULE_ID, MODULE_VERSION } from '../constants';
-import { buildDangerBoardData, DangerBoardData } from './danger-board';
+import { buildDangerBoardData, DangerBoardData, unsupportedSystemBoardData } from './danger-board';
+import { debounce } from './debounce';
 import { ForecastPanel } from './forecast-panel';
-import { DEFAULT_PANEL_CONTROLS } from './panel-data';
 import { PairDetailPanel } from './pair-detail-panel';
 
 export interface DangerBoardPanelData {
@@ -16,14 +17,44 @@ export interface DangerBoardPanelData {
 
 interface ApplicationV2Like {
   render(force?: boolean | Record<string, unknown>): Promise<unknown>;
+  rendered: boolean;
 }
 
-const ApplicationV2Api = (foundry as { applications: { api: { ApplicationV2: unknown; HandlebarsApplicationMixin: (base: unknown) => unknown } } }).applications.api;
-const Base = ApplicationV2Api.HandlebarsApplicationMixin(ApplicationV2Api.ApplicationV2) as unknown as new (
-  options?: unknown
-) => ApplicationV2Like;
+const ApplicationV2Api = foundry.applications.api;
+const Base = ApplicationV2Api.HandlebarsApplicationMixin(
+  ApplicationV2Api.ApplicationV2
+) as unknown as new (options?: unknown) => ApplicationV2Like;
 
 export class DangerBoardPanel extends Base {
+  private static singleton?: DangerBoardPanel;
+
+  static getInstance(): DangerBoardPanel {
+    return (DangerBoardPanel.singleton ??= new DangerBoardPanel());
+  }
+
+  static open(): void {
+    DangerBoardPanel.getInstance().render({ force: true });
+  }
+
+  /** GM-only: re-render the open board when the combat/actors change (debounced). */
+  static registerAutoRefresh(): void {
+    const refresh = debounce(() => {
+      const instance = DangerBoardPanel.singleton;
+      if (instance?.rendered) void instance.render();
+    }, 250);
+    for (const hook of [
+      'updateCombat',
+      'createCombatant',
+      'deleteCombatant',
+      'deleteCombat',
+      'updateActor',
+      'updateToken',
+      'deleteToken'
+    ]) {
+      Hooks.on(hook, refresh);
+    }
+  }
+
   static DEFAULT_OPTIONS = {
     id: `${MODULE_ID}-danger-board`,
     classes: ['grim-arithmetic-window'],
@@ -64,11 +95,18 @@ export class DangerBoardPanel extends Base {
   };
 
   async _prepareContext(): Promise<DangerBoardPanelData> {
-    const adapter = new Pf2eAdapter();
+    const adapter = getSystemAdapter();
+    if (!adapter) {
+      return {
+        moduleVersion: MODULE_VERSION,
+        dangerBoard: unsupportedSystemBoardData(),
+        forecastEnabled: isMonteCarloEnabled()
+      };
+    }
     const participants = getEncounterParticipants(adapter);
     const matrix = computeEncounterRiskMatrix(participants, {
       adapter,
-      controls: DEFAULT_PANEL_CONTROLS,
+      controls: { ...DEFAULT_PANEL_CONTROLS, strikes: getDefaultStrikes() },
       pairLimit: MAX_PAIRS
     });
     const dangerBoard = buildDangerBoardData(matrix);

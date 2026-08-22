@@ -1,10 +1,11 @@
 import { MODULE_ID, MODULE_TITLE } from './constants';
-import { logDebugCapture } from './debug-capture';
-import { registerSettings, applyPlayerSettingsVisibility, type SettingsRegistry } from './settings';
+import { buildLiveFixture, logDebugCapture, type DebugTokenLike } from './debug-capture';
+import { registerSettings, applyPlayerSettingsVisibility } from './settings';
+import { getSystemAdapter } from './systems/adapter-registry';
 import { DangerBoardPanel } from './ui/danger-board-panel';
 import { ForecastPanel } from './ui/forecast-panel';
 import { PairDetailPanel } from './ui/pair-detail-panel';
-import { applyTooltipDelay } from './ui/tooltip-delay';
+import { installScopedTooltipDelay } from './ui/tooltip-delay';
 import { registerTokenControls } from './ui/token-controls';
 
 Hooks.once('init', () => {
@@ -15,32 +16,50 @@ Hooks.once('init', () => {
 });
 
 function registerHandlebarsHelpers(): void {
-  const handlebars = (globalThis as { Handlebars?: { registerHelper(name: string, fn: (...args: unknown[]) => unknown): void } }).Handlebars;
+  const handlebars = typeof Handlebars === 'undefined' ? undefined : Handlebars;
   if (!handlebars) return;
-  handlebars.registerHelper('eq', function (a: unknown, b: unknown): boolean {
+  handlebars.registerHelper('grimEq', function (a: unknown, b: unknown): boolean {
     return a === b;
   });
 }
 
 Hooks.once('ready', () => {
-  applyTooltipDelay(750);
   // Runs before the GM guard below: players must reach this to have their settings hidden.
-  applyPlayerSettingsVisibility(
-    (game.settings as { settings?: SettingsRegistry } | undefined)?.settings,
-    game.user?.isGM === true
-  );
+  applyPlayerSettingsVisibility(game.settings.settings, game.user?.isGM === true);
 
   if (!game.user?.isGM) return;
+
+  if (!getSystemAdapter()) {
+    console.warn(
+      `${MODULE_TITLE} | Unsupported game system "${game.system?.id}"; Grim Arithmetic is disabled.`
+    );
+    return;
+  }
+
+  DangerBoardPanel.registerAutoRefresh();
+  installScopedTooltipDelay(750);
 
   const grimArithmeticModule = game.modules.get(MODULE_ID);
   if (!grimArithmeticModule) return;
 
   grimArithmeticModule.api = {
-    openPanel: () => new DangerBoardPanel().render(true),
+    openPanel: () => DangerBoardPanel.open(),
     openPairDetail: (pcId: string, enemyId: string, attackId?: string) =>
       PairDetailPanel.openForPair(pcId, enemyId, attackId),
     openPairDetailFromSelection: () => PairDetailPanel.openForSelection(),
     openForecast: () => ForecastPanel.open(),
-    captureTokenDebug: (token = canvas.tokens?.controlled?.[0]) => logDebugCapture(token)
+    captureTokenDebug: (
+      token = canvas.tokens?.controlled?.[0] as Parameters<typeof logDebugCapture>[0]
+    ) => logDebugCapture(token),
+    exportLiveFixture: (token = canvas.tokens?.controlled?.[0] as DebugTokenLike | undefined) => {
+      if (!token) return null;
+      const fixture = buildLiveFixture(token);
+      const json = JSON.stringify(fixture, null, 2);
+      console.log(json);
+      void (
+        globalThis as { navigator?: { clipboard?: { writeText(t: string): Promise<void> } } }
+      ).navigator?.clipboard?.writeText(json);
+      return fixture;
+    }
   };
 });

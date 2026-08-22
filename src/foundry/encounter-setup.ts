@@ -1,5 +1,5 @@
-import { MODULE_ID } from '../constants';
 import type { EncounterSetup, HealingState, SimulationCombatant } from '../engine/simulation-types';
+import { isDebugLoggingEnabled } from '../settings';
 import type { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
 import {
   getEncounterParticipants,
@@ -60,10 +60,22 @@ function materialize<TokenLike extends { name?: string }>(
     try {
       attacks = adapter.getAttacksFromToken(p.token);
     } catch {
-      caveats.push(`${p.snapshot.name}: PC attack extraction failed; treated as no supported Strike.`);
+      caveats.push(
+        `${p.snapshot.name}: PC attack extraction failed; treated as no supported Strike.`
+      );
     }
     if (attacks.length === 0) {
-      caveats.push(`${p.snapshot.name} has no supported Strike; will skip its turns in the simulation.`);
+      caveats.push(
+        `${p.snapshot.name} has no supported Strike; will skip its turns in the simulation.`
+      );
+    }
+    const attackAssumptions = new Set(attacks.flatMap((attack) => attack.assumptions));
+    for (const assumption of attackAssumptions) caveats.push(`${p.snapshot.name}: ${assumption}`);
+    // everDowned counts the starting state, so a PC already at 0 HP pins
+    // "any PC down" at 100% — say so rather than letting it read as a forecast.
+    // Keyed off current HP only, matching `downed` above.
+    if (p.snapshot.hp.current <= 0) {
+      caveats.push(`${p.snapshot.name} starts this run at 0 HP, so "any PC down" will read 100%.`);
     }
     const combatant = snapshotToSimulationCombatant(p.snapshot, 'pc', attacks, caveats);
     combatant.healing = buildHealingState(p.snapshot, caveats);
@@ -78,7 +90,9 @@ function materialize<TokenLike extends { name?: string }>(
     try {
       attacks = adapter.getAttacksFromToken(h.token);
     } catch {
-      caveats.push(`${h.snapshot.name}: attack extraction failed; treated as no supported attacks.`);
+      caveats.push(
+        `${h.snapshot.name}: attack extraction failed; treated as no supported attacks.`
+      );
     }
     if (attacks.length === 0) {
       caveats.push(`${h.snapshot.name} has no supported attacks; will skip its turns.`);
@@ -96,40 +110,26 @@ function buildHealingState(snapshot: CombatantSnapshot, caveats: string[]): Heal
       medicineDC: 15,
       hasBattleMedicine: false,
       battleMedicineUsedTargets: new Set(),
-      healSpellSlotsRemaining: {},
-      healCantripLevel: null
+      healSpellSlotsRemaining: {}
     };
   }
   const hasBattleMedicine = caps.hasBattleMedicine === true;
   const slots = caps.healSpellSlots ?? {};
-  const cantrip = caps.healCantripLevel ?? null;
   const slotCount = Object.values(slots).reduce((sum, n) => sum + n, 0);
-  if (!hasBattleMedicine && slotCount === 0 && cantrip === null) {
+  if (!hasBattleMedicine && slotCount === 0) {
     caveats.push(`${snapshot.name} has no healing options; will not heal in this simulation.`);
-  } else if (hasBattleMedicine && slotCount === 0 && cantrip === null && caps.medicineModifier === undefined) {
-    caveats.push(`${snapshot.name}: Battle Medicine detected but no Medicine modifier; using default DC 15 with +0 modifier.`);
+  } else if (hasBattleMedicine && slotCount === 0 && caps.medicineModifier === undefined) {
+    caveats.push(
+      `${snapshot.name}: Battle Medicine detected but no Medicine modifier; using default DC 15 with +0 modifier.`
+    );
   }
   return {
     medicineModifier: caps.medicineModifier,
     medicineDC: caps.medicineDC ?? 15,
     hasBattleMedicine,
     battleMedicineUsedTargets: new Set(),
-    healSpellSlotsRemaining: { ...slots },
-    healCantripLevel: cantrip
+    healSpellSlotsRemaining: { ...slots }
   };
-}
-
-function isDebugLoggingEnabled(): boolean {
-  if (typeof game === 'undefined') return false;
-  try {
-    return Boolean(
-      (game as { settings?: { get?: (module: string, key: string) => unknown } })
-        .settings
-        ?.get?.(MODULE_ID, 'debugLogging') ?? false
-    );
-  } catch {
-    return false;
-  }
 }
 
 function logHealingCapability(snapshot: CombatantSnapshot, healing: HealingState): void {
@@ -141,7 +141,6 @@ function logHealingCapability(snapshot: CombatantSnapshot, healing: HealingState
     hasBattleMedicine: healing.hasBattleMedicine,
     medicineModifier: healing.medicineModifier,
     medicineDC: healing.medicineDC,
-    healCantripLevel: healing.healCantripLevel,
     healSpellSlots: slotSummary || '(none)'
   });
 }
@@ -154,6 +153,9 @@ function snapshotToSimulationCombatant(
 ): SimulationCombatant {
   if (snapshot.initiativeBonus === undefined) {
     caveats.push(`${snapshot.name}: initiative bonus unknown; defaulting to 0.`);
+  }
+  if (side === 'enemy' && snapshot.hp.current <= 0) {
+    caveats.push(`${snapshot.name} is already at 0 HP and is treated as defeated.`);
   }
   return {
     id: snapshot.id,
@@ -175,8 +177,22 @@ function snapshotToSimulationCombatant(
     wounded: snapshot.deathState?.wounded ?? 0,
     doomed: snapshot.deathState?.doomed ?? 0,
     heroPoints: snapshot.deathState?.heroPoints ?? 0,
-    downed: (snapshot.deathState?.dying ?? 0) > 0,
-    dead: false,
+    // Consciousness keys off current HP; temp HP absorbs damage but does not
+    // keep a creature standing (matches applyDamage).
+    //
+    // PCs: 0 HP is unconscious whether or not they are still dying (a passed
+    // recovery check stabilizes them but leaves them down); never dead at
+    // setup, because dying/death is the engine's to resolve.
+    //
+    // Hostiles: 0 HP is out of the fight, so mark them dead as well as downed.
+    // applyDamage() uses that same rule mid-fight, and allEnemiesDead() reads
+    // `dead` — a hostile left downed-but-alive is never targeted by PC tactics
+    // and never dies, so every iteration would run to the round cap.
+    downed:
+      side === 'pc'
+        ? snapshot.hp.current <= 0 || (snapshot.deathState?.dying ?? 0) > 0
+        : snapshot.hp.current <= 0,
+    dead: side === 'enemy' && snapshot.hp.current <= 0,
     initiativeBonus: snapshot.initiativeBonus ?? 0,
     damageAdjustments: snapshot.damageAdjustments,
     traits: [...snapshot.traits],

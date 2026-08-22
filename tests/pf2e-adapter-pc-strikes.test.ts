@@ -1,12 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { Pf2eAdapter } from '../src/systems/pf2e-adapter';
+import { Pf2eAdapter, type Pf2eTokenLike } from '../src/systems/pf2e-adapter';
+import {
+  PC_STRIKE_ASSUMPTION_ACTIONS,
+  PC_STRIKE_ASSUMPTION_FALLBACK,
+  PC_STRIKE_ASSUMPTION_SYNTHESIZED
+} from '../src/systems/pf2e-pc-strikes';
 
 const adapter = new Pf2eAdapter();
 
 function pcTokenWith(overrides: {
   actions?: unknown[];
   items?: { contents: unknown[] };
-}): unknown {
+  abilities?: Record<string, { mod: number }>;
+}): Pf2eTokenLike {
   return {
     id: 'pc-1',
     name: 'Mira Stormwake',
@@ -16,7 +22,8 @@ function pcTokenWith(overrides: {
       name: 'Mira',
       type: 'character',
       system: {
-        actions: overrides.actions
+        actions: overrides.actions,
+        abilities: overrides.abilities
       },
       items: overrides.items
     }
@@ -47,9 +54,42 @@ describe('Pf2eAdapter.getAttacksFromToken: PC actions list (primary path)', () =
         damageType: 'slashing',
         traits: ['versatile-p'],
         mapType: 'normal',
-        assumptions: ['PC Strike extracted from actor.system.actions; conditional modifiers (status, MAP-adjacent feats) may be missing.']
+        assumptions: [PC_STRIKE_ASSUMPTION_ACTIONS]
       }
     ]);
+  });
+
+  it('keeps only ready strikes when PF2e flags the held weapon', () => {
+    const token = pcTokenWith({
+      actions: [
+        {
+          slug: 'stowed-bow',
+          label: 'Shortbow',
+          totalModifier: 12,
+          damageFormula: '1d6+2'
+        },
+        {
+          slug: 'longsword',
+          label: 'Longsword',
+          totalModifier: 14,
+          damageFormula: '1d8+5',
+          ready: true
+        }
+      ]
+    });
+
+    expect(adapter.getAttacksFromToken(token).map((a) => a.id)).toEqual(['longsword']);
+  });
+
+  it('keeps every strike when no action carries a ready flag', () => {
+    const token = pcTokenWith({
+      actions: [
+        { slug: 'shortbow', label: 'Shortbow', totalModifier: 12, damageFormula: '1d6+2' },
+        { slug: 'longsword', label: 'Longsword', totalModifier: 14, damageFormula: '1d8+5' }
+      ]
+    });
+
+    expect(adapter.getAttacksFromToken(token).map((a) => a.id)).toEqual(['shortbow', 'longsword']);
   });
 
   it('extracts every strike for a dual-wielder', () => {
@@ -172,7 +212,7 @@ describe('Pf2eAdapter.getAttacksFromToken: PC weapon fallback', () => {
       damageType: 'bludgeoning',
       mapType: 'normal'
     });
-    expect(attacks[0].assumptions[0]).toMatch(/fallback/i);
+    expect(attacks[0].assumptions).toEqual([PC_STRIKE_ASSUMPTION_FALLBACK]);
   });
 
   it('skips unequipped weapons in the fallback path', () => {
@@ -222,7 +262,7 @@ describe('Pf2eAdapter.getAttacksFromToken: graceful empty cases', () => {
   });
 
   it('returns [] when token has no actor', () => {
-    expect(adapter.getAttacksFromToken({ id: 't' } as unknown)).toEqual([]);
+    expect(adapter.getAttacksFromToken({ id: 't' } as Pf2eTokenLike)).toEqual([]);
   });
 
   it('does not affect the NPC melee path', () => {
@@ -256,5 +296,110 @@ describe('Pf2eAdapter.getAttacksFromToken: graceful empty cases', () => {
     expect(attacks).toHaveLength(1);
     expect(attacks[0].id).toBe('shortsword');
     expect(attacks[0].attackBonus).toBe(7);
+  });
+});
+
+describe('Pf2eAdapter.getAttacksFromToken: synthesized from strike item (live PF2e shape)', () => {
+  function liveStrike(overrides: Record<string, unknown> = {}) {
+    return {
+      slug: 'longsword',
+      label: 'Longsword',
+      totalModifier: 14,
+      damage: () => Promise.resolve(null), // PF2e StrikeData.damage is a roll function
+      traits: [{ name: 'versatile-p', label: 'Versatile P' }],
+      item: {
+        id: 'item-longsword',
+        name: 'Longsword',
+        system: {
+          damage: { dice: 1, die: 'd8', damageType: 'slashing', modifier: 0 },
+          runes: { striking: 1 },
+          traits: { value: ['versatile-p'] },
+          range: null
+        }
+      },
+      ...overrides
+    };
+  }
+  const abilities = { str: { mod: 4 }, dex: { mod: 2 } };
+
+  it('builds dice × striking + STR modifier when no formula string exists', () => {
+    const token = pcTokenWith({ actions: [liveStrike()], abilities });
+    const [attack] = adapter.getAttacksFromToken(token);
+    expect(attack).toMatchObject({
+      id: 'longsword',
+      attackBonus: 14,
+      damageFormula: '2d8+4',
+      damageType: 'slashing',
+      mapType: 'normal'
+    });
+    expect(attack.assumptions).toEqual([PC_STRIKE_ASSUMPTION_SYNTHESIZED]);
+    expect(attack.assumptions[0]).toContain('synthesized');
+  });
+
+  it('uses STR for finesse weapons (finesse only applies to the attack roll)', () => {
+    const token = pcTokenWith({
+      actions: [liveStrike({ traits: [{ name: 'finesse' }, { name: 'agile' }] })],
+      abilities: { str: { mod: 1 }, dex: { mod: 4 } }
+    });
+    const [attack] = adapter.getAttacksFromToken(token);
+    expect(attack.damageFormula).toBe('2d8+1');
+    expect(attack.mapType).toBe('agile');
+  });
+
+  it('thief racket uses DEX for damage when higher', () => {
+    const token = pcTokenWith({
+      actions: [liveStrike({ traits: [{ name: 'finesse' }] })],
+      abilities: { str: { mod: 1 }, dex: { mod: 4 } },
+      items: {
+        contents: [
+          { id: 'f1', name: 'Thief Racket', type: 'feat', system: { slug: 'thief-racket' } }
+        ]
+      }
+    });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8+4');
+  });
+
+  it('thief racket does not apply DEX to a non-finesse weapon', () => {
+    const token = pcTokenWith({
+      actions: [liveStrike({ traits: [] })],
+      abilities: { str: { mod: 1 }, dex: { mod: 4 } },
+      items: {
+        contents: [
+          { id: 'f1', name: 'Thief Racket', type: 'feat', system: { slug: 'thief-racket' } }
+        ]
+      }
+    });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8+1');
+  });
+
+  it('takes mapType from an agile trait that only lives on the weapon item', () => {
+    const strike = liveStrike({ traits: [] });
+    (strike.item.system as Record<string, unknown>).traits = { value: ['agile'] };
+    const token = pcTokenWith({ actions: [strike], abilities });
+    const [attack] = adapter.getAttacksFromToken(token);
+    expect(attack.mapType).toBe('agile');
+    expect(attack.traits).toContain('agile');
+  });
+
+  it('ranged non-thrown weapons get no ability modifier', () => {
+    const strike = liveStrike({ traits: [] });
+    (strike.item.system as Record<string, unknown>).range = 60;
+    const token = pcTokenWith({ actions: [strike], abilities });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8');
+  });
+
+  it('propulsive ranged weapons add half STR (rounded down)', () => {
+    const strike = liveStrike({ traits: [{ name: 'propulsive' }] });
+    (strike.item.system as Record<string, unknown>).range = 60;
+    const token = pcTokenWith({
+      actions: [strike],
+      abilities: { str: { mod: 3 }, dex: { mod: 4 } }
+    });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('2d8+1');
+  });
+
+  it('still prefers an explicit damageFormula string when present', () => {
+    const token = pcTokenWith({ actions: [liveStrike({ damageFormula: '1d8+7' })], abilities });
+    expect(adapter.getAttacksFromToken(token)[0].damageFormula).toBe('1d8+7');
   });
 });

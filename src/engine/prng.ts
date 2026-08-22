@@ -29,7 +29,8 @@ export function createRng(seed: number | string): Rng {
 }
 
 export function deriveChildSeed(parentSeed: number | string, label: string | number): number {
-  const parent = typeof parentSeed === 'string' ? hashStringSeed(parentSeed) : normalizeNumericSeed(parentSeed);
+  const parent =
+    typeof parentSeed === 'string' ? hashStringSeed(parentSeed) : normalizeNumericSeed(parentSeed);
   const child = typeof label === 'string' ? hashStringSeed(label) : normalizeNumericSeed(label);
   return mixSeeds(parent, child);
 }

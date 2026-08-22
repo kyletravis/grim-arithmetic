@@ -27,7 +27,13 @@ describe('immediateDownRisk', () => {
     });
 
     expect(result.downProbability).toBeCloseTo(0.0375);
-    expect(result.damage).toMatchObject({ min: 3, max: 6, average: '4.5', critMin: 6, critMax: 12 });
+    expect(result.damage).toMatchObject({
+      min: 3,
+      max: 6,
+      average: '4.5',
+      critMin: 6,
+      critMax: 12
+    });
     expect(result.topRiskDrivers[0]).toContain('Only some crit damage rolls can down the PC');
   });
 
@@ -83,27 +89,30 @@ describe('immediateDownRisk', () => {
     [1, 2, 3],
     [2, 3, 4],
     [3, 4, 5]
-  ])('reports wounded %i dying severity for normal and critical downing hits', (wounded, normalDying, critDying) => {
-    const result = immediateDownRisk({
-      hp: 7,
-      ac: 20,
-      attackBonus: 10,
-      damageFormula: '1d4+2',
-      strikes: 1,
-      mapType: 'normal',
-      wounded,
-      doomed: 0,
-      assumeHeroPointAvailable: false
-    });
+  ])(
+    'reports wounded %i dying severity for normal and critical downing hits',
+    (wounded, normalDying, critDying) => {
+      const result = immediateDownRisk({
+        hp: 7,
+        ac: 20,
+        attackBonus: 10,
+        damageFormula: '1d4+2',
+        strikes: 1,
+        mapType: 'normal',
+        wounded,
+        doomed: 0,
+        assumeHeroPointAvailable: false
+      });
 
-    expect(result.dyingSeverity).toMatchObject({
-      wounded,
-      doomed: 0,
-      deathThreshold: 4,
-      normalDownDying: normalDying,
-      critDownDying: critDying
-    });
-  });
+      expect(result.dyingSeverity).toMatchObject({
+        wounded,
+        doomed: 0,
+        deathThreshold: 4,
+        normalDownDying: normalDying,
+        critDownDying: critDying
+      });
+    }
+  );
 
   it('flags crit-downs that reach the doomed-adjusted death threshold', () => {
     const result = immediateDownRisk({
@@ -136,7 +145,25 @@ describe('immediateDownRisk', () => {
       assumeHeroPointAvailable: true
     });
 
-    expect(result.dyingSeverity.heroPointNote).toContain('Hero Point prevention is assumed available');
+    expect(result.dyingSeverity.heroPointNote).toContain(
+      'Hero Point prevention is assumed available'
+    );
     expect(result.notModeled).toContain('Permanent death probability.');
+  });
+
+  it('applies deadly on crits (1d4+2 deadly-d6 vs 13 HP)', () => {
+    const result = immediateDownRisk({
+      hp: 13,
+      ac: 20,
+      attackBonus: 10,
+      damageFormula: '1d4+2',
+      strikes: 1,
+      mapType: 'normal',
+      traits: ['deadly-d6']
+    });
+
+    expect(result.damage.critMax).toBe(18);
+    expect(result.downProbability).toBeGreaterThan(0);
+    expect(result.assumptions.some((a) => a.includes('deadly d6'))).toBe(true);
   });
 });

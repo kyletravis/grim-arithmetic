@@ -1,4 +1,4 @@
-import { DEFAULT_STRIKES_PER_TURN, type TacticsProfile, type TurnPlanStrike } from './tactics-types';
+import type { TacticsProfile, TurnPlanStrike } from './tactics-types';
 import { getStandingPcs, pickFirstAttack, pickHighestDamageAttack } from './shared';
 
 /**
@@ -11,7 +11,8 @@ import { getStandingPcs, pickFirstAttack, pickHighestDamageAttack } from './shar
  */
 export const bossCinematicTactics: TacticsProfile = {
   id: 'boss-cinematic',
-  description: "Use the highest-damage attack on the toughest standing PC, all strikes on the same target.",
+  description:
+    'Use the highest-damage attack on the toughest standing PC, all strikes on the same target.',
   chooseTurn(context) {
     const targets = getStandingPcs(context.pcs);
     if (targets.length === 0) return { strikes: [] };
@@ -22,7 +23,8 @@ export const bossCinematicTactics: TacticsProfile = {
     const attack = pickHighestDamageAttack(context.attacker) ?? pickFirstAttack(context.attacker);
     if (!attack) return { strikes: [] };
     const strikes: TurnPlanStrike[] = [];
-    for (let i = 0; i < DEFAULT_STRIKES_PER_TURN; i += 1) {
+    const strikeCount = Math.min(3, context.strikesPerTurn);
+    for (let i = 0; i < strikeCount; i += 1) {
       strikes.push({ attackId: attack.id, targetId: target.id, mapIndex: i as 0 | 1 | 2 });
     }
     return { strikes };

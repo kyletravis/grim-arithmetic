@@ -18,7 +18,11 @@ function makeUnsupportedToken(id: string, name: string) {
   return { id, name, _kind: 'unsupported' as const };
 }
 
-type FakeToken = ReturnType<typeof makePcToken> | ReturnType<typeof makeHostileToken> | ReturnType<typeof makeAllyToken> | ReturnType<typeof makeUnsupportedToken>;
+type FakeToken =
+  | ReturnType<typeof makePcToken>
+  | ReturnType<typeof makeHostileToken>
+  | ReturnType<typeof makeAllyToken>
+  | ReturnType<typeof makeUnsupportedToken>;
 
 const adapter: SystemAdapter<FakeToken> = {
   id: 'pf2e',

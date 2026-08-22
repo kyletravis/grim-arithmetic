@@ -1,7 +1,12 @@
-import { EncounterParticipants } from '../foundry/encounter-participants';
+import type { EncounterParticipants } from '../foundry/encounter-participants';
 import { AttackSnapshot, CombatantSnapshot, SystemAdapter } from '../systems/base-adapter';
-import { PanelControls } from '../ui/panel-data';
-import { ImmediateDownRiskResult, immediateDownRisk, MapType } from './mortality';
+import { ImmediateDownRiskResult, immediateDownRisk } from './mortality';
+import {
+  type PanelControls,
+  resolveHeroPointAvailability,
+  resolveMapType,
+  resolveWounded
+} from './risk-controls';
 
 export interface PairRisk {
   pcId: string;
@@ -30,7 +35,7 @@ export interface ComputeMatrixOptions<TokenLike> {
 export const MAX_PAIRS = 200;
 
 const NO_ATTACKS_CAVEAT = (enemyName: string): string =>
-  `${enemyName} has no supported melee Strike with numeric attack bonus and damage formula.`;
+  `${enemyName} has no supported Strike with numeric attack bonus and damage formula.`;
 
 const GUARDRAIL_CAVEAT =
   'Encounter too large to compute pairwise risk safely. Reduce combatants or use the single-pair detail view.';
@@ -41,20 +46,28 @@ export function computeEncounterRiskMatrix<TokenLike>(
 ): EncounterRiskMatrix {
   const { adapter, controls, pairLimit } = options;
 
+  const caveats: string[] = [];
+
+  const activePcs = participants.pcs.filter((pc) => {
+    const pool = pc.snapshot.hp.current + (pc.snapshot.hp.temp ?? 0);
+    if (pool > 0) return true;
+    caveats.push(`${pc.snapshot.name} is already at 0 HP and was excluded from the danger board.`);
+    return false;
+  });
+
   const hostileAttackSets = participants.hostiles.map((hostile) => ({
     hostile,
     attacks: safeGetAttacks(adapter, hostile.token)
   }));
 
-  const projectedPairCount = participants.pcs.length *
-    hostileAttackSets.reduce((sum, set) => sum + set.attacks.length, 0);
+  const projectedPairCount =
+    activePcs.length * hostileAttackSets.reduce((sum, set) => sum + set.attacks.length, 0);
 
   if (pairLimit !== undefined && projectedPairCount > pairLimit) {
     return { pairs: [], skipped: true, caveats: [GUARDRAIL_CAVEAT] };
   }
 
   const pairs: PairRisk[] = [];
-  const caveats: string[] = [];
 
   for (const { hostile, attacks } of hostileAttackSets) {
     if (attacks.length === 0) {
@@ -62,7 +75,7 @@ export function computeEncounterRiskMatrix<TokenLike>(
       continue;
     }
 
-    for (const pc of participants.pcs) {
+    for (const pc of activePcs) {
       for (const attack of attacks) {
         pairs.push(buildPairRisk(pc.snapshot, hostile.snapshot, attack, controls));
       }
@@ -92,7 +105,8 @@ function buildPairRisk(
       doomed: pc.deathState?.doomed ?? 0,
       assumeHeroPointAvailable: resolveHeroPointAvailability(pc, controls.heroPointMode),
       damageType: attack.damageType,
-      targetAdjustments: pc.damageAdjustments
+      targetAdjustments: pc.damageAdjustments,
+      traits: attack.traits
     });
 
     return {
@@ -133,23 +147,4 @@ function safeGetAttacks<TokenLike>(
   } catch {
     return [];
   }
-}
-
-function resolveMapType(mapMode: PanelControls['mapMode'], attackMapType: AttackSnapshot['mapType']): MapType {
-  if (mapMode !== 'auto') return mapMode;
-  return attackMapType === 'unknown' ? 'normal' : attackMapType;
-}
-
-function resolveWounded(pc: CombatantSnapshot, override: PanelControls['woundedOverride']): number {
-  if (override === 'current') return pc.deathState?.wounded ?? 0;
-  return Number(override);
-}
-
-function resolveHeroPointAvailability(
-  pc: CombatantSnapshot,
-  heroPointMode: PanelControls['heroPointMode']
-): boolean {
-  if (heroPointMode === 'available') return true;
-  if (heroPointMode === 'unavailable') return false;
-  return (pc.deathState?.heroPoints ?? 0) > 0;
 }

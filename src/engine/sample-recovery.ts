@@ -21,8 +21,8 @@ export interface RecoveryOutcome {
  * check vs DC 10 + dying value. The four degrees of success map to:
  *   - crit-success: dying -= 2 (stabilizes at 0, restores wakefulness)
  *   - success:      dying -= 1
- *   - failure:      no change
- *   - crit-failure: dying += 1 (and may cross the death threshold)
+ *   - failure:      dying += 1
+ *   - crit-failure: dying += 2 (and may cross the death threshold)
  *
  * Nat 1 / nat 20 step-shift through the existing degreeOfSuccess helper.
  *
@@ -47,10 +47,10 @@ export function sampleRecoveryCheck(combatant: SimulationCombatant, rng: Rng): R
       delta = -1;
       break;
     case 'failure':
-      delta = 0;
+      delta = 1;
       break;
     case 'criticalFailure':
-      delta = 1;
+      delta = 2;
       break;
   }
 

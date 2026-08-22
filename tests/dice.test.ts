@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { averageDamage, damageDistribution } from '../src/engine/dice';
+import {
+  averageDamage,
+  damageDistribution,
+  combineDistributions,
+  clearDistributionCache
+} from '../src/engine/dice';
 
 describe('averageDamage', () => {
   it('calculates average for a single die', () => {
@@ -44,7 +49,9 @@ describe('damageDistribution', () => {
     expect(distribution.min).toBe(6);
     expect(distribution.max).toBe(16);
     expect(distribution.mean).toBeCloseTo(11);
-    expect(distribution.outcomes.find((outcome) => outcome.damage === 11)?.probability).toBeCloseTo(6 / 36);
+    expect(distribution.outcomes.find((outcome) => outcome.damage === 11)?.probability).toBeCloseTo(
+      6 / 36
+    );
   });
 
   it('supports mixed dice terms, flat modifiers, and whitespace variants', () => {
@@ -53,7 +60,9 @@ describe('damageDistribution', () => {
     expect(distribution.min).toBe(5);
     expect(distribution.max).toBe(21);
     expect(distribution.mean).toBeCloseTo(13);
-    expect(distribution.outcomes.reduce((sum, outcome) => sum + outcome.probability, 0)).toBeCloseTo(1);
+    expect(
+      distribution.outcomes.reduce((sum, outcome) => sum + outcome.probability, 0)
+    ).toBeCloseTo(1);
   });
 
   it('supports flat damage formulas as degenerate distributions', () => {
@@ -66,7 +75,9 @@ describe('damageDistribution', () => {
   });
 
   it('throws for unsupported tagged or conditional formulas', () => {
-    expect(() => damageDistribution('2d8[persistent,fire]+4')).toThrow('Unsupported damage formula');
+    expect(() => damageDistribution('2d8[persistent,fire]+4')).toThrow(
+      'Unsupported damage formula'
+    );
     expect(() => damageDistribution('1d8+1d6 precision')).toThrow('Unsupported damage formula');
   });
 
@@ -89,6 +100,34 @@ describe('damageDistribution', () => {
   });
 
   it('throws when total dice exceeds budget', () => {
-    expect(() => damageDistribution('100d6+100d6+100d6+100d6+100d6+100d6+100d6+100d7')).toThrow('too many total dice');
+    expect(() => damageDistribution('100d6+100d6+100d6+100d6+100d6+100d6+100d6+100d7')).toThrow(
+      'too many total dice'
+    );
+  });
+});
+
+describe('damageDistribution cache', () => {
+  it('returns the same object for the same normalized formula', () => {
+    clearDistributionCache();
+    const a = damageDistribution('1d8 + 4');
+    const b = damageDistribution('1d8+4');
+    expect(a).toBe(b);
+    expect(Object.isFrozen(a)).toBe(true);
+  });
+});
+
+describe('combineDistributions', () => {
+  it('convolves two PMFs (1d4 + 1d4 == 2d4)', () => {
+    const sum = combineDistributions(damageDistribution('1d4'), damageDistribution('1d4'));
+    const direct = damageDistribution('2d4');
+    expect(sum.min).toBe(2);
+    expect(sum.max).toBe(8);
+    expect(sum.mean).toBeCloseTo(5);
+    expect(sum.outcomes).toEqual(
+      direct.outcomes.map((o) => ({
+        damage: o.damage,
+        probability: expect.closeTo(o.probability, 10)
+      }))
+    );
   });
 });

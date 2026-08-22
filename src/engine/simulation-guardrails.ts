@@ -40,6 +40,14 @@ export function validateSimulationConfig(config: SimulationConfig): void {
       );
     }
   }
+  if (
+    config.enemyStrikesPerTurn !== undefined &&
+    config.enemyStrikesPerTurn !== 1 &&
+    config.enemyStrikesPerTurn !== 2 &&
+    config.enemyStrikesPerTurn !== 3
+  ) {
+    throw new Error(`enemyStrikesPerTurn must be 1, 2, or 3, got ${config.enemyStrikesPerTurn}`);
+  }
 }
 
 /**
@@ -51,8 +59,7 @@ export function validateSimulationConfig(config: SimulationConfig): void {
  * Used by the worker to throttle postMessage progress events without
  * losing the final tick.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function throttleProgress<TArgs extends any[]>(
+export function throttleProgress<TArgs extends unknown[]>(
   callback: (...args: TArgs) => void,
   minIntervalMs: number,
   now: () => number = defaultNow
@@ -69,14 +76,14 @@ export function throttleProgress<TArgs extends any[]>(
       pending = args;
     }
   };
-  (wrapped as { flush: () => void }).flush = () => {
+  const flush = (): void => {
     if (pending) {
       callback(...pending);
       pending = null;
       lastFired = now();
     }
   };
-  return wrapped as ((...args: TArgs) => void) & { flush(): void };
+  return Object.assign(wrapped, { flush });
 }
 
 function defaultNow(): number {

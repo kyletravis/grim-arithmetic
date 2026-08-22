@@ -3,6 +3,7 @@ import { runSimulation } from '../src/engine/run-simulation';
 import {
   DEFAULT_MAX_ROUNDS,
   type EncounterSetup,
+  type IterationCount,
   type SimulationCombatant,
   type SimulationConfig
 } from '../src/engine/simulation-types';
@@ -28,8 +29,8 @@ import type { AttackSnapshot } from '../src/systems/base-adapter';
  *
  * Each PC gets 1 Hero Point and Battle Medicine by default so the rc.4
  * safety-net paths (Hero Point survival, Battle Medicine top-up) exercise.
- * mira specifically is built as a Cleric with prepared Heal spells +
- * Heal cantrip so the spell-slot path exercises too.
+ * mira specifically is built as a Cleric with prepared Heal spells so the
+ * spell-slot path exercises too.
  */
 const DEFAULT_PC_STRIKE: AttackSnapshot = {
   id: 'longsword',
@@ -42,10 +43,7 @@ const DEFAULT_PC_STRIKE: AttackSnapshot = {
   assumptions: []
 };
 
-function pc(
-  id: string,
-  overrides: Partial<SimulationCombatant> = {}
-): SimulationCombatant {
+function pc(id: string, overrides: Partial<SimulationCombatant> = {}): SimulationCombatant {
   const isMira = id === 'mira';
   return {
     id,
@@ -68,9 +66,8 @@ function pc(
       medicineDC: 15,
       hasBattleMedicine: true,
       battleMedicineUsedTargets: new Set(),
-      // Mira plays a Cleric with prepared Heal slots + cantrip.
-      healSpellSlotsRemaining: isMira ? { 1: 3, 2: 2 } : {},
-      healCantripLevel: isMira ? 4 : null
+      // Mira plays a Cleric with prepared Heal slots.
+      healSpellSlotsRemaining: isMira ? { 1: 3, 2: 2 } : {}
     },
     ...overrides
   };
@@ -91,6 +88,7 @@ function enemy(
     wounded: 0,
     doomed: 0,
     heroPoints: 0,
+    heroPointSurvivalUsed: false,
     downed: false,
     dead: false,
     initiativeBonus: 3,
@@ -114,13 +112,22 @@ function attack(overrides: Partial<AttackSnapshot> = {}): AttackSnapshot {
   };
 }
 
-function config(overrides: Partial<SimulationConfig> = {}): SimulationConfig {
+/**
+ * Tests intentionally run far fewer iterations than the production
+ * `IterationCount` options (1000/5000/10000) to keep the suite fast; the
+ * engine itself only requires a positive integer (validateSimulationConfig),
+ * so the override here is widened to plain `number` and cast at the edge.
+ */
+type ConfigOverrides = Omit<Partial<SimulationConfig>, 'iterations'> & { iterations?: number };
+
+function config(overrides: ConfigOverrides = {}): SimulationConfig {
+  const { iterations, ...rest } = overrides;
   return {
-    iterations: 1000,
+    iterations: (iterations ?? 1000) as IterationCount,
     tacticsProfile: 'focus-fire',
     maxRounds: DEFAULT_MAX_ROUNDS,
     seed: 'fixture',
-    ...overrides
+    ...rest
   };
 }
 
@@ -136,9 +143,18 @@ describe('simulation fixtures: 4 PCs vs 1 boss', () => {
     caveats: []
   };
 
-  for (const profile of ['random-legal', 'spread-damage', 'focus-fire', 'predator', 'boss-cinematic'] as const) {
+  for (const profile of [
+    'random-legal',
+    'spread-damage',
+    'focus-fire',
+    'predator',
+    'boss-cinematic'
+  ] as const) {
     it(`is stable under ${profile}`, () => {
-      const result = runSimulation(setup, config({ tacticsProfile: profile, seed: `4v1-${profile}` }));
+      const result = runSimulation(
+        setup,
+        config({ tacticsProfile: profile, seed: `4v1-${profile}` })
+      );
       expect({
         profile,
         anyPcDownProbability: result.anyPcDownProbability,
@@ -164,9 +180,18 @@ describe('simulation fixtures: 4 PCs vs 4 minions', () => {
     caveats: []
   };
 
-  for (const profile of ['random-legal', 'spread-damage', 'focus-fire', 'predator', 'boss-cinematic'] as const) {
+  for (const profile of [
+    'random-legal',
+    'spread-damage',
+    'focus-fire',
+    'predator',
+    'boss-cinematic'
+  ] as const) {
     it(`is stable under ${profile}`, () => {
-      const result = runSimulation(setup, config({ tacticsProfile: profile, seed: `4v4-${profile}` }));
+      const result = runSimulation(
+        setup,
+        config({ tacticsProfile: profile, seed: `4v4-${profile}` })
+      );
       expect({
         profile,
         anyPcDownProbability: result.anyPcDownProbability,
@@ -210,10 +235,11 @@ describe('simulation fixtures: 1 PC vs 1 enemy (parity with v0.5.0 pair detail)'
 
 describe('simulation fixtures: PCs act (v0.6.0-rc.3 regression net)', () => {
   it('4 PCs vs 1 boss now resolves in fewer rounds than rc.2 stones-baseline', () => {
-    // In rc.2 (PCs do nothing), this scenario hit the 5-round maxRounds cap
-    // almost every iteration. With PC actions in rc.3, the boss takes damage
-    // and the encounter ends earlier. Assert the run terminates strictly
-    // before maxRounds on this seed.
+    // In rc.2 (PCs do nothing), this scenario hit the maxRounds cap almost
+    // every iteration. With PC actions in rc.3, the boss takes damage and the
+    // encounter ends earlier — under the 10-round cap essentially every run
+    // resolves on its own. Assert the down risk stays well below the rc.2
+    // baseline on this seed.
     const setup: EncounterSetup = {
       pcs: [pc('mira'), pc('seam'), pc('jor'), pc('elya')],
       enemies: [
@@ -228,10 +254,14 @@ describe('simulation fixtures: PCs act (v0.6.0-rc.3 regression net)', () => {
       setup,
       config({ tacticsProfile: 'focus-fire', seed: 'pcs-act-sanity', iterations: 500 })
     );
-    // anyPcDown should drop dramatically compared to a no-action baseline; we
-    // don't pin an exact number (snapshot tests cover that), but a sanity
-    // check below the 100% rc.2 baseline catches regressions.
-    expect(result.anyPcDownProbability).toBeLessThan(0.95);
+    // We don't pin exact numbers (the snapshots cover that): the fight should
+    // resolve on its own rather than being cut off, and the party should
+    // survive it far more often than the rc.2 baseline TPK. anyPcDown is not
+    // the right signal here — it counts every mid-fight knockout, healed or
+    // not — so assert on the cap rate and TPK instead.
+    expect(result.roundCapRate).toBeLessThan(0.05);
+    expect(result.tpkProbability).toBeLessThan(0.2);
+    expect(result.safetyNet.meanHealsPerIteration).toBeGreaterThan(0);
   });
 });
 
@@ -255,12 +285,13 @@ describe('simulation fixtures: degenerate setups', () => {
         pc('mira', { hp: { current: 2, max: 24, temp: 0 } }),
         pc('seam', { hp: { current: 2, max: 24, temp: 0 } })
       ],
-      enemies: [
-        enemy('boss', [attack({ attackBonus: 25, damageFormula: '5d10+10' })])
-      ],
+      enemies: [enemy('boss', [attack({ attackBonus: 25, damageFormula: '5d10+10' })])],
       caveats: []
     };
-    const result = runSimulation(setup, config({ iterations: 500, seed: 'tpk-fixture', tacticsProfile: 'spread-damage' }));
+    const result = runSimulation(
+      setup,
+      config({ iterations: 500, seed: 'tpk-fixture', tacticsProfile: 'spread-damage' })
+    );
     expect({
       anyPcDownProbability: result.anyPcDownProbability,
       tpkProbability: result.tpkProbability,

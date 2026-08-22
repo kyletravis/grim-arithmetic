@@ -1,4 +1,4 @@
-import { DEFAULT_STRIKES_PER_TURN, type TacticsProfile, type TurnPlanStrike } from './tactics-types';
+import type { TacticsProfile, TurnPlanStrike } from './tactics-types';
 import { getStandingPcs } from './shared';
 
 /**
@@ -16,7 +16,8 @@ export const randomLegalTactics: TacticsProfile = {
       return { strikes: [] };
     }
     const strikes: TurnPlanStrike[] = [];
-    for (let i = 0; i < DEFAULT_STRIKES_PER_TURN; i += 1) {
+    const strikeCount = Math.min(3, context.strikesPerTurn);
+    for (let i = 0; i < strikeCount; i += 1) {
       const target = targets[rng.nextInt(0, targets.length - 1)];
       const attack = context.attacker.attacks[rng.nextInt(0, context.attacker.attacks.length - 1)];
       strikes.push({ attackId: attack.id, targetId: target.id, mapIndex: i as 0 | 1 | 2 });

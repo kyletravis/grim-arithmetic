@@ -12,7 +12,9 @@ export interface AttackOutcomeProbabilities {
   criticalFailure: number;
 }
 
-export function attackOutcomeProbabilities(input: AttackProbabilityInput): AttackOutcomeProbabilities {
+export function attackOutcomeProbabilities(
+  input: AttackProbabilityInput
+): AttackOutcomeProbabilities {
   const counts: Record<DegreeOfSuccess, number> = {
     criticalSuccess: 0,
     success: 0,

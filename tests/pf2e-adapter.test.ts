@@ -54,7 +54,10 @@ describe('Pf2eAdapter combatant extraction', () => {
       deathState: { dying: 0, wounded: 1, doomed: 0, heroPoints: 1 },
       traits: ['human', 'druid'],
       damageAdjustments: {
-        resistances: [{ type: 'fire', value: 5 }, { type: 'physical', value: 3 }],
+        resistances: [
+          { type: 'fire', value: 5 },
+          { type: 'physical', value: 3 }
+        ],
         weaknesses: [{ type: 'cold', value: 4 }],
         immunities: ['poison']
       }
@@ -76,10 +79,29 @@ describe('Pf2eAdapter combatant extraction', () => {
 
     expect(adapter.getCombatantFromToken(token)).toBeNull();
   });
+
+  it('reads initiative bonus from system.perception.mod (remaster shape)', () => {
+    const adapter = new Pf2eAdapter();
+    const snapshot = adapter.getCombatantFromToken({
+      id: 't',
+      name: 'Mira',
+      document: { disposition: 1 },
+      actor: {
+        id: 'a',
+        name: 'Mira',
+        type: 'character',
+        system: {
+          attributes: { hp: { value: 20, max: 20 }, ac: { value: 18 } },
+          perception: { mod: 7 }
+        }
+      }
+    });
+    expect(snapshot?.initiativeBonus).toBe(7);
+  });
 });
 
 describe('Pf2eAdapter Strike extraction', () => {
-  it('extracts first-pass PF2e melee Strike snapshots from item data', () => {
+  it('extracts first-pass PF2e Strike snapshots from melee item data', () => {
     const adapter = new Pf2eAdapter();
     const token = {
       actor: {

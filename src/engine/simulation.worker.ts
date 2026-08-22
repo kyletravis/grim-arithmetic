@@ -53,8 +53,7 @@ ctx.addEventListener('message', (event) => {
   if (message.type === 'run') {
     abortFlag = false;
     const sendProgress = throttleProgress(
-      (completed: number, total: number) =>
-        ctx.postMessage({ type: 'progress', completed, total }),
+      (completed: number, total: number) => ctx.postMessage({ type: 'progress', completed, total }),
       100
     );
 

@@ -2,11 +2,51 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.9.0-rc1 - Review fixes: PC strike extraction, rules fidelity, deadly/fatal, auto-refresh
+
+Release candidate implementing the 2026-08 full-module review. **Simulation numbers change** in this release.
+
+### Fixes
+
+- **Default enemy Strike count** setting now actually drives the Encounter Danger Board, the Pair Detail starting value, and simulated enemies in the Encounter Forecast (previously registered but unused).
+- PC Strikes are now extracted from live PF2e strike data (attack `totalModifier` + weapon dice × striking rune + ability modifier) instead of silently falling back to potency-rune-only weapon items; extraction assumptions appear under "Other modeling assumptions".
+- PC Strike damage uses STR for melee/thrown weapons (finesse affects only the attack roll) unless the character has the thief racket, in which case DEX is used when higher.
+- Thief-racket DEX damage applies only to finesse weapons.
+- Tooltip delay (750 ms) now applies only inside Grim Arithmetic windows, GM only — no longer changes Foundry/other modules' tooltips or players' clients.
+- Encounter Forecast: cancelling/closing mid-run can no longer let a stale run overwrite a newer one; progress updates no longer re-render the whole window.
+- Encounter Danger Board is a single window (no duplicate instances); PCs already at 0 HP are excluded with a note instead of showing 100%.
+- Encounter Danger Board shows an "Unsupported game system" note (and the module disables itself with a console warning) when the world is not running PF2e.
+- Handlebars helper renamed to `grimEq` (no longer overrides Foundry's core `eq`).
+- Initiative bonus and Medicine modifier read the remaster `.mod` fields.
+
+### Simulation (PF2e rules fidelity)
+
+- Battle Medicine uses the Treat Wounds table (DC 15/20/30/40 → 2d8 / +10 / +30 / +50; crit doubles dice), choosing the highest proficiency-allowed DC the healer hits ≥ 50% of the time.
+- 1-action Heal heals `rank`d8; the non-existent "Heal cantrip" and the unused 3-action Heal paths were removed.
+- Any healing to 1+ HP clears dying and wakes the PC; leaving dying (heal or recovery check) adds Wounded; a stabilized 0-HP PC hit again gets 1 + Wounded dying.
+- Recovery checks now follow the rulebook degrees: critical success −2 dying, success −1, failure +1, critical failure +2 (previously failure/critical failure were 0/+1).
+- Round cap raised to 10; the share of runs that hit the cap is reported as a caveat.
+- "Any PC down" and per-PC "Down" now count a PC that reached 0 HP at any point in a run, even if later healed; TPK and death remain end-of-run. The high-risk banner now triggers on TPK ≥ 35% or any PC's death chance ≥ 35% instead of on any-PC-down.
+- PC healers now also treat a stabilized, unconscious ally (0 HP, not dying) as an emergency heal target.
+
+### New
+
+- **Deadly** and **fatal** weapon traits are modeled in critical-hit damage (Danger Board, Pair Detail, and Forecast).
+- Encounter Danger Board auto-refreshes when the combat, combatants, actors, or tokens change.
+- `game.modules.get('grim-arithmetic').api.exportLiveFixture()` dumps a pruned actor fixture for bug reports / regression tests.
+- `exportLiveFixture()` / debug capture now record each PC strike's `ready` flag; the adapter prefers ready (held) weapons when PF2e marks them.
+
+### Internal
+
+- TypeScript type-checking is now part of `npm run check` and CI; risk bands, panel controls, CI statistics, and record helpers have single homes; `damageDistribution` is memoized; adapter split into PC strikes / PC capabilities; adapter registry with a game-system guard; dev-dependency security bumps, SHA-pinned actions, Dependabot.
+- `npm run check` now also type-checks; `format:check` and `npm audit --audit-level=high` run in CI; `.prettierignore` added.
+
 ## v0.8.1 - Foundry v14.364 compatibility
 
 Compatibility bump only; no changes to the underlying mortality math.
 
 ### Compatibility
+
 - Verified against **Foundry VTT v14.364**.
 
 ## v0.8.0 - README stats and module.zip downloads
@@ -14,6 +54,7 @@ Compatibility bump only; no changes to the underlying mortality math.
 Repository-facing polish; no changes to the underlying mortality math.
 
 ### Repository & releases
+
 - Renamed the release archive from `grim-arithmetic-v<version>.zip` to a stable `module.zip` (the version stays in the release path), so the download count can be tracked accurately atop the README (KHT-130).
 - Added Latest Release, Downloads, Foundry Verified, and License badges to the top of the README (KHT-130).
 
@@ -26,10 +67,12 @@ First release using updated CI process. No other material changes.
 Release candidate focused on decluttering and unifying the three windows; no changes to the underlying mortality math (KHT-129).
 
 ### Usability
+
 - **Encounter Forecast**: shows only the selected tactics profile's description instead of all five; keeps the vital "not modeled" caveat inline and collapses the rest; moves the high-risk warning below the statistics; adds a "Forecast Completed" status chip; the run button toggles to Cancel while running; light dividers separate the result tables.
 - **Encounter Danger Board**: the version now sits as small text under the title; a single-line risk-band legend (Grim → Low) with thresholds sits above the lists; removed the redundant header instruction line; each row shows the risk label before the percentage; the window starts wider; tighter row spacing.
 
 ### Look & feel
+
 - Unified typography across all three windows on Foundry's native Signika body font with Modesto Condensed titles, replacing the previous mix of fonts.
 - Optimized spacing, sizing, and semantic box colors throughout.
 
@@ -38,6 +81,7 @@ Release candidate focused on decluttering and unifying the three windows; no cha
 Release candidate building on v0.7.2-rc1; no changes to the underlying mortality math.
 
 ### Usability
+
 - The **Encounter Forecast**'s Biggest Threats table now lists enemies from most to least dangerous, sorted by their share of total damage descending; enemies showing the same percentage are ordered alphabetically by name (KHT-126).
 - The **Encounter Forecast**'s Most Likely to Drop table now lists party members from most to least at risk, sorted by their chance of being downed descending; party members showing the same percentage are ordered alphabetically by name (KHT-127).
 
@@ -46,6 +90,7 @@ Release candidate building on v0.7.2-rc1; no changes to the underlying mortality
 Release candidate. Three usability fixes on top of v0.7.1; no changes to the underlying mortality math.
 
 ### Usability
+
 - The Grim Arithmetic settings section is now GM-only — regular players no longer see any module options (KHT-118). The GM-facing options carry clearer descriptions of what each one does.
 - Hover help across all three windows now waits a beat (750ms) before appearing, so tooltips no longer flicker continuously while scanning down a list of values (KHT-120).
 - The risk-rating tooltip now spells out the full ladder — Low, Guarded, Dangerous, Severe, Grim, with the chance-of-being-downed band for each — instead of just "Low → Grim" (KHT-121).
@@ -55,13 +100,16 @@ Release candidate. Three usability fixes on top of v0.7.1; no changes to the und
 Builds on v0.7.0's ApplicationV2 migration with internationalization groundwork, on-hover help across every window, clearer tactics options, and a real CI/release pipeline. No changes to the underlying mortality math.
 
 ### Internationalization (i18n)
+
 - The GM-facing UI is now translation-ready. The three settings, all window titles, and every static label, heading, button, and tooltip across the **Encounter Danger Board**, **Pair Detail**, and **Encounter Forecast** load from a bundled language file (`lang/en.json`). English ships in the box, with no visible change for English users.
 
 ### Usability
+
 - On-hover descriptions on every labeled metric, control, and table header across all three windows — e.g. "Any PC down", "TPK risk", "Recovery checks per run", "MAP", "Damage swing", "Dying if downed" (KHT-108).
 - The **Encounter Forecast** lists an inline definition for each tactics profile (Random Legal, Spread Damage, Focus Fire, Predator, Boss Cinematic) above the selector, and tactics labels read more clearly (KHT-111).
 
 ### Compatibility & packaging
+
 - Verified against **Foundry VTT v14.363**.
 - Removed the unknown `system`/`templates` manifest keys that triggered a Foundry package warning.
 - Added GitHub Actions CI (lint + tests + build on every push/PR) and a tag-driven release workflow; published the `docs/` reference set on GitHub.
@@ -71,10 +119,12 @@ Builds on v0.7.0's ApplicationV2 migration with internationalization groundwork,
 Release candidate adding internationalization (i18n) scaffolding so the GM-facing UI can be translated, plus developer tooling. No visible text changes for English users.
 
 ### Internationalization (i18n)
+
 - All UI chrome now loads strings from a language file (`lang/en.json`) through Foundry's localization system: the three settings, the three window titles, and every static label, heading, button, and tooltip across the **Encounter Danger Board**, **Pair Detail**, and **Encounter Forecast** windows. English ships in the box, and the module is now translation-ready.
 - Engine-generated caveats and risk labels remain English for now and are tracked for a follow-up pass (KHT-112).
 
 ### Tooling & docs
+
 - Added GitHub Actions: `test.yml` (lint + tests + build on every push/PR) and `release.yml` (tag-driven release with automatic prerelease detection for `-rc` tags).
 - Published the `docs/` reference set (install, testing, release, arithmetic) on GitHub; release packaging now bundles `lang/`.
 
@@ -83,6 +133,7 @@ Release candidate adding internationalization (i18n) scaffolding so the GM-facin
 Release candidate adding inline definitions for the Encounter Forecast's tactics profiles, plus label polish.
 
 ### Tactics profile definitions (KHT-111)
+
 - The **Encounter Forecast** window now shows a bulleted list defining each tactics profile (Random Legal, Spread Damage, Focus Fire, Predator, Boss Cinematic) directly above the **Tactics Profile** dropdown. Definitions are driven by the engine's existing `TACTICS_PROFILE_DESCRIPTIONS`, so they stay in sync with simulation behavior.
 - Capitalized the second word of each multi-word tactics label and the word "Profile" in the control heading.
 - Bumped verified Foundry compatibility to **v14.363**.
@@ -92,10 +143,12 @@ Release candidate adding inline definitions for the Encounter Forecast's tactics
 Release candidate adding on-hover descriptions across all three GM windows so the dense PF2e mortality metrics explain themselves.
 
 ### Hover descriptions (KHT-108)
+
 - Every labeled metric, control, and table header in the **Encounter Forecast**, **Encounter Danger Board**, and **Pair Detail** windows now carries a `data-tooltip` describing what it means — e.g. "Any PC down", "TPK risk", "Recovery checks per run", "Hero Point saves", "MAP", "Damage swing", "Dying if downed".
 - Uses Foundry v13+'s native `data-tooltip` tooltip system, so no extra JavaScript or CSS is required and the panel context builders are unchanged.
 
 ### Manifest cleanup
+
 - Removed the unknown `system` and `templates` keys from `module.json` that triggered a Foundry package warning. The `pf2e` system requirement is already declared via `relationships.systems`, and templates are loaded at runtime through each panel's ApplicationV2 `static PARTS`.
 
 ## v0.7.0 - ApplicationV2 migration + readability tweaks
@@ -103,12 +156,14 @@ Release candidate adding on-hover descriptions across all three GM windows so th
 v0.7.0 migrates Grim Arithmetic's three windows off the deprecated V1 `Application` framework so Foundry v13+ no longer logs a console deprecation warning, plus a small set of UX fixes against the V2 dark window theme.
 
 ### UI tweaks
+
 - Pair Detail and Encounter Forecast windows are bounded (640 / 720) and resizable, with `.window-content` set to `overflow-y: auto` so long content scrolls inside the window instead of being clipped below the viewport.
 - In-content headers simplified: Pair Detail shows `Pair Detail`, Encounter Forecast shows `Encounter Forecast` (the full `Grim Arithmetic — <panel>` label stays in the window chrome title bar).
 - Pair Detail labels (form `<label>`, summary `<dt>`) inherit the V2 window's primary text color instead of the hard-coded dark brown that read as muddy orange on the dark window background.
 - Encounter Danger Board: `Encounter Forecast` button moved before `Detail Selection + Target`, both buttons re-cased to title-case.
 
 ### Foundry framework migration (KHT-106)
+
 - **Encounter Danger Board**, **Pair Detail**, and **Encounter Forecast** now extend `foundry.applications.api.HandlebarsApplicationMixin(ApplicationV2)`.
 - V1 `defaultOptions` getter → V2 `static DEFAULT_OPTIONS` (window/position/classes/actions sub-objects).
 - V1 `getData()` → V2 `_prepareContext()`. Return shapes (`DangerBoardPanelData`, `MortalityPanelData`, `ForecastPanelData`) are unchanged, so all 322 unit tests pass without modification.
@@ -124,22 +179,27 @@ v0.7.0 migrates Grim Arithmetic's three windows off the deprecated V1 `Applicati
 Bugfix release surfacing the Phase I-A safety-net stats that v0.6.0 was already computing but never displaying, plus a more robust PF2e Heal-spell extractor for real-world prepared-caster actors.
 
 ### Forecast panel
+
 - Added a "Heals per run / Recovery checks per run / Hero Point saves" row under the headline metrics so GMs can see whether PC healing, recovery checks, and Hero Point death prevention actually fired during the simulation (KHT-105).
 
 ### PF2e adapter — heal-capability extraction
+
 - Prepared casters: `extractHealCapability` now walks `spellcastingEntry.system.slots.slotN.prepared` (the canonical PF2e v6+ shape) and counts un-expended preparations whose `id` references a Heal spell item, instead of only reading a `slotsRemaining` field that real PF2e prepared casters do not populate. This is the root-cause fix for "Mira's heals never fire."
 - Spontaneous casters: when an entry's `prepared.value === 'spontaneous'` and Heal is in its spell list, the entry's per-rank `value` (remaining slots) is counted as Heal-castable.
 - Item access now prefers `actor.itemTypes.<type>` (PF2e's pre-filtered arrays) over walking `actor.items`, with the latter as a fallback. Removes one class of "items collection looked empty" failure modes.
 - Legacy item-level `slotsRemaining` fallback retained for completeness so existing synthetic fixtures still pass.
 
 ### Debug logging
+
 - When the **Debug logging** module setting is enabled, the encounter setup builder logs each PC's extracted healing capability (Battle Medicine, Heal cantrip, Heal spell slots, Medicine modifier, Medicine DC).
 - The PF2e adapter additionally emits a verbose `extraction probe` log per PC dumping item-type counts, every Heal spell found, and the raw slot/prepared structure for each spellcasting entry — so future shape mismatches between Grim Arithmetic and the PF2e system can be diagnosed from a console paste without source access.
 
 ### Cleanup
+
 - Removed two dead identifiers (`ITERATION_CHOICES`, an unused `totalIterations` parameter) that were tripping `npm run lint`.
 
 ### Known issues (deferred to v0.7.0)
+
 - Foundry v13+ logs a console deprecation warning for the V1 Application framework. The warning is non-fatal until Foundry v16; the three panels (Encounter Danger Board, Pair Detail, Forecast) will be migrated to `ApplicationV2` in v0.7.0 (KHT-106).
 - A `"message channel closed before a response was received"` console error reported in some sessions traces to a browser extension's `chrome.runtime.onMessage` listener, not Grim Arithmetic. The module uses zero Chrome extension APIs (KHT-107 — closed as external).
 
@@ -148,6 +208,7 @@ Bugfix release surfacing the Phase I-A safety-net stats that v0.6.0 was already 
 v0.6.0 introduces a Monte Carlo encounter simulation engine, a Forecast panel, and Phase I-A PC survival mechanics. The following summarizes the main changes across all rc releases.
 
 ### Monte Carlo simulation engine
+
 - New pure-TypeScript Monte Carlo engine with seeded determinism (`mulberry32` PRNG + `xmur3` hash).
 - Five tactics profiles: **random-legal**, **spread-damage**, **focus-fire**, **predator**, **boss-cinematic**.
 - Round orchestrator aggregates any-PC-down, TPK, mean/median rounds-to-first-down, per-PC down/death/HP, per-enemy damage share and top target.
@@ -156,6 +217,7 @@ v0.6.0 introduces a Monte Carlo encounter simulation engine, a Forecast panel, a
 - Default round cap lowered from 10 to 5 to keep no-action simulation in a plausible range.
 
 ### Forecast panel
+
 - New ~800w Forecast window opened from the Encounter Danger Board header.
 - Headline metrics (Any PC down, TPK risk, Expected first down) with active tactics profile name + description.
 - Per-PC table rows with down %, death %, and mean first-down round.
@@ -164,6 +226,7 @@ v0.6.0 introduces a Monte Carlo encounter simulation engine, a Forecast panel, a
 - Simplified UI: fixed 5,000 iterations, removed seed input, default tactics changed to **Spread damage**.
 
 ### Phase I-A: PC survival mechanics
+
 - PCs now take 2 Strikes per turn against the most-dangerous standing enemy in the simulation.
 - PF2e adapter extracts PC Strikes from `actor.system.actions` with equipped-weapon fallback.
 - **Healing**: Battle Medicine (Medicine check vs DC, proficiency-scaled heal, crit-fail collateral), Heal spell 1/2/3-action variants, Heal cantrip with heightened scaling. Heal on a dying target clears dying per PF2e.
@@ -173,11 +236,13 @@ v0.6.0 introduces a Monte Carlo encounter simulation engine, a Forecast panel, a
 - `SimulationResult.safetyNet` aggregates (`meanHealsPerIteration`, `meanRecoveryChecksPerIteration`, `heroPointSurvivalRate`) surface in the UI.
 
 ### Other changes
+
 - Forecast assumption block rewritten to reflect the active PC model.
 - Fixture snapshots regenerated across all five tactics profiles (13 snapshots).
 - `docs/ARITHMETIC.md` updated with the Monte Carlo pipeline, tactics profiles, seeding rules, and the "not modeled" scope.
 
 Still **not modeled** (deferred to later milestones):
+
 - Shield Block and Champion reactions (Liberator/Redeemer/Paladin)
 - Spells beyond Heal / save-based threat modeling
 - Persistent damage

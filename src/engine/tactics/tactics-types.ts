@@ -32,11 +32,17 @@ export interface TacticsContext {
   pcs: readonly SimulationCombatant[];
   enemies: readonly SimulationCombatant[];
   round: number;
+  /**
+   * Strikes this actor takes this turn; enemies from
+   * SimulationConfig.enemyStrikesPerTurn, PCs DEFAULT_STRIKES_PER_TURN.
+   */
+  strikesPerTurn: number;
 }
 
 /** Pluggable enemy decision policy. */
 export interface TacticsProfile {
-  id: TacticsProfileId;
+  /** 'pc-default' marks the built-in PC profile, which is not GM-selectable. */
+  id: TacticsProfileId | 'pc-default';
   description: string;
   chooseTurn(context: TacticsContext, rng: Rng): TurnPlan;
 }

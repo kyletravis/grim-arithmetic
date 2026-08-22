@@ -18,14 +18,16 @@ if (!newVersion) {
 
 if (!VERSION_RE.test(newVersion)) {
   stderr.write(`Error: invalid version "${newVersion}".\n`);
-  stderr.write('Expected format: X.Y.Z or X.Y.Z-<prerelease> (e.g. 0.7.3, 0.7.3-rc1, 1.0.0-beta2)\n');
+  stderr.write(
+    'Expected format: X.Y.Z or X.Y.Z-<prerelease> (e.g. 0.7.3, 0.7.3-rc1, 1.0.0-beta2)\n'
+  );
   exit(1);
 }
 
 const files = {
   packageJson: join(root, 'package.json'),
   packageLock: join(root, 'package-lock.json'),
-  moduleJson: join(root, 'module.json'),
+  moduleJson: join(root, 'module.json')
 };
 
 for (const [name, filePath] of Object.entries(files)) {

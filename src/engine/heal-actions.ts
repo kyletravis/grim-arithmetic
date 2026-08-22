@@ -4,18 +4,10 @@ import type { Rng } from './prng';
 import type { SimulationCombatant } from './simulation-types';
 
 /** Method of healing. */
-export type HealKind =
-  | 'battle-medicine'
-  | 'heal-spell-1action'
-  | 'heal-spell-2action'
-  | 'heal-spell-3action'
-  | 'heal-cantrip-1action'
-  | 'heal-cantrip-2action';
+export type HealKind = 'battle-medicine' | 'heal-spell-1action' | 'heal-spell-2action';
 
 export interface HealSampleInput {
   kind: HealKind;
-  /** PF2e character level of the healer (for cantrip scaling). */
-  healerLevel?: number;
   /** Heal spell rank (1-10). For spell variants only. */
   spellRank?: number;
   /** Medicine check modifier. For battle-medicine only. */
@@ -34,23 +26,54 @@ export interface HealSampleResult {
 }
 
 /**
+ * PF2e Treat Wounds / Battle Medicine table: a higher DC heals more but
+ * requires the matching Medicine proficiency rank.
+ */
+const BATTLE_MEDICINE_TABLE: ReadonlyArray<{
+  dc: 15 | 20 | 30 | 40;
+  minRank: number;
+  bonus: number;
+}> = [
+  { dc: 15, minRank: 1, bonus: 0 },
+  { dc: 20, minRank: 2, bonus: 10 },
+  { dc: 30, minRank: 3, bonus: 30 },
+  { dc: 40, minRank: 4, bonus: 50 }
+];
+
+/** Highest DC the healer's proficiency allows AND hits (total >= DC) on at least 50% of d20 rolls, i.e. DC - modifier <= 11. */
+export function selectBattleMedicineDc(
+  rank: number | undefined,
+  modifier: number | undefined
+): 15 | 20 | 30 | 40 {
+  const r = rank ?? 1;
+  const m = modifier ?? 0;
+  let chosen: 15 | 20 | 30 | 40 = 15;
+  for (const row of BATTLE_MEDICINE_TABLE) {
+    if (r >= row.minRank && row.dc - m <= 11) chosen = row.dc;
+  }
+  return chosen;
+}
+
+/** Healing bonus granted by the Treat Wounds table for a given DC. */
+export function battleMedicineBonusFor(dc: number): number {
+  return BATTLE_MEDICINE_TABLE.find((row) => row.dc === dc)?.bonus ?? 0;
+}
+
+/**
  * Sample a healing action's outcome using the seeded RNG. Pure function;
  * the caller (orchestrator / tactics) applies the heal to the target.
  *
- * PF2e formulas (rc.4 simplification — proficiency bonuses approximate
- * the rulebook scaling but do not yet model treat-wounds-medicine-feats
- * like Continual Recovery or Risky Surgery):
+ * PF2e formulas:
  *
- *  - Battle Medicine: Medicine check vs DC.
- *    crit-success: 4d8 + 8 healed.
- *    success:      2d8 + 4 healed.
+ *  - Battle Medicine: Medicine check against a DC from the Treat Wounds
+ *    table (DC 15 / 20 / 30 / 40 for trained / expert / master / legendary,
+ *    granting +0 / +10 / +30 / +50 healing).
+ *    crit-success: 4d8 + table bonus healed.
+ *    success:      2d8 + table bonus healed.
  *    failure:      0 healed.
  *    crit-failure: 0 healed, target takes 1d8 damage.
- *  - Heal spell 1-action: 1d10 single target.
- *  - Heal spell 2-action: 1d8 + 8 per rank.
- *  - Heal spell 3-action: 1d8 + 8 per rank (AoE; sim ignores positioning).
- *  - Heal cantrip 1-action: 1d10 single target (cantrip never adds modifiers).
- *  - Heal cantrip 2-action: (1 + ceil(level/2)) * d8 (heightened scaling).
+ *  - Heal spell 1-action (touch): rank d8.
+ *  - Heal spell 2-action (30 ft): rank d8 + 8 per rank.
  *
  * Returns the rolled heal amount; the caller writes it to the target.
  */
@@ -58,15 +81,16 @@ export function sampleHealAction(input: HealSampleInput, rng: Rng): HealSampleRe
   switch (input.kind) {
     case 'battle-medicine': {
       const dc = input.medicineDC ?? 15;
+      const bonus = battleMedicineBonusFor(dc);
       const modifier = input.medicineModifier ?? 0;
       const die = rng.nextInt(1, 20);
       const total = die + modifier;
       const degree = degreeOfSuccess({ die, total, dc });
       switch (degree) {
         case 'criticalSuccess':
-          return { healedAmount: rollFormula('4d8+8', rng), degree };
+          return { healedAmount: rollFormula(withBonus('4d8', bonus), rng), degree };
         case 'success':
-          return { healedAmount: rollFormula('2d8+4', rng), degree };
+          return { healedAmount: rollFormula(withBonus('2d8', bonus), rng), degree };
         case 'failure':
           return { healedAmount: 0, degree };
         case 'criticalFailure':
@@ -79,50 +103,39 @@ export function sampleHealAction(input: HealSampleInput, rng: Rng): HealSampleRe
       // exhaustive — unreachable
       return { healedAmount: 0, degree };
     }
-    case 'heal-spell-1action':
-      return { healedAmount: rollFormula('1d10', rng) };
+    case 'heal-spell-1action': {
+      const rank = Math.max(1, input.spellRank ?? 1);
+      return { healedAmount: rollFormula(`${rank}d8`, rng) };
+    }
     case 'heal-spell-2action': {
       const rank = Math.max(1, input.spellRank ?? 1);
       return { healedAmount: rollFormula(`${rank}d8+${rank * 8}`, rng) };
     }
-    case 'heal-spell-3action': {
-      const rank = Math.max(1, input.spellRank ?? 1);
-      return { healedAmount: rollFormula(`${rank}d8+${rank * 8}`, rng) };
-    }
-    case 'heal-cantrip-1action':
-      return { healedAmount: rollFormula('1d10', rng) };
-    case 'heal-cantrip-2action': {
-      const level = Math.max(1, input.healerLevel ?? 1);
-      const diceCount = 1 + Math.ceil(level / 2);
-      return { healedAmount: rollFormula(`${diceCount}d8`, rng) };
-    }
   }
+}
+
+function withBonus(dice: string, bonus: number): string {
+  return bonus > 0 ? `${dice}+${bonus}` : dice;
 }
 
 /**
  * Apply a heal to a combatant. Returns a new immutable state with HP
  * raised by `amount`, clamped at max HP.
  *
- * Heal spells cast on a dying target also remove dying (per PF2e rules);
- * the caller signals this via `clearsDying = true` (set by the heal-spell
- * tactics path; Battle Medicine does NOT clear dying).
+ * PF2e: any healing that brings a dying creature to 1+ HP removes the dying
+ * condition and wakes them; losing the dying condition increases wounded by
+ * 1. A creature that is unconscious at 0 HP without dying (e.g. stabilized
+ * by a Hero Point) simply wakes, with no extra wounded.
  */
-export function applyHeal(
-  target: SimulationCombatant,
-  amount: number,
-  options: { clearsDying?: boolean } = {}
-): SimulationCombatant {
-  if (amount <= 0 && !options.clearsDying) return target;
-  const healed = Math.min(target.hp.max, target.hp.current + Math.max(0, amount));
-  const next: SimulationCombatant = {
-    ...target,
-    hp: { ...target.hp, current: healed }
-  };
-  if (options.clearsDying && next.dying > 0) {
+export function applyHeal(target: SimulationCombatant, amount: number): SimulationCombatant {
+  if (amount <= 0) return target;
+  const healed = Math.min(target.hp.max, target.hp.current + amount);
+  const next: SimulationCombatant = { ...target, hp: { ...target.hp, current: healed } };
+  if (healed > 0 && (target.dying > 0 || target.downed)) {
+    // PF2e: you lose dying and wake the moment you have 1+ HP; losing dying raises wounded.
+    if (target.dying > 0) next.wounded = target.wounded + 1;
     next.dying = 0;
-    // Dying gets cleared, but the PC may still be at 0 HP if the heal
-    // didn't restore HP. The orchestrator decides if downed flips back.
-    if (healed > 0) next.downed = false;
+    next.downed = false;
   }
   return next;
 }
