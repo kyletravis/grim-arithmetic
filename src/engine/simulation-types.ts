@@ -3,11 +3,7 @@ import type { AttackSnapshot, DamageAdjustments } from '../systems/base-adapter'
 
 /** Tactics profile identifiers shipped in v0.6.0. */
 export type TacticsProfileId =
-  | 'random-legal'
-  | 'spread-damage'
-  | 'focus-fire'
-  | 'predator'
-  | 'boss-cinematic';
+  'random-legal' | 'spread-damage' | 'focus-fire' | 'predator' | 'boss-cinematic';
 
 /** Iteration counts the GM can select in the Forecast window. */
 export type IterationCount = 1000 | 5000 | 10000;

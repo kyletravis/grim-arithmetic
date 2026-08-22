@@ -106,8 +106,7 @@ export function getEncounterParticipants<TokenLike extends { name?: string }>(
   options: ResolveOptions = {}
 ): EncounterParticipants<TokenLike> {
   const combat = game.combat as
-    | { combatants?: Iterable<{ token?: { object?: TokenLike } | TokenLike }> }
-    | undefined;
+    { combatants?: Iterable<{ token?: { object?: TokenLike } | TokenLike }> } | undefined;
   const combatants = combat?.combatants
     ? Array.from(combat.combatants).map((c) => ({ token: extractCombatantToken<TokenLike>(c) }))
     : undefined;
