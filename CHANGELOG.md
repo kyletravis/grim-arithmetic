@@ -2,6 +2,49 @@
 
 All notable changes to Grim Arithmetic are documented here.
 
+## v0.9.0 - PC strike fidelity, PF2e rules accuracy, deadly/fatal, Danger Board auto-refresh
+
+Promotes v0.9.0-rc1 after a soak period. Implements the 2026-08 full-module review. **Simulation numbers change** in this release (see the Simulation section) — the rc1 notes are consolidated below.
+
+### Fixes
+
+- **Default enemy Strike count** setting now actually drives the Encounter Danger Board, the Pair Detail starting value, and simulated enemies in the Encounter Forecast (previously registered but unused).
+- PC Strikes are now extracted from live PF2e strike data (attack `totalModifier` + weapon dice × striking rune + ability modifier) instead of silently falling back to potency-rune-only weapon items; extraction assumptions appear under "Other modeling assumptions".
+- PC Strike damage uses STR for melee/thrown weapons (finesse affects only the attack roll) unless the character has the thief racket, in which case DEX is used when higher.
+- Thief-racket DEX damage applies only to finesse weapons.
+- Tooltip delay (750 ms) now applies only inside Grim Arithmetic windows, GM only — no longer changes Foundry/other modules' tooltips or players' clients.
+- Encounter Forecast: cancelling/closing mid-run can no longer let a stale run overwrite a newer one; progress updates no longer re-render the whole window.
+- Encounter Danger Board is a single window (no duplicate instances); PCs already at 0 HP are excluded with a note instead of showing 100%.
+- Encounter Danger Board shows an "Unsupported game system" note (and the module disables itself with a console warning) when the world is not running PF2e.
+- Handlebars helper renamed to `grimEq` (no longer overrides Foundry's core `eq`).
+- Initiative bonus and Medicine modifier read the remaster `.mod` fields.
+
+### Simulation (PF2e rules fidelity)
+
+- Battle Medicine uses the Treat Wounds table (DC 15/20/30/40 → 2d8 / +10 / +30 / +50; crit doubles dice), choosing the highest proficiency-allowed DC the healer hits ≥ 50% of the time.
+- 1-action Heal heals `rank`d8; the non-existent "Heal cantrip" and the unused 3-action Heal paths were removed.
+- Any healing to 1+ HP clears dying and wakes the PC; leaving dying (heal or recovery check) adds Wounded; a stabilized 0-HP PC hit again gets 1 + Wounded dying.
+- Recovery checks now follow the rulebook degrees: critical success −2 dying, success −1, failure +1, critical failure +2 (previously failure/critical failure were 0/+1).
+- Round cap raised to 10; the share of runs that hit the cap is reported as a caveat.
+- "Any PC down" and per-PC "Down" now count a PC that reached 0 HP at any point in a run, even if later healed; TPK and death remain end-of-run. The high-risk banner now triggers on TPK ≥ 35% or any PC's death chance ≥ 35% instead of on any-PC-down.
+- PC healers now also treat a stabilized, unconscious ally (0 HP, not dying) as an emergency heal target.
+
+### New
+
+- **Deadly** and **fatal** weapon traits are modeled in critical-hit damage (Danger Board, Pair Detail, and Forecast).
+- Encounter Danger Board auto-refreshes when the combat, combatants, actors, or tokens change.
+- `game.modules.get('grim-arithmetic').api.exportLiveFixture()` dumps a pruned actor fixture for bug reports / regression tests.
+- `exportLiveFixture()` / debug capture now record each PC strike's `ready` flag; the adapter prefers ready (held) weapons when PF2e marks them.
+
+### Internal
+
+- TypeScript type-checking is now part of `npm run check` and CI; risk bands, panel controls, CI statistics, and record helpers have single homes; `damageDistribution` is memoized; adapter split into PC strikes / PC capabilities; adapter registry with a game-system guard; dev-dependency security bumps, SHA-pinned actions, Dependabot.
+- `npm run check` now also type-checks; `format:check` and `npm audit --audit-level=high` run in CI; `.prettierignore` added.
+
+### Since rc1
+
+- Dev-dependency bumps (eslint 10.8.1, prettier 3.9.6, typescript-eslint 8.67.0, @types/node 26.2.0) and GitHub Actions bumps (checkout 7.0.1, setup-node 7.0.0) via Dependabot; Dependabot now ignores TypeScript major bumps until typescript-eslint supports 7.x. No changes to the underlying mortality math since rc1.
+
 ## v0.9.0-rc1 - Review fixes: PC strike extraction, rules fidelity, deadly/fatal, auto-refresh
 
 Release candidate implementing the 2026-08 full-module review. **Simulation numbers change** in this release.
